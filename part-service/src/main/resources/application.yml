@@ -1,0 +1,18 @@
+server:
+  port: 8004 #Thay port cho moi service
+
+spring:
+  application:
+    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
+  datasource:
+    url: "jdbc:mysql://localhost:3306/part_service?createDatabaseIfNotExist=true"
+    # Vi du: url: "jdbc:mysql://localhost:3306/exampleDataBase?createDatabaseIfNotExist=true"
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+
