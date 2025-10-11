@@ -1,4 +1,4 @@
-package com.oem.evwarranty.dto;
+package com.oem.evwarranty.dto.response;
 
 import lombok.Data;
 import java.time.LocalDateTime;

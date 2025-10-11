@@ -1,4 +1,4 @@
-package com.oem.evwarranty.dto;
+package com.oem.evwarranty.dto.request;
 
 import lombok.Data;
 

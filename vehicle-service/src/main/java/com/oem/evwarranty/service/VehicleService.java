@@ -1,8 +1,8 @@
 package com.oem.evwarranty.service;
 
-import com.oem.evwarranty.dto.CustomerResponseDTO;
-import com.oem.evwarranty.dto.VehicleRequestDTO;
-import com.oem.evwarranty.dto.VehicleResponseDTO;
+import com.oem.evwarranty.dto.response.CustomerResponseDTO;
+import com.oem.evwarranty.dto.request.VehicleRequestDTO;
+import com.oem.evwarranty.dto.response.VehicleResponseDTO;
 import com.oem.evwarranty.entity.Customer;
 import com.oem.evwarranty.entity.Vehicle;
 import com.oem.evwarranty.exception.ResourceNotFoundException;
