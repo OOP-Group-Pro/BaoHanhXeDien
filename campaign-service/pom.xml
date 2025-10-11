@@ -10,8 +10,8 @@
     </parent>
 
     <!-- Cac ban nho thay doi ten cho nay -->
-    <artifactId>template-service</artifactId>
-    <name>Template-service</name>
+    <artifactId>campaign-service</artifactId>
+    <name>campaign-service</name>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
