@@ -1,33 +1,40 @@
 package com.example.user_service.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "role")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Table(name = "roles")
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Column(name = "role_id")
+    private Long roleId;
 
-    @Column(nullable = false, unique = true)
-    private String roleName; // ADMIN, STAFF, TECHNICIAN
+    @Column(name = "role_name", nullable = false, unique = true)
+    private String roleName;
 
     @ManyToMany(mappedBy = "roles")
-    @JsonIgnoreProperties("roles")
-    private Set<User> users;
+    private Set<User> users = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "role_permission",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> permissions = new HashSet<>();
 
     public Role() {}
+
     public Role(String roleName) { this.roleName = roleName; }
 
-    // getters & setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public Long getRoleId() { return roleId; }
     public String getRoleName() { return roleName; }
     public void setRoleName(String roleName) { this.roleName = roleName; }
+
     public Set<User> getUsers() { return users; }
-    public void setUsers(Set<User> users) { this.users = users; }
+    public Set<Permission> getPermissions() { return permissions; }
 }

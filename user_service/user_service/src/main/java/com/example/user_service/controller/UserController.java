@@ -18,6 +18,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    // --- CREATE ---
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{roleName}")
     public ResponseEntity<User> createUser(@RequestBody User user, @PathVariable String roleName) {
@@ -25,6 +26,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // --- READ SINGLE ---
     @PreAuthorize("hasAnyRole('ADMIN','STAFF','TECHNICIAN')")
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable int id) {
@@ -32,12 +34,22 @@ public class UserController {
         return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
+    // --- READ ALL ---
     @PreAuthorize("hasAnyRole('ADMIN','STAFF','TECHNICIAN')")
     @GetMapping
     public ResponseEntity<List<User>> listUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    // --- UPDATE ---
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User user) {
+        User updated = userService.updateUser(id, user);
+        return (updated != null) ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    // --- DELETE ---
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable int id) {

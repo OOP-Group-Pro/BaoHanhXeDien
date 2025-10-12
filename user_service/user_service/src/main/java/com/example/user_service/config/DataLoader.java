@@ -22,14 +22,16 @@ public class DataLoader {
                                PasswordEncoder passwordEncoder) {
         return args -> {
 
-            // Danh sách roles
+            // Danh sách role cần tạo
             String[] roles = {"ADMIN", "SC_STAFF", "SC_TECHNICIAN", "EVM_STAFF"};
+
+            // Tạo role nếu chưa tồn tại
             for (String roleName : roles) {
                 roleRepository.findByRoleName(roleName)
                         .orElseGet(() -> roleRepository.save(new Role(roleName)));
             }
 
-            // Tạo user nếu chưa tồn tại
+            // Tạo user mặc định nếu chưa tồn tại
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
                     "Admin", "admin123", "ADMIN");
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
@@ -49,6 +51,7 @@ public class DataLoader {
                                       String roleName) {
 
         if (userRepository.findByUsername(username).isEmpty()) {
+            // Lấy role từ DB, nếu chưa có thì tạo
             Role role = roleRepository.findByRoleName(roleName)
                     .orElseGet(() -> roleRepository.save(new Role(roleName)));
 
