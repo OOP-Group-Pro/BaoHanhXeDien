@@ -47,7 +47,7 @@ public enum ErrorCode {
     INSTALLED_PART_NOT_FOUND(2401, "Không tìm thấy phụ tùng đã gắn"),
     INSTALLED_PART_INVALID(2402, "Thông tin phụ tùng gắn không hợp lệ"),
     VEHICLE_VIN_REQUIRED(2403, "VIN của xe là bắt buộc"),
-    INSTALL_STATUS_INVALID(2404, "Trạng thái lắp đặt không hợp lệ");
+    INSTALL_STATUS_INVALID(2404, "Trạng thái lắp đặt không hợp lệ"), PART_EXISTED(2405,"" );
 
     // =========================
     // ⚙️ Fields & Constructors

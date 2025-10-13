@@ -2,6 +2,7 @@ package com.oem.evpart.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
 import java.time.LocalDateTime;
 
 
@@ -36,14 +37,14 @@ public class Part {
 
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
-//
-//    // ===== Quan hệ =====
-//    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<WarrantyPolicy> warrantyPolicies;
-//
-//    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<PartInventory> inventories;
-//
-//    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<InstalledPart> installedParts;
+
+    // ===== Quan hệ =====
+    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WarrantyPolicy> warrantyPolicies;
+
+    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PartInventory> inventories;
+
+    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InstalledPart> installedParts;
 }

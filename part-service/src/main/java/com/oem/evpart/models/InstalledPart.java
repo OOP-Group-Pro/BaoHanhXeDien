@@ -1,3 +1,4 @@
+
 package com.oem.evpart.models;
 
 import jakarta.persistence.*;
@@ -5,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "InstalledPart")
+@Table(name = "installedPart")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,11 +32,15 @@ public class InstalledPart {
     @Column(name = "install_date", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime installDate;
 
+    // FIX: Change type from String to the Status enum
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "ENUM('Installed','Replaced','Removed') DEFAULT 'Installed'")
-    private Status status = Status.Installed;
+    private Status status;
 
+    // FIX: Define the enum directly inside the class
     public enum Status {
-        Installed, Replaced, Removed
+        Installed,
+        Replaced,
+        Removed
     }
 }
