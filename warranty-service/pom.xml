@@ -9,8 +9,8 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>vehicle-service</artifactId>
-    <name>vehicle-service</name>
+    <artifactId>warranty-service</artifactId>
+    <name>warranty-service</name>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

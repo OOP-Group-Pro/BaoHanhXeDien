@@ -17,11 +17,11 @@
 
     <modules>
         <module>template-service</module>
-        <module>vehicle-service</module>
-        <module>user-service</module>
+        <!--<module>user-service</module>-->
         <module>campaign-service</module>
-       <!-- <module>part-service</module>
-        <module>warrenty-service</module> -->
+        <module>vehicle-service</module>
+        <module>part-service</module>
+        <module>warranty-service</module>
     </modules>
 
     <properties>
