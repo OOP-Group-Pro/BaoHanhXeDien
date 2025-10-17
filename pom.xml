@@ -17,8 +17,8 @@
 
     <modules>
         <module>template-service</module>
-        <module>user-service</module>
-        <!--<module>campaign-service</module>-->
+        <!--<module>user-service</module>-->
+        <module>campaign-service</module>
         <module>vehicle-service</module>
         <module>part-service</module>
         <module>warranty-service</module>

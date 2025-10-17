@@ -4,8 +4,6 @@ server:
     context-path: /vehicle-service
 
 spring:
-  application:
-    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
     url: jdbc:mysql://localhost:3306/vehicle_service?createDatabaseIfNotExist=true&serverTimezone=UTC
     username: root
