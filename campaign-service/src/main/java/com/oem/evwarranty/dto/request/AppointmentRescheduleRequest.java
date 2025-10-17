@@ -1,0 +1,26 @@
+package com.oem.evwarranty.dto.request;
+
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+
+public class AppointmentRescheduleRequest {
+
+    @NotNull
+    private LocalDateTime scheduledAt;
+
+    // Cho phép đổi TTTD (optional)
+    private Integer serviceCenterId;
+
+    public LocalDateTime getScheduledAt() {
+        return scheduledAt;
+    }
+    public void setScheduledAt(LocalDateTime scheduledAt) {
+        this.scheduledAt = scheduledAt;
+    }
+    public Integer getServiceCenterId() {
+        return serviceCenterId;
+    }
+    public void setServiceCenterId(Integer serviceCenterId) {
+        this.serviceCenterId = serviceCenterId;
+    }
+}
