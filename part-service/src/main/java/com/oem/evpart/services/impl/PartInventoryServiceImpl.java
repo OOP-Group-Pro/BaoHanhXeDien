@@ -65,14 +65,23 @@ public class PartInventoryServiceImpl implements PartInventoryService {
                 .collect(Collectors.toList());
     }
 
+    // Trong file PartInventoryServiceImpl.java
+
     @Override
     @Transactional
     public PartInventoryResponse updateInventoryStatus(Long inventoryId, String status) {
         PartInventory inventory = inventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory not found with id: " + inventoryId));
 
-        // Thêm logic để validate `status` có hợp lệ không (ENUM('Available','Reserved','Defective'))
-        inventory.setStatus(status); // Cần có validation cho Enum
+        // FIX: Chuyển đổi String sang Enum một cách an toàn
+        try {
+            PartInventory.Status newStatus = PartInventory.Status.valueOf(status.trim()); // trim() để xóa khoảng trắng thừa
+            inventory.setStatus(newStatus);
+        } catch (IllegalArgumentException e) {
+
+            throw new IllegalArgumentException("Invalid status value: '" + status + "'. Must be 'Available', 'Reserved', or 'Defective'.");
+        }
+
         PartInventory updatedInventory = inventoryRepository.save(inventory);
         return inventoryMapper.toPartInventoryResponse(updatedInventory);
     }

@@ -1,6 +1,9 @@
 server:
   port: 8004 #Thay port cho moi service
-
+logging:
+  level:
+    org:
+      springframework: DEBUG
 spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
@@ -15,4 +18,9 @@ spring:
       ddl-auto: update
     show-sql: true
 
-
+# Cấu hình Feign Client
+feign:
+  client:
+    config:
+      user-service:
+        url: http://localhost:8081

@@ -11,5 +11,7 @@ import java.util.List;
 @Repository
 public interface WarrantyPolicyRepository extends JpaRepository<WarrantyPolicy, Long> {
     List<WarrantyPolicy> findByPart(Part part);
+
+    List<WarrantyPolicy> findByPart_PartId(Long partId);
 }
 
