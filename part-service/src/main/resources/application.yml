@@ -1,12 +1,15 @@
 server:
-  port: 8000 #Thay port cho moi service
-
+  port: 8004 # Giữ lại port 8004 từ nhánh part-service vì nó cụ thể cho service này
+logging:
+  level:
+    org:
+      springframework: DEBUG
 spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: "jdbc:mysql://localhost:3306/\"CAC BAN TU DAT TEN DATABASE RIENG\"?createDatabaseIfNotExist=true"
-    # Vi du: url: "jdbc:mysql://localhost:3306/exampleDataBase?createDatabaseIfNotExist=true"
+    # Sử dụng URL database cụ thể từ nhánh part-service
+    url: "jdbc:mysql://localhost:3306/part_service?createDatabaseIfNotExist=true"
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -15,4 +18,9 @@ spring:
       ddl-auto: update
     show-sql: true
 
-
+# Giữ lại cấu hình Feign Client từ nhánh part-service
+feign:
+  client:
+    config:
+      user-service:
+        url: http://localhost:8081
