@@ -24,6 +24,8 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private UserStatus status;
+    private Long serviceCenterId;
+
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -47,6 +49,8 @@ public class User {
     public void setPhone(String phone) { this.phone = phone; }
     public UserStatus getStatus() { return status; }
     public void setStatus(UserStatus status) { this.status = status; }
+    public Long getServiceCenterId() { return serviceCenterId; }
+    public void setServiceCenterId(Long serviceCenterId) { this.serviceCenterId = serviceCenterId; }
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
 }

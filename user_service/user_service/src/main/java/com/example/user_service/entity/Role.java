@@ -1,5 +1,6 @@
 package com.example.user_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,7 +17,9 @@ public class Role {
     @Column(name = "role_name", nullable = false, unique = true)
     private String roleName;
 
+    // ⚠️ Thêm annotation này để ngắt vòng lặp JSON
     @ManyToMany(mappedBy = "roles")
+    @JsonIgnore
     private Set<User> users = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
