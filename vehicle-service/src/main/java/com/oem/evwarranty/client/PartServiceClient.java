@@ -25,6 +25,6 @@ public interface PartServiceClient {
      * Yêu cầu phân bổ hoặc giảm trừ một linh kiện khỏi kho.
      * (Body có thể chứa partId, quantity, location...)
      */
-    @PostMapping("/api/inventory/allocate")
+    @PostMapping("/api/v1/inventory/allocate")
     ResponseEntity<Void> allocatePart(@RequestBody AllocationRequestDTO allocationRequest);
 }
