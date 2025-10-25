@@ -40,8 +40,6 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        // JWT không có logout thật sự (vì stateless)
-        // Có thể triển khai danh sách token đen nếu cần
         return ResponseEntity.ok(Map.of("message", "Logged out"));
     }
 }

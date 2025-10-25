@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.example.user_service.dto.ServiceCenterDTO;
 
 import java.util.List;
 
@@ -54,5 +55,10 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable int id) {
         return userService.deleteUser(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+    @GetMapping("/user/service-center/{id}")
+    public ServiceCenterDTO getServiceCenterById(@PathVariable Long id) {
+        // Thông thường bạn sẽ lấy dữ liệu từ DB, nhưng đây là ví dụ tạm
+        return new ServiceCenterDTO(id, "Service Center " + id, "123 Example Street");
     }
 }
