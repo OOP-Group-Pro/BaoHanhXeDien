@@ -7,5 +7,4 @@ public class CenterDetailsDTO {
     private Long centerId;
     private String centerName;
     private String address;
-    private String phone;
 }

@@ -5,9 +5,9 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "user-service") // Tên của microservice trung tâm
+@FeignClient(name = "user-service" , contextId = "Centerid") // Tên của microservice trung tâm
 public interface CenterClient {
 
-    @GetMapping("/api/v1/center/{centerId}")
-    CenterDetailsDTO getCenterDetails(@PathVariable("centerId") Long centerId);
+    @GetMapping("/service-centers/{id}")
+    CenterDetailsDTO getCenterDetails(@PathVariable("id") Long centerId);
 }

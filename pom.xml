@@ -11,7 +11,7 @@
     <packaging>pom</packaging> <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.5</version>
+        <version>3.3.5</version>
         <relativePath/>
     </parent>
 
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
-            <version>3.5.5</version>
+            <version>3.3.5</version>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>

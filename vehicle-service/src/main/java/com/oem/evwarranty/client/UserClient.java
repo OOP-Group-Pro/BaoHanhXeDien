@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * Nó định nghĩa "hợp đồng" để gọi sang "user-service".
  * Spring sẽ tự động tạo ra một class thực thi interface này.
  */
-@FeignClient(name = "user-service") // Tên của microservice đăng ký trên Eureka
+@FeignClient(name = "user-service" , contextId = "userClient")
 public interface UserClient {
 
     @GetMapping("/api/users/technician/{technicianId}")

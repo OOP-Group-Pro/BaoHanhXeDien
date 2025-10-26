@@ -1,13 +1,9 @@
 package com.oem.evwarranty.controller;
 
 import com.oem.evwarranty.dto.response.ApiResponse;
-import com.oem.evwarranty.dto.response.InstalledPartResponseDTO;
-import com.oem.evwarranty.dto.response.ServiceHistoryResponseDTO;
 import com.oem.evwarranty.dto.response.VehicleResponseDTO;
 import com.oem.evwarranty.entity.Customer;
 import com.oem.evwarranty.service.CustomerService;
-import com.oem.evwarranty.service.InstalledPartService;
-import com.oem.evwarranty.service.ServiceHistoryService;
 import com.oem.evwarranty.service.VehicleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
