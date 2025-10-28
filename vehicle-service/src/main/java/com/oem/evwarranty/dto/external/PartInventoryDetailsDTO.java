@@ -1,29 +1,34 @@
-package com.oem.evwarranty.dto.external;
+package com.oem.evwarranty.dto.external; // Package của vehicle-service
 
 import lombok.Data;
+import java.time.LocalDateTime;
 
 /**
- * DTO này dùng để "hứng" dữ liệu trả về từ part-service.
- * Các trường của nó PHẢI KHỚP với cấu trúc JSON
- * của class PartInventoryResponse bên part-service.
+ * DTO này dùng để "hứng" dữ liệu JSON trả về từ part-service.
+ * Tên các trường PHẢI KHỚP TUYỆT ĐỐI với các trường JSON
+ * trong PartInventoryResponse của part-service.
  */
 @Data
 public class PartInventoryDetailsDTO {
+
+    // Khớp với "inventoryId"
     private Long inventoryId;
+
+    // Khớp với "partId"
+    private Long partId;
+
+    // Khớp với "partName"
+    private String partName;
+
+    // Khớp với "quantity"
     private Integer quantity;
+
+    // Khớp với "location"
     private String location;
-    private String status; // "Available", "Reserved", "Defective"
 
-    // Thông tin lồng nhau từ Part
-    private PartInfo part;
+    // Khớp với "status"
+    private String status;
 
-
-    @Data
-    public static class PartInfo {
-        private Long partId;
-        private String name;
-        private String serialNumber;
-        private String manufacturer;
-        private String partType;
-    }
+    // Khớp với "updatedAt"
+    private LocalDateTime updatedAt;
 }

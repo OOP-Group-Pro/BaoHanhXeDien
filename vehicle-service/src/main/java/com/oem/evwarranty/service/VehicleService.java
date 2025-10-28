@@ -102,4 +102,25 @@ public class VehicleService {
 
         return vehicleDTO;
     }
+
+    public boolean isVinExists(String vin) {
+        return vehicleRepository.existsByVin(vin); // Giả sử bạn có phương thức này
+    }
+    public String getCustomerNameByVin(String vin) {
+        // 1. Tìm xe bằng VIN
+        Vehicle vehicle = vehicleRepository.findByVehicleVin(vin)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with VIN: " + vin));
+
+        // 2. Lấy đối tượng Customer liên kết
+        Customer customer = vehicle.getCustomer();
+
+        // 3. Kiểm tra xem có khách hàng không
+        if (customer == null) {
+            throw new ResourceNotFoundException("Vehicle " + vin + " is not associated with any customer.");
+        }
+
+        // 4. Trả về tên khách hàng
+        return customer.getCustomerName();
+    }
+
 }

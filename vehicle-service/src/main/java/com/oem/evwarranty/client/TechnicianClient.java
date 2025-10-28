@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
  * Spring sẽ tự động tạo ra một class thực thi interface này.
  */
 @FeignClient(name = "user-service" , contextId = "userClient")
-public interface UserClient {
+public interface TechnicianClient {
 
-    @GetMapping("/api/users/technician/{technicianId}")
-    TechnicianDetailsDTO getTechnicianDetails(@PathVariable("technicianId") Long technicianId);
+    @GetMapping("/api/v1/users/{userId}")
+    TechnicianDetailsDTO getTechnicianDetails(@PathVariable("userId") Long userId);
 }

@@ -1,5 +1,6 @@
 package com.oem.evwarranty.client;
 
+// Đảm bảo import DTO mới
 import com.oem.evwarranty.dto.external.PartInventoryDetailsDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
