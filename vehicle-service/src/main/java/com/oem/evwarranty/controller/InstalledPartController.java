@@ -4,6 +4,7 @@ import com.oem.evwarranty.dto.request.InstalledPartRequestDTO;
 import com.oem.evwarranty.dto.response.InstalledPartResponseDTO;
 import com.oem.evwarranty.dto.response.ApiResponse;
 import com.oem.evwarranty.service.InstalledPartService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ public class InstalledPartController {
     private InstalledPartService installedPartService;
 
     @PostMapping("/install")
-    public ResponseEntity<ApiResponse<InstalledPartResponseDTO>> installPart(@RequestBody InstalledPartRequestDTO requestDTO) {
+    public ResponseEntity<ApiResponse<InstalledPartResponseDTO>> installPart(@Valid @RequestBody InstalledPartRequestDTO requestDTO) {
         InstalledPartResponseDTO installedPart = installedPartService.installPart(requestDTO);
         ApiResponse<InstalledPartResponseDTO> response = ApiResponse.success(
                 HttpStatus.CREATED.value(), "Part installed successfully.", installedPart);

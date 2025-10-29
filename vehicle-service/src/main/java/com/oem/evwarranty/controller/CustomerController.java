@@ -5,6 +5,7 @@ import com.oem.evwarranty.dto.response.VehicleResponseDTO;
 import com.oem.evwarranty.entity.Customer;
 import com.oem.evwarranty.service.CustomerService;
 import com.oem.evwarranty.service.VehicleService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class CustomerController {
 
     // POST - Tạo mới
     @PostMapping
-    public ResponseEntity<ApiResponse<Customer>> createCustomer(@RequestBody Customer customer) {
+    public ResponseEntity<ApiResponse<Customer>> createCustomer(@Valid @RequestBody Customer customer) {
         Customer createdCustomer = customerService.createCustomer(customer);
         ApiResponse<Customer> response = ApiResponse.success(
                 HttpStatus.CREATED.value(),

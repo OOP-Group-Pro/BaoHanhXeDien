@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "user-service" , contextId = "Centerid") // Tên của microservice trung tâm
 public interface CenterClient {
 
-    @GetMapping("/service-centers/{id}")
+    @GetMapping("/api/v1/service-centers/{id}")
     CenterDetailsDTO getCenterDetails(@PathVariable("id") Long centerId);
 }

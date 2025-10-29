@@ -8,6 +8,7 @@ import com.oem.evwarranty.dto.response.VehicleResponseDTO;
 import com.oem.evwarranty.service.InstalledPartService;
 import com.oem.evwarranty.service.ServiceHistoryService;
 import com.oem.evwarranty.service.VehicleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ public class VehicleController {
     private ServiceHistoryService historyService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<VehicleResponseDTO>> createVehicle(@RequestBody VehicleRequestDTO vehicleRequest) {
+    public ResponseEntity<ApiResponse<VehicleResponseDTO>> createVehicle(@Valid @RequestBody VehicleRequestDTO vehicleRequest) {
         VehicleResponseDTO createdVehicle = vehicleService.createVehicle(vehicleRequest);
         ApiResponse<VehicleResponseDTO> response = ApiResponse.success(
                 HttpStatus.CREATED.value(), "Vehicle created successfully.", createdVehicle);

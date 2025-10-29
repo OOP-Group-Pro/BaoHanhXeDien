@@ -4,6 +4,7 @@ import com.oem.evwarranty.dto.response.ApiResponse;
 import com.oem.evwarranty.dto.response.TechnicianResponseDTO;
 import com.oem.evwarranty.entity.Technician;
 import com.oem.evwarranty.service.TechnicianService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class TechnicianController {
 
 
     @PostMapping
-    public ResponseEntity<ApiResponse<TechnicianResponseDTO>> createTechnician(@RequestBody Technician technician) {
+    public ResponseEntity<ApiResponse<TechnicianResponseDTO>> createTechnician(@Valid @RequestBody Technician technician) {
         // 1. Service trả về DTO
         TechnicianResponseDTO createdTech = technicianService.createTechnician(technician);
 
