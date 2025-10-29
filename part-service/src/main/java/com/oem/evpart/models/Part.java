@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "Part")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -45,6 +44,5 @@ public class Part {
     @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PartInventory> inventories;
 
-    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InstalledPart> installedParts;
+
 }

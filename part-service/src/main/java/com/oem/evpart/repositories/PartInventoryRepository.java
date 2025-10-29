@@ -1,5 +1,6 @@
 package com.oem.evpart.repositories;
 
+import com.oem.evpart.models.Part;
 import com.oem.evpart.models.PartInventory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,4 +19,7 @@ public interface PartInventoryRepository extends JpaRepository<PartInventory, Lo
 
 
     List<PartInventory> findByLocation(String location);
+
+    //Tìm 1 kho đầu tiên có chứa "part" và số lượng "quantity" lớn hơn hoặc bằng
+    Optional<PartInventory> findFirstByPartAndQuantityGreaterThanEqual(Part part, Long quantity);
 }

@@ -8,10 +8,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(
-        name = "PartInventory",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"part_id", "location"})
-)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,7 +25,7 @@ public class PartInventory {
     private Part part;
 
     @Column(nullable = false)
-    private Integer quantity;
+    private Long quantity;
 
     @Column(length = 100)
     private String location;

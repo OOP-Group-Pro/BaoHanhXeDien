@@ -20,6 +20,6 @@ public class PartAllocationRequest {
 
     @NotNull(message = "Số lượng phân bổ không được để trống")
     @Min(value = 1, message = "Số lượng phải lớn hơn 0")
-    private Integer allocatedQty;
+    private Long allocatedQty;
 }
 

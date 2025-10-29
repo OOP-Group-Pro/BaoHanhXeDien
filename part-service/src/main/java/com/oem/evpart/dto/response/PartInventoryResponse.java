@@ -12,7 +12,7 @@ public class PartInventoryResponse {
     private Long inventoryId;
     private Long partId;
     private String partName;
-    private Integer quantity;
+    private Long quantity;
     private String location;
     private String status;
     private LocalDateTime updatedAt;

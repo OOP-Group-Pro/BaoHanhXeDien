@@ -5,7 +5,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "PartAllocation")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,7 +25,7 @@ public class PartAllocation {
     private Long serviceCenterId; // FK từ service khác (User-Service)
 
     @Column(name = "allocated_qty", nullable = false)
-    private Integer allocatedQty;
+    private Long allocatedQty;
 
     @Column(name = "allocated_date", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime allocatedDate;
