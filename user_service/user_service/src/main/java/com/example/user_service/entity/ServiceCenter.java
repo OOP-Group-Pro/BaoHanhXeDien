@@ -13,10 +13,10 @@ public class ServiceCenter {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long centerId;
 
     @Column(nullable = false)
-    private String name;
+    private String centerName;
 
-    private String address;
+    private String centerAddress;
 }

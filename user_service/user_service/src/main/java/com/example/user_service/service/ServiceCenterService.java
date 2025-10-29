@@ -31,8 +31,8 @@ public class ServiceCenterService {
         ServiceCenter existing = repository.findById(id).orElse(null);
         if (existing == null) return null;
 
-        existing.setName(sc.getName());
-        existing.setAddress(sc.getAddress());
+        existing.setCenterName(sc.getCenterName());
+        existing.setCenterAddress(sc.getCenterAddress());
         return repository.save(existing);
     }
 
@@ -43,4 +43,5 @@ public class ServiceCenterService {
         }
         return false;
     }
+
 }

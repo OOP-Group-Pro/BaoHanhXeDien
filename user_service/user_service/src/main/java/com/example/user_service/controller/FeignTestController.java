@@ -1,6 +1,9 @@
 package com.example.user_service.controller;
 
-import com.example.user_service.dto.*;
+import com.example.user_service.dto.response.CampaignResponse;
+import com.example.user_service.dto.response.PartResponse;
+import com.example.user_service.dto.response.VehicleResponse;
+import com.example.user_service.dto.response.WarrantyResponse;
 import com.example.user_service.service.FeignIntegrationService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;

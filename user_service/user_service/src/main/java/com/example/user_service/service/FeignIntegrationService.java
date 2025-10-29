@@ -4,7 +4,10 @@ import com.example.user_service.client.VehicleClient;
 import com.example.user_service.client.WarrantyClient;
 import com.example.user_service.client.PartClient;
 import com.example.user_service.client.CampaignClient;
-import com.example.user_service.dto.*;
+import com.example.user_service.dto.response.CampaignResponse;
+import com.example.user_service.dto.response.PartResponse;
+import com.example.user_service.dto.response.VehicleResponse;
+import com.example.user_service.dto.response.WarrantyResponse;
 import org.springframework.stereotype.Service;
 import java.util.List;
 

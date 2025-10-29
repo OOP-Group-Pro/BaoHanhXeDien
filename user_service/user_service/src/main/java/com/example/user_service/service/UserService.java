@@ -10,9 +10,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.access.AccessDeniedException;
+import com.example.user_service.dto.response.UserResponseDto;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Service
@@ -40,6 +42,19 @@ public class UserService {
                 .anyMatch(role -> role.equals("ROLE_ADMIN"));
     }
 
+    public UserResponseDto getBasicUserDetails(long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với ID: " + userId));
+
+        UserResponseDto dto = new UserResponseDto();
+        dto.setUserId(user.getUserId());
+        dto.setFullName(user.getUsername()); // giả sử username là tên đầy đủ
+        dto.setServiceCenterId(user.getServiceCenterId());
+
+        return dto;
+    }
+
+
     // CREATE USER - chỉ ADMIN được phép
     public User createUser(User user, String roleName) {
         if (!isAdmin()) {
@@ -47,10 +62,7 @@ public class UserService {
         }
 
         Role role = roleRepository.findByRoleName(roleName)
-                .orElseGet(() -> {
-                    Role r = new Role(roleName);
-                    return roleRepository.save(r);
-                });
+                .orElseGet(() -> roleRepository.save(new Role(roleName)));
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -62,7 +74,7 @@ public class UserService {
     }
 
     // READ - Lấy user theo ID (ai cũng xem được)
-    public User getUserById(int id) {
+    public User getUserById(long id) {
         return userRepository.findById(id).orElse(null);
     }
 
@@ -71,8 +83,8 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    //  UPDATE - chỉ ADMIN được sửa
-    public User updateUser(int id, User user) {
+    // UPDATE - chỉ ADMIN được sửa
+    public User updateUser(long id, User user) {
         if (!isAdmin()) {
             throw new AccessDeniedException("Chỉ ADMIN mới được phép sửa user!");
         }
@@ -89,7 +101,7 @@ public class UserService {
     }
 
     // DELETE - chỉ ADMIN được xóa
-    public boolean deleteUser(int id) {
+    public boolean deleteUser(long id) {
         if (!isAdmin()) {
             throw new AccessDeniedException("Chỉ ADMIN mới được phép xóa user!");
         }

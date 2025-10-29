@@ -1,17 +1,16 @@
-package com.example.user_service.dto;
+package com.example.user_service.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// DTO cho VehicleClient
+// DTO cho WarrantyClient
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class VehicleResponse {
+public class WarrantyResponse {
     private Long id;
-    private String vin;
-    private String model;
-    private String licensePlate;
+    private String status;
+    private String expireDate;
 }

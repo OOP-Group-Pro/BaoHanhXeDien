@@ -1,16 +1,17 @@
-package com.example.user_service.dto;
+package com.example.user_service.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// DTO cho PartClient
+// DTO cho VehicleClient
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PartResponse {
+public class VehicleResponse {
     private Long id;
-    private String partName;
-    private String partCode;
+    private String vin;
+    private String model;
+    private String licensePlate;
 }

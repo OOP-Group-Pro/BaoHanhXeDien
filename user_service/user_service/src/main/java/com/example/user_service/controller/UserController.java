@@ -2,24 +2,76 @@ package com.example.user_service.controller;
 
 import com.example.user_service.entity.User;
 import com.example.user_service.service.UserService;
+import com.example.user_service.dto.response.UserResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.example.user_service.dto.ServiceCenterDTO;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
+
     private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    // --- CREATE ---
+    // GET cơ bản theo ID
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponseDto> getUserBasicInfo(@PathVariable Long userId) {
+        try {
+            UserResponseDto dto = userService.getBasicUserDetails(userId);
+            return ResponseEntity.ok(dto);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // GET tất cả cơ bản
+    @GetMapping("")
+    public ResponseEntity<List<UserResponseDto>> listBasicUsers() {
+        List<UserResponseDto> dtos = userService.getAllUsers()
+                .stream()
+                .map(user -> {
+                    UserResponseDto dto = new UserResponseDto();
+                    dto.setUserId(user.getUserId());
+                    dto.setFullName(user.getUsername());
+                    dto.setServiceCenterId(user.getServiceCenterId());
+                    return dto;
+                })
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    // ===========================
+    //  Thông tin full (chỉ ADMIN)
+    // ===========================
+
+    // GET full theo ID
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/{id}")
+    public ResponseEntity<User> getUserFull(@PathVariable Long id) {
+        User user = userService.getUserById(id);
+        return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+    }
+
+    // GET tất cả full
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    public ResponseEntity<List<User>> listAllUsersFull() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    // ===========================
+    //  CRUD (chỉ ADMIN)
+    // ===========================
+
+    // CREATE USER
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{roleName}")
     public ResponseEntity<User> createUser(@RequestBody User user, @PathVariable String roleName) {
@@ -27,38 +79,18 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // --- READ SINGLE ---
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TECHNICIAN')")
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable int id) {
-        User user = userService.getUserById(id);
-        return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
-    }
-
-    // --- READ ALL ---
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TECHNICIAN')")
-    @GetMapping
-    public ResponseEntity<List<User>> listUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
-
-    // --- UPDATE ---
+    // UPDATE USER
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         User updated = userService.updateUser(id, user);
         return (updated != null) ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
-    // --- DELETE ---
+    // DELETE USER
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable int id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         return userService.deleteUser(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
-    }
-    @GetMapping("/user/service-center/{id}")
-    public ServiceCenterDTO getServiceCenterById(@PathVariable Long id) {
-        // Thông thường bạn sẽ lấy dữ liệu từ DB, nhưng đây là ví dụ tạm
-        return new ServiceCenterDTO(id, "Service Center " + id, "123 Example Street");
     }
 }
