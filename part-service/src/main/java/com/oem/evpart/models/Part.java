@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "Part")
 @Getter
 @Setter
 @NoArgsConstructor

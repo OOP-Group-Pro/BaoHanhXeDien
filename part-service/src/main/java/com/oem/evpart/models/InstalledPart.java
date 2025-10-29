@@ -6,7 +6,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "installedPart")
 @Getter
 @Setter
 @NoArgsConstructor

@@ -6,7 +6,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "WarrantyPolicy")
 @Getter
 @Setter
 @NoArgsConstructor

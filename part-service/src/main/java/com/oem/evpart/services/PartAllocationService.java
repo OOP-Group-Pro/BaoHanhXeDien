@@ -1,5 +1,6 @@
 package com.oem.evpart.services;
 
+import com.oem.evpart.dto.request.ClaimAllocationRequest;
 import com.oem.evpart.dto.request.PartAllocationRequest;
 import com.oem.evpart.dto.response.PartAllocationResponse;
 import java.util.List;
@@ -10,6 +11,10 @@ public interface PartAllocationService {
      * Thao tác này sẽ làm giảm số lượng tồn kho tương ứng.
      */
     PartAllocationResponse createAllocation(PartAllocationRequest request);
+
+
+    PartAllocationResponse allocateForClaim(ClaimAllocationRequest request);
+
 
     /**
      * Lấy thông tin một lần phân bổ cụ thể bằng ID.

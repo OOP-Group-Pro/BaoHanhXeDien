@@ -17,7 +17,7 @@ public class PartInventoryRequest {
 
     @NotNull(message = "Số lượng không được để trống")
     @Min(value = 0, message = "Số lượng không được âm")
-    private Integer quantity;
+    private Long quantity;
 
     private String location;
 

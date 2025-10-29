@@ -7,10 +7,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="template-service (1)" />
         <module name="user_service" />
-        <module name="user-service" />
         <module name="vehicle-service" />
+        <module name="template-service" />
+        <module name="template-service (1)" />
+        <module name="user-service" />
         <module name="warranty-service" />
         <module name="campaign-service" />
       </profile>
@@ -19,6 +20,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="campaign-service" options="-parameters" />
+      <module name="template-service" options="-parameters" />
       <module name="template-service (1)" options="-parameters" />
       <module name="user-service" options="-parameters" />
       <module name="user_service" options="-parameters" />
