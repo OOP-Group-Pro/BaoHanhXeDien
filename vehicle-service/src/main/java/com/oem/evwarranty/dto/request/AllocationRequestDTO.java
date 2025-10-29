@@ -15,9 +15,7 @@ public class AllocationRequestDTO {
 
     private Long partId;
 
-    private Integer quantity;
-
-    private Long serviceCenterId;
+    private Long quantity;
 
     private String location;
 }

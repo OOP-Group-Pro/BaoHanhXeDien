@@ -53,9 +53,8 @@ public class InstalledPartService {
             // Tạo DTO yêu cầu trừ kho
             AllocationRequestDTO allocationRequest = new AllocationRequestDTO(
                     savedPart.getPartId(),
-                    1, // Mặc định lắp 1
-                    requestDTO.getServiceCenterId(), // Lấy từ DTO input
-                    null // Location (nếu có, không thì part-service tự suy)
+                    1L, // Mặc định lắp 1
+                    requestDTO.getLocation()
             );
 
             // Gọi Feign Client

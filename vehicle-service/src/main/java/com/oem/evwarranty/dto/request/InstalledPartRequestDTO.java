@@ -19,6 +19,7 @@ public class InstalledPartRequestDTO {
     private InstallStatus status;
     @NotNull
     private Long vehicleId;
-    @NotNull
-    private Long serviceCenterId; // Để biết trừ kho ở đâu// ID của xe mà linh kiện được lắp vào
+    @NotBlank
+    private String location; // Thêm trường này
+    // Để biết trừ kho ở đâu// ID của xe mà linh kiện được lắp vào
 }
