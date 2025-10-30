@@ -1,5 +1,6 @@
 package com.oem.evpart.services.impl;
 
+import com.oem.evpart.dto.request.DecrementStockRequest;
 import com.oem.evpart.dto.request.PartInventoryRequest;
 import com.oem.evpart.dto.response.PartInventoryResponse;
 import com.oem.evpart.exceptions.ResourceNotFoundException;
@@ -47,6 +48,31 @@ public class PartInventoryServiceImpl implements PartInventoryService {
 
         PartInventory savedInventory = inventoryRepository.save(inventory);
         return inventoryMapper.toPartInventoryResponse(savedInventory);
+    }
+
+    @Override
+    @Transactional
+    public PartInventoryResponse decrementStock(DecrementStockRequest request) {
+        // 1. Tìm bản ghi tồn kho tương ứng với partId và location
+        PartInventory inventory = inventoryRepository
+                .findByPart_PartIdAndLocation(request.getPartId(), request.getLocation())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tồn kho cho Part ID "
+                        + request.getPartId() + " tại địa điểm '" + request.getLocation() + "'."));
+
+        // 2. Kiểm tra số lượng tồn
+        int currentQuantity = inventory.getQuantity();
+        int requestedQuantity = request.getQuantity();
+        if (currentQuantity < requestedQuantity) {
+            throw new IllegalArgumentException("Không đủ số lượng tồn kho tại '" + request.getLocation() +
+                    "'. Còn lại: " + currentQuantity + ", Yêu cầu trừ: " + requestedQuantity);
+        }
+
+        // 3. Trừ số lượng và lưu lại
+        inventory.setQuantity(currentQuantity - requestedQuantity);
+        PartInventory updatedInventory = inventoryRepository.save(inventory);
+
+        // 4. Trả về thông tin tồn kho sau khi đã trừ
+        return inventoryMapper.toPartInventoryResponse(updatedInventory);
     }
 
     @Override

@@ -14,7 +14,7 @@ public class PartAllocationResponse {
     private Long inventoryId;
     private String partName;
     private Long serviceCenterId;
-    private Integer allocatedQty;
+    private Long allocatedQty;
     private LocalDateTime allocatedDate;
 }
 

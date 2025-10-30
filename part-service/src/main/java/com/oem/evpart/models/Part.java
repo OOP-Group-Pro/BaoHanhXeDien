@@ -44,6 +44,5 @@ public class Part {
     @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PartInventory> inventories;
 
-    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InstalledPart> installedParts;
+
 }
