@@ -30,5 +30,5 @@ public class DecrementStockRequest {
      */
     @NotNull(message = "Số lượng không được để trống")
     @Min(value = 1, message = "Số lượng phải lớn hơn 0")
-    private Integer quantity; // Thường sẽ là 1
+    private Long quantity; // Thường sẽ là 1
 }

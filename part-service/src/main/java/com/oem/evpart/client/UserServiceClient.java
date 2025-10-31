@@ -15,5 +15,5 @@ public interface UserServiceClient {
     UserResponseDTO getServiceCenter(@PathVariable Long id);
 
     @GetMapping("/api/v1/users/{id}")
-    UserResponseDTO getUserById(@PathVariable("id") Long id);
+    UserResponseDTO getUser(@PathVariable("id") Long id);
 }
