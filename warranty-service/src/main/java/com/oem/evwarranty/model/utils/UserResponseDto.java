@@ -12,5 +12,5 @@ import lombok.Setter;
 public class UserResponseDto {
     private Long userId;
     private String fullName;
-    private String serviceCenterId;
+    private Long serviceCenterId;
 }

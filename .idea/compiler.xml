@@ -17,6 +17,9 @@
         <module name="campaign-service" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="template-service (2)" target="21" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
