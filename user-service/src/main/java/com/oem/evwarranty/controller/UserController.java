@@ -30,7 +30,7 @@ public class UserController {
     // --- READ SINGLE ---
     @PreAuthorize("hasAnyRole('ADMIN','STAFF','TECHNICIAN')")
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable int id) {
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
         User user = userService.getUserById(id);
         return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
