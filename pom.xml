@@ -8,18 +8,19 @@
     <artifactId>ev-warranty-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <packaging>pom</packaging> <parent>
+    <packaging>pom</packaging>
+    <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.5</version>
+        <version>3.2.5</version>
         <relativePath/>
     </parent>
 
     <modules>
         <module>user-service</module>
+        <module>part-service</module>
         <module>campaign-service</module>
         <module>vehicle-service</module>
-        <module>part-service</module>
         <module>warranty-service</module>
     </modules>
 
