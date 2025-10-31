@@ -12,9 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Thêm Transactional
 
-import com.oem.evwarranty.client.PartServiceClient;
-import com.oem.evwarranty.dto.request.AllocationRequestDTO; // Import này vẫn đúng
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,19 +23,16 @@ public class InstalledPartService {
     private InstalledPartRepository installedPartRepository;
     @Autowired
     private VehicleRepository vehicleRepository;
-    @Autowired
-    private PartServiceClient partServiceClient;
-
 
     /**
-     * Cập nhật: Thêm @Transactional và logic gọi Trừ kho (Allocate Stock).
+     * Cập nhật: Thêm @Transactional
      */
     @Transactional // Đảm bảo lưu và gọi trừ kho là một giao dịch
     public InstalledPartResponseDTO installPart(InstalledPartRequestDTO requestDTO) {
         Vehicle vehicle = vehicleRepository.findById(requestDTO.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + requestDTO.getVehicleId()));
 
-        // --- BƯỚC 1: LƯU VÀO DB NỘI BỘ ---
+        // --- LƯU VÀO DB NỘI BỘ ---
         InstalledPart newPart = new InstalledPart();
         newPart.setPartId(requestDTO.getPartId());
         newPart.setSerialNumber(requestDTO.getSerialNumber());
@@ -47,31 +41,6 @@ public class InstalledPartService {
         newPart.setVehicle(vehicle);
 
         InstalledPart savedPart = installedPartRepository.save(newPart);
-
-        // --- BƯỚC 2: GỌI PART-SERVICE ĐỂ TRỪ KHO ---
-        try {
-            // Tạo DTO yêu cầu trừ kho
-            AllocationRequestDTO allocationRequest = new AllocationRequestDTO(
-                    savedPart.getPartId(),
-                    1L, // Mặc định lắp 1
-                    requestDTO.getLocation()
-            );
-
-            // Gọi Feign Client
-            log.info("Đang gọi part-service để trừ kho cho partId: {}", savedPart.getPartId());
-            partServiceClient.allocateStock(allocationRequest);
-            log.info("Trừ kho thành công.");
-
-        } catch (Exception e) {
-            // LỖI NGHIÊM TRỌNG:
-            // Đã lưu part vào xe nhưng KHÔNG trừ được kho.
-            // Cần log lại để hệ thống chạy bù (reconciliation).
-            log.error("LỖI NGHIÊP VỤ: Không thể trừ kho cho partId {}. Cần chạy bù!", savedPart.getPartId(), e);
-
-            // Tùy nghiệp vụ, bạn có thể "roll back" (xóa) bản ghi savedPart
-            // hoặc để lại và báo lỗi cho hệ thống giám sát.
-            // Ở đây chúng ta tạm log lỗi và vẫn trả về DTO.
-        }
 
         return convertToDTO(savedPart);
     }

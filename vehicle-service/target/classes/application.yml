@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
+    name: vehicle-service
   datasource:
     url: jdbc:mysql://localhost:3306/vehicle_service?createDatabaseIfNotExist=true&serverTimezone=UTC
     username: root
@@ -18,3 +18,5 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+  profiles:
+    active=dev:

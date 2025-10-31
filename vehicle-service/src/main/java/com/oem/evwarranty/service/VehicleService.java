@@ -104,7 +104,7 @@ public class VehicleService {
     }
 
     public boolean isVinExists(String vin) {
-        return vehicleRepository.existsByVin(vin); // Giả sử bạn có phương thức này
+        return vehicleRepository.existsByVehicleVin(vin); // Giả sử bạn có phương thức này
     }
     public String getCustomerNameByVin(String vin) {
         // 1. Tìm xe bằng VIN
