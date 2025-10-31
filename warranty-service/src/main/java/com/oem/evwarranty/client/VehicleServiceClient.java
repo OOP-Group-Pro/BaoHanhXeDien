@@ -1,6 +1,7 @@
 package com.oem.evwarranty.client;
 
 
+import com.oem.evwarranty.client.fallback.VehicleServiceClientFallback;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,7 +9,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 /**
  * Feign Client cho Vehicle-Service
  */
-@FeignClient(name = "vehicle-service") // Tên của Service trên Eureka/Service Registry
+@FeignClient(
+        name = "vehicle-service",
+        url = "${vehicle-service.url}", //
+        fallback = VehicleServiceClientFallback.class
+) // Tên của Service trên Eureka/Service Registry
 public interface VehicleServiceClient {
 
     // Xác thực VIN có tồn tại và thuộc về Customer hợp lệ không

@@ -26,7 +26,6 @@ import java.util.Map;
 import static com.oem.evwarranty.mapper.ClaimMapper.mapToClaimDto;
 import static com.oem.evwarranty.mapper.PartMapper.mapToPartDetail;
 
-
 import com.oem.evwarranty.repository.ClaimPartDetailRepository;
 import com.oem.evwarranty.repository.ClaimStatusLogRepository;
 import com.oem.evwarranty.repository.WarrantyClaimRepository;
@@ -141,6 +140,7 @@ public class WarrantyService {
         List<ClaimPartDetail> parts = partDetailRepo.findAllByClaim_Id(claimId);
         List<String> partNumbers = new ArrayList<>();   // Danh sách phụ tùng đã được duyệt
         for (ClaimPartDetail part : parts) {
+            // Nếu có kiểm tra các điều kiện phê duyệt phụ tùng thậm chí là gọi đến part-service để kiểm tra thì sẽ thực hiện ở đây. Nhưng hiện tại cho đơn giản thì duyệt hết mà ko cần ktra
             // Thường thì viec kiểm tra và xem xét từng phụ tùng có được duyệt bảo hành hay không sẽ thực hiện ở đây rồi mới đánh dấu và thêm vào partsNumbers
             part.setIsApproved(true);   // Đánh dấu phụ tùng được phép bảo hành
             partNumbers.add(part.getPartNumber());  // Sau khi đánh dấu thì thêm vào danh sách đã duyệt
@@ -159,7 +159,7 @@ public class WarrantyService {
 
         // BƯỚC 5: GỌI SERVICE NGOÀI - YÊU CẦU CẤP PHÁT PHỤ TÙNG
         // De yeu cau cap phat, can biet Ai, noi nao yeu cau cap phat :
-        UserResponseDto userResponseDto = userClient.getScStaffById(claimId);
+        UserResponseDto userResponseDto = userClient.getScStaffById(claim.getScStaffId());
         //Bước 5 chỉ thực hiện sau khi đã biết api của bên part-service cho nên hiện tại chưa dùng
         // Tao request cap phat:
         PartAllocationRequest partAllocationRequest = new PartAllocationRequest(
@@ -250,8 +250,13 @@ public class WarrantyService {
         WarrantyClaim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
 
-        // Giả sử có mapper để chuyển Entity sang DTO
-        return mapToClaimDto(claim);
+        // mapper để chuyển Entity sang DTO
+        ClaimDto claimDto = mapToClaimDto(claim);
+        // Lấy tên customer:
+        String customerName = vehicleClient.getCustomerNameByVin(claim.getVin());
+        claimDto.setCustomerName(customerName);
+
+        return claimDto;
     }
 
     // 5. Chức năng: XEM LỊCH SỬ TRẠNG THÁI
@@ -261,7 +266,23 @@ public class WarrantyService {
         List<ClaimStatusLog> logs = logRepo.findByClaim_IdOrderByTimestampAsc(claimId);
 
         // map sang DTO trước khi trả về
-        return logs.stream().map(ClaimMapper::mapToLogDto).toList();
+        return logs.stream()
+                // Chuyển từng ClaimStatusLog thành Dto
+                .map(ClaimMapper::mapToLogDto)
+                // Dùng user client gửi ProcessorId để lấy tên Processor và lưu vào Dto
+                .map(logDto -> {
+                        if(logDto.getProcessorId() != null) {
+                            try {
+                                UserResponseDto proccessorDetails = userClient.getScStaffById(logDto.getProcessorId());
+                                logDto.setProcessorName(proccessorDetails.getFullName());
+                            }catch (Exception e) {
+                                logDto.setProcessorName("ID: " + logDto.getProcessorId() + " (Không tìm thấy)");
+                            }
+                        }else logDto.setProcessorName("Hệ thống");
+
+                        return logDto;
+                })
+                .toList();
     }
 
     // --- PRIVATE UTILS ---

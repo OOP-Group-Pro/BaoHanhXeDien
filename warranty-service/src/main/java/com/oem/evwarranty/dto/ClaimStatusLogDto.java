@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class ClaimStatusLogDto {
     private String status;
     private String processorName; // Lấy từ User-Service
+    private Long processorId;
     private LocalDateTime timestamp;
     private String notes;
 }
