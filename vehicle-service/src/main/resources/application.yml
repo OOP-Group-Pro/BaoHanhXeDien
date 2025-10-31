@@ -1,7 +1,5 @@
 server:
-  port: 8888
-  servlet:
-    context-path: /vehicle-service
+  port: 8002
 
 spring:
   application:
@@ -19,4 +17,21 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
   profiles:
-    active=dev:
+    active: dev
+
+feign:
+  circuitbreaker:
+    enabled: true
+  client:
+    config:
+      user-service:
+        url: http://localhost:8001/
+      campaign-service:
+        url: http://localhost:8003/
+      part-service:
+        url: http://localhost:8004/
+      warranty-service:
+        url: http://localhost:8005/
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
