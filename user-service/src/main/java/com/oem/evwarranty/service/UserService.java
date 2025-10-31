@@ -63,8 +63,8 @@ public class UserService {
     }
 
     // READ - Lấy user theo ID (ai cũng xem được)
-    public User getUserById(int id) {
-        return userRepository.findById(id).orElse(null);
+    public User getUserById(Long id) {
+        return userRepository.findById(Math.toIntExact(id)).orElse(null);
     }
 
     // READ - Lấy tất cả user (ai cũng xem được)

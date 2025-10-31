@@ -60,8 +60,8 @@ public class PartInventoryServiceImpl implements PartInventoryService {
                         + request.getPartId() + " tại địa điểm '" + request.getLocation() + "'."));
 
         // 2. Kiểm tra số lượng tồn
-        int currentQuantity = inventory.getQuantity();
-        int requestedQuantity = request.getQuantity();
+        Long currentQuantity = inventory.getQuantity();
+        Long requestedQuantity = request.getQuantity();
         if (currentQuantity < requestedQuantity) {
             throw new IllegalArgumentException("Không đủ số lượng tồn kho tại '" + request.getLocation() +
                     "'. Còn lại: " + currentQuantity + ", Yêu cầu trừ: " + requestedQuantity);
