@@ -18,3 +18,22 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+  profiles:
+    active: dev
+
+feign:
+  circuitbreaker:
+    enabled: true
+  client:
+    config:
+      user-service:
+        url: http://user-service:8080/
+      campaign-service:
+        url: http://campaign-service:8080/
+      part-service:
+        url: http://part-service:8080/
+      warranty-service:
+        url: http://warranty-service:8080/
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000

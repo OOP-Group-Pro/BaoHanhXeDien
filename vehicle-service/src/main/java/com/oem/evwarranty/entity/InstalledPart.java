@@ -26,7 +26,7 @@ public class InstalledPart {
     @Column(name = "install_date")
     private LocalDateTime installDate;
 
-    @Enumerated(EnumType.STRING) // Lưu trữ Enum dưới dạng chuỗi trong DB
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private InstallStatus status;
 
