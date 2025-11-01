@@ -1,0 +1,37 @@
+server:
+  port: 8080
+# Cấu hình Feign Clients:
+vehicle-service:
+  url: http://vehicle-service:8080/ # Giả sử Vehicle Service chạy ở port 8081
+user-service:
+  url: http://user-service:8080/ # Giả sử User Service chạy ở port 8082
+part-service:
+  url: http://part-service:8080/ # Giả sử Part Service chạy ở port 8083
+campaign-service:
+  url: http://campaign-service:8080/ # Giả sử Campaign Service chạy ở port 8084
+# Cấu hình Feign timeout (giúp tránh chờ đợi quá lâu)
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+
+
+spring:
+  application:
+    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
+  datasource:
+    url: "jdbc:mysql://mysql-db:3306/warranty_service_db?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      dialect: org.hibernate.dialect.MySQLDialect
+      ddl-auto: update
+    show-sql: true
+
+  cloud:
+    compatibility-verifier:
+      enabled: false
