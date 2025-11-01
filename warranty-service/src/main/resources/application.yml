@@ -1,5 +1,5 @@
 server:
-  port: 8005
+  port: 8080
 # Cấu hình Feign Clients:
 vehicle-service:
   url: http://vehicle-service:8080/ # Giả sử Vehicle Service chạy ở port 8081
@@ -32,3 +32,6 @@ spring:
       ddl-auto: update
     show-sql: true
 
+  cloud:
+    compatibility-verifier:
+      enabled: false

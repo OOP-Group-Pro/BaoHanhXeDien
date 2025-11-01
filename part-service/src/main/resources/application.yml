@@ -1,11 +1,11 @@
 server:
-  port: 8000 #Thay port cho moi service
+  port: 8080 #Thay port cho moi service
 
 spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: "jdbc:mysql://localhost:3306/\"CAC BAN TU DAT TEN DATABASE RIENG\"?createDatabaseIfNotExist=true"
+    url: "jdbc:mysql://mysql-db:3306/\"CAC BAN TU DAT TEN DATABASE RIENG\"?createDatabaseIfNotExist=true"
     # Vi du: url: "jdbc:mysql://localhost:3306/exampleDataBase?createDatabaseIfNotExist=true"
     username: root
     password: 1234
