@@ -10,7 +10,6 @@
         <module name="user_service" />
         <module name="part-service" />
         <module name="vehicle-service" />
-        <module name="template-service" />
         <module name="template-service (1)" />
         <module name="user-service" />
         <module name="warranty-service" />
@@ -18,6 +17,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="template-service (1)" target="21" />
       <module name="template-service (2)" target="21" />
     </bytecodeTargetLevel>
   </component>
