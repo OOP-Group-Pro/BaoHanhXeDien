@@ -1,7 +1,5 @@
 server:
   port: 8002
-  servlet:
-    context-path: /vehicle-service
 
 spring:
   application:
@@ -28,8 +26,12 @@ feign:
     config:
       user-service:
         url: http://localhost:8001/
+      campaign-service:
+        url: http://localhost:8003/
       part-service:
         url: http://localhost:8004/
+      warranty-service:
+        url: http://localhost:8005/
       default:
         connectTimeout: 5000
         readTimeout: 10000
