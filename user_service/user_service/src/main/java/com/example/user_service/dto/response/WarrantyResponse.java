@@ -13,4 +13,5 @@ public class WarrantyResponse {
     private Long id;
     private String status;
     private String expireDate;
+    private String description;
 }

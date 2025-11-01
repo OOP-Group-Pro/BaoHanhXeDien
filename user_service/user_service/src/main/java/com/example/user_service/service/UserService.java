@@ -61,17 +61,20 @@ public class UserService {
             throw new AccessDeniedException("Chỉ ADMIN mới được phép tạo user!");
         }
 
+        // Lấy role hoặc tạo mới nếu chưa có
         Role role = roleRepository.findByRoleName(roleName)
                 .orElseGet(() -> roleRepository.save(new Role(roleName)));
 
+        // Mã hóa password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        Set<Role> roles = new HashSet<>();
-        roles.add(role);
-        user.setRoles(roles);
+        // Thêm role với helper method để đồng bộ 2 chiều
+        user.addRole(role);
 
+        // Lưu user
         return userRepository.save(user);
     }
+
 
     // READ - Lấy user theo ID (ai cũng xem được)
     public User getUserById(long id) {

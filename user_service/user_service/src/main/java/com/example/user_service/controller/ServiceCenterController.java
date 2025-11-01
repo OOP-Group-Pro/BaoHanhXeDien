@@ -19,15 +19,14 @@ public class ServiceCenterController {
         this.serviceCenterService = serviceCenterService;
     }
 
-    // Ai có token hợp lệ cũng được get
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    //@PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ServiceCenter>> getAll() {
         return ResponseEntity.ok(serviceCenterService.getAll());
     }
 
     @GetMapping("/{centerId}")
-    @PreAuthorize("isAuthenticated()")
+    //@PreAuthorize("isAuthenticated()")
     public ResponseEntity<CenterDetailsDTO> getCenterDetails(@PathVariable("centerId") Long centerId) {
         ServiceCenter sc = serviceCenterService.getById(centerId);
         if (sc == null) {

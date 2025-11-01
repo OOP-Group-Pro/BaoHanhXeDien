@@ -1,45 +1,27 @@
 package com.example.user_service.service;
 
-import com.example.user_service.client.VehicleClient;
 import com.example.user_service.client.WarrantyClient;
-import com.example.user_service.client.PartClient;
-import com.example.user_service.client.CampaignClient;
-import com.example.user_service.dto.response.CampaignResponse;
-import com.example.user_service.dto.response.PartResponse;
-import com.example.user_service.dto.response.VehicleResponse;
+import com.example.user_service.dto.request.WarrantyRequest;
 import com.example.user_service.dto.response.WarrantyResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class FeignIntegrationService {
 
-    private final VehicleClient vehicleClient;
     private final WarrantyClient warrantyClient;
-    private final PartClient partClient;
-    private final CampaignClient campaignClient;
 
-    public FeignIntegrationService(VehicleClient vehicleClient, WarrantyClient warrantyClient,
-                                   PartClient partClient, CampaignClient campaignClient) {
-        this.vehicleClient = vehicleClient;
-        this.warrantyClient = warrantyClient;
-        this.partClient = partClient;
-        this.campaignClient = campaignClient;
+    public void createWarranty(WarrantyRequest request) {
+        warrantyClient.createWarranty(request);
     }
 
-    public List<VehicleResponse> getVehiclesByCustomer(Long customerId) {
-        return vehicleClient.getVehiclesByCustomerId(customerId);
+    public WarrantyResponse getWarrantyById(Long id) {
+        return warrantyClient.getWarrantyById(id);
+    }
+    public WarrantyResponse getWarranty(Long id) {
+        return getWarrantyById(id);
     }
 
-    public WarrantyResponse getWarranty(Long vehicleId) {
-        return warrantyClient.getWarrantyByVehicle(vehicleId);
-    }
-
-    public List<PartResponse> getParts(Long vehicleId) {
-        return partClient.getPartsByVehicle(vehicleId);
-    }
-
-    public List<CampaignResponse> getCampaigns(Long vehicleId) {
-        return campaignClient.getCampaignsByVehicle(vehicleId);
-    }
 }
+

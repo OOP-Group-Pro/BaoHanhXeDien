@@ -29,3 +29,25 @@ service:
     url: http://part-service:8004
   campaign:
     url: http://campaign-service:8003
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+circuitbreaker:
+    enabled: true
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.transaction.interceptor: TRACE
+    org.springframework.orm.jpa: DEBUG
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
+
+
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always

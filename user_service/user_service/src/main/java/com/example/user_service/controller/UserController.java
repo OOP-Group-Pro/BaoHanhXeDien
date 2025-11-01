@@ -16,14 +16,15 @@ import java.util.NoSuchElementException;
 public class UserController {
 
     private final UserService userService;
-
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    // GET cơ bản theo ID
+    // ===========================
+    //  1️⃣ FEIGN CLIENT (internal)
+    // ===========================
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResponseDto> getUserBasicInfo(@PathVariable Long userId) {
+    public ResponseEntity<UserResponseDto> getUserBasicInfoForFeign(@PathVariable Long userId) {
         try {
             UserResponseDto dto = userService.getBasicUserDetails(userId);
             return ResponseEntity.ok(dto);
@@ -32,27 +33,10 @@ public class UserController {
         }
     }
 
-    // GET tất cả cơ bản
-    @GetMapping("")
-    public ResponseEntity<List<UserResponseDto>> listBasicUsers() {
-        List<UserResponseDto> dtos = userService.getAllUsers()
-                .stream()
-                .map(user -> {
-                    UserResponseDto dto = new UserResponseDto();
-                    dto.setUserId(user.getUserId());
-                    dto.setFullName(user.getUsername());
-                    dto.setServiceCenterId(user.getServiceCenterId());
-                    return dto;
-                })
-                .toList();
-        return ResponseEntity.ok(dtos);
-    }
-
     // ===========================
-    //  Thông tin full (chỉ ADMIN)
+    //  2️⃣ ADMIN - full control
     // ===========================
 
-    // GET full theo ID
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/{id}")
     public ResponseEntity<User> getUserFull(@PathVariable Long id) {
@@ -60,37 +44,31 @@ public class UserController {
         return (user != null) ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-    // GET tất cả full
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
     public ResponseEntity<List<User>> listAllUsersFull() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    // ===========================
-    //  CRUD (chỉ ADMIN)
-    // ===========================
-
-    // CREATE USER
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/{roleName}")
+    @PostMapping("/admin/{roleName}")
     public ResponseEntity<User> createUser(@RequestBody User user, @PathVariable String roleName) {
         User created = userService.createUser(user, roleName);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // UPDATE USER
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
+    @PutMapping("/admin/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         User updated = userService.updateUser(id, user);
         return (updated != null) ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
-    // DELETE USER
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        return userService.deleteUser(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        return userService.deleteUser(id)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.notFound().build();
     }
 }
