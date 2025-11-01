@@ -1,12 +1,15 @@
 server:
   port: 8080 #Thay port cho moi service
 
+logging:
+  level:
+    org.springframework: DEBUG
+
 spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: "jdbc:mysql://mysql-db:3306/\"CAC BAN TU DAT TEN DATABASE RIENG\"?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
-    # Vi du: url: "jdbc:mysql://localhost:3306/exampleDataBase?createDatabaseIfNotExist=true"
+    url: "jdbc:mysql://mysql-db:3306/part_service?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -15,4 +18,22 @@ spring:
       ddl-auto: update
     show-sql: true
 
+# Các service URL (tốt, giữ nguyên)
+vehicle-service:
+  url: http://vehicle-service:8080/
+user-service:
+  url: http://user-service:8080/
+warranty-service:
+  url: http://warranty-service:8080/
+campaign-service:
+  url: http://campaign-service:8080/
+
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: full
 

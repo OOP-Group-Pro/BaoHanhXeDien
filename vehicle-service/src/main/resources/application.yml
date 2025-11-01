@@ -1,11 +1,9 @@
 server:
-  port: 8001
-  servlet:
-    context-path: /vehicle-service
+  port: 8002
 
 spring:
   application:
-    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
+    name: vehicle-service
   datasource:
     url: jdbc:mysql://mysql-db:3306/vehicle_service?createDatabaseIfNotExist=true&serverTimezone=UTC&autoReconnect=true&connectTimeout=30000
     username: root
@@ -18,3 +16,22 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+  profiles:
+    active: dev
+
+feign:
+  circuitbreaker:
+    enabled: true
+  client:
+    config:
+      user-service:
+        url: http://localhost:8001/
+      campaign-service:
+        url: http://localhost:8003/
+      part-service:
+        url: http://localhost:8004/
+      warranty-service:
+        url: http://localhost:8005/
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
