@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Expose port (từ application.yml của bạn)
-EXPOSE 8002
+EXPOSE 8080
 
 # Tên file .jar (lấy từ thư mục target)
 # Nó sẽ tìm bất kỳ file .jar nào trong thư mục target
