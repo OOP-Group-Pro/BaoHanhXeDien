@@ -1,11 +1,13 @@
 server:
-  port: 8002
+  port: 8080
+  servlet:
+    context-path: /vehicle-service
 
 spring:
   application:
-    name: vehicle-service
+    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: jdbc:mysql://mysql-db:3306/vehicle_service?createDatabaseIfNotExist=true&serverTimezone=UTC
+    url: jdbc:mysql://mysql-db:3306/vehicle_service?createDatabaseIfNotExist=true&serverTimezone=UTC&autoReconnect=true&connectTimeout=30000
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,13 +27,13 @@ feign:
   client:
     config:
       user-service:
-        url: http://localhost:8001/
+        url: http://user-service:8080/
       campaign-service:
-        url: http://localhost:8003/
+        url: http://campaign-service:8080/
       part-service:
-        url: http://localhost:8004/
+        url: http://part-service:8080/
       warranty-service:
-        url: http://localhost:8005/
+        url: http://warranty-service:8080/
       default:
         connectTimeout: 5000
         readTimeout: 10000
