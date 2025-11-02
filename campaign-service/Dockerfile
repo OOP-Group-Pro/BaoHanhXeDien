@@ -1,12 +1,29 @@
-# 1. Môi trường nền: Chọn Java 21 Slim để tối ưu dung lượng
-FROM openjdk:21-jdk-slim
+# GIAI ĐOẠN 1: Build (Xây dựng)
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
 
-# 2. Thiết lập đối số (argument) cho tên file JAR
-# Điều này giúp Docker tìm đúng file JAR trong thư mục target/
-ARG JAR_FILE=target/*.jar
+# --- Sửa lỗi tìm Parent POM ---
+# 1. Sao chép file pom.xml CỦA CHA (nằm ở thư mục gốc của Context Build)
+COPY pom.xml .
 
-# 3. Copy file JAR: Chuyển file JAR đã build từ Host (máy tính của bạn) vào Container
-COPY ${JAR_FILE} app.jar
+# 2. Sao chép file pom.xml CỦA CON (campaign-service/pom.xml)
+COPY campaign-service/pom.xml .
+
+# 3. Tải dependency (tối ưu cache)
+RUN mvn dependency:go-offline
+
+# 4. Sao chép toàn bộ source code của campaign-service
+COPY campaign-service/src ./src # Đường dẫn mới
+
+# 5. Build dự án
+RUN mvn clean package -DskipTests
+
+# --- GIAI ĐOẠN 2: Run (Chạy) ---
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+
+# Lấy file .jar đã được build từ Giai đoạn 1
+COPY --from=build /app/target/campaign-service-*.jar app.jar
 
 # 4. Công khai cổng: Báo cho Docker biết ứng dụng lắng nghe ở cổng 8080 nội bộ
 EXPOSE 8080
