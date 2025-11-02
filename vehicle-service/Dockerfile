@@ -1,33 +1,37 @@
-# GIAI ĐOẠN 1: Build (Xây dựng)
+# --- GIAI ĐOẠN 1: Build (Dùng Maven + JDK 21) ---
+ARG MODULE_NAME=vehicle-service
 FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Tên của module này (Dùng cho bước 4, 5, 6)
+ARG MODULE_NAME
 WORKDIR /app
 
-# --- Sửa lỗi tìm Parent POM ---
-# 1. Sao chép file pom.xml CỦA CHA (nằm ở thư mục gốc của Context Build)
+# 1. Copy POM cha
 COPY pom.xml .
 
-# 2. Sao chép file pom.xml CỦA CON (vehicle-service/pom.xml)
-COPY vehicle-service/pom.xml .
+# 2. Copy TẤT CẢ 5 file POM con (Rất quan trọng)
+COPY user-service/pom.xml ./user-service/
+COPY vehicle-service/pom.xml ./vehicle-service/
+COPY part-service/pom.xml ./part-service/
+COPY campaign-service/pom.xml ./campaign-service/
+COPY warranty-service/pom.xml ./warranty-service/
 
-# 3. Tải dependency (tối ưu cache)
-RUN mvn dependency:go-offline
+# 3. Tải dependencies (chỉ cho module này)
+RUN mvn -pl ${MODULE_NAME} -am dependency:go-offline
 
-# 4. Sao chép toàn bộ source code của vehicle-service
-COPY vehicle-service/src ./src # Đường dẫn mới
+# 4. Copy code nguồn (chỉ cho module này)
+COPY ${MODULE_NAME}/src ./${MODULE_NAME}/src
 
-# 5. Build dự án
-RUN mvn clean package -DskipTests
+# 5. Build (chỉ module này)
+RUN mvn -pl ${MODULE_NAME} -am clean package -DskipTests
 
-# --- GIAI ĐOẠN 2: Run (Chạy) ---
-FROM eclipse-temurin:21-jre-jammy
+# --- GIAI ĐOẠN 2: Run (Dùng JRE 21 Tối ưu) ---
+FROM eclipse-temurin:21-jre-alpine
+ARG MODULE_NAME
 WORKDIR /app
-
-# Lấy file .jar đã được build từ Giai đoạn 1
-COPY --from=build /app/target/vehicle-service-*.jar app.jar
-
-# Mở cổng 8004 (port mà service của bạn đang chạy)
 EXPOSE 8080
 
-# Lệnh để chạy ứng dụng khi container khởi động
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# 6. Copy file .jar đã build từ Giai đoạn 1
+COPY --from=build /app/${MODULE_NAME}/target/*.jar app.jar
 
+ENTRYPOINT ["java", "-jar", "app.jar"]
