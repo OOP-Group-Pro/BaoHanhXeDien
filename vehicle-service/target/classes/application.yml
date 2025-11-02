@@ -1,5 +1,5 @@
 server:
-  port: 8002
+  port: 8080
 
 spring:
   application:
@@ -25,13 +25,13 @@ feign:
   client:
     config:
       user-service:
-        url: http://localhost:8001/
+        url: http://user-service:8080/
       campaign-service:
-        url: http://localhost:8003/
+        url: http://campaign-service:8080/
       part-service:
-        url: http://localhost:8004/
+        url: http://part-service:8080/
       warranty-service:
-        url: http://localhost:8005/
+        url: http://warranty-service:8080/
       default:
         connectTimeout: 5000
         readTimeout: 10000
