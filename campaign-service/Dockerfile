@@ -1,32 +1,18 @@
-# GIAI ĐOẠN 1: Build (Xây dựng)
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# --- Sửa lỗi tìm Parent POM ---
-# 1. Sao chép file pom.xml CỦA CHA (nằm ở thư mục gốc của Context Build)
-COPY pom.xml .
+COPY base-pom/pom.xml .
+RUN mvn install -N -f pom.xml
 
-# 2. Sao chép file pom.xml CỦA CON (campaign-service/pom.xml)
-COPY campaign-service/pom.xml .
+COPY campaign-service/pom.xml campaign-service/
+RUN mvn dependency:go-offline -f campaign-service/pom.xml
 
-# 3. Tải dependency (tối ưu cache)
-RUN mvn dependency:go-offline
+COPY campaign-service/src campaign-service/src
+RUN mvn clean package -f campaign-service/pom.xml -DskipTests
 
-# 4. Sao chép toàn bộ source code của campaign-service
-COPY campaign-service/src ./src # Đường dẫn mới
-
-# 5. Build dự án
-RUN mvn clean package -DskipTests
-
-# --- GIAI ĐOẠN 2: Run (Chạy) ---
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Lấy file .jar đã được build từ Giai đoạn 1
-COPY --from=build /app/target/campaign-service-*.jar app.jar
-
-# 4. Công khai cổng: Báo cho Docker biết ứng dụng lắng nghe ở cổng 8080 nội bộ
+COPY --from=build /app/campaign-service/target/campaign-service-*.jar app.jar
 EXPOSE 8080
-
-# 5. Lệnh chạy: Lệnh thực thi ứng dụng khi Container được khởi động
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

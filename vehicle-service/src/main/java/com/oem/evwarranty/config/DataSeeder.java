@@ -1,8 +1,10 @@
 package com.oem.evwarranty.config;
 
+import com.oem.evwarranty.entity.Customer;
 import com.oem.evwarranty.entity.Technician;
 import com.oem.evwarranty.entity.Vehicle;
 import com.oem.evwarranty.entity.ServiceHistory;
+import com.oem.evwarranty.repository.CustomerRepository;
 import com.oem.evwarranty.repository.TechnicianRepository;
 import com.oem.evwarranty.repository.VehicleRepository;
 import com.oem.evwarranty.repository.ServiceHistoryRepository;
@@ -27,6 +29,8 @@ public class DataSeeder implements CommandLineRunner {
     private TechnicianRepository technicianRepository;
     @Autowired
     private ServiceHistoryRepository serviceHistoryRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -41,13 +45,25 @@ public class DataSeeder implements CommandLineRunner {
             tech1.setTechnicianId(101L); // Giả sử ID này khớp với User-service
             tech1.setTechnicianLevel("L5");
             tech1.setStatus("Active");
+            tech1.setTechnicianName("Nguyen Van A"); // 👈 BẮT BUỘC: thêm dòng này
+
             // (Bạn có thể set thêm các trường khác)
             technicianRepository.save(tech1);
+
+            // --- Tạo customer ---
+            Customer customer1 = new Customer();
+            customer1.setCustomerName("Tran Van B");
+            customer1.setPhoneNum("0987654321");
+            customer1.setEmail("tranb@example.com");
+            customerRepository.save(customer1);
+
 
             // --- 2. Tạo Vehicle ---
             Vehicle vehicle1 = new Vehicle();
             vehicle1.setVehicleVin("VIN123456789ABCDE");
             vehicle1.setModel("Model S");
+            vehicle1.setStatus("Active");
+            vehicle1.setCustomer(customer1);
             // (Bạn có thể set thêm các trường khác)
             vehicleRepository.save(vehicle1);
 

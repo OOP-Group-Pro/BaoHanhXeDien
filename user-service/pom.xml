@@ -10,6 +10,7 @@
         <groupId>com.oem.evwarranty</groupId>
         <artifactId>ev-warranty-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath/>
     </parent>
 
     <artifactId>user-service</artifactId>
@@ -57,13 +58,6 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.11.5</version>
             <scope>runtime</scope>
-        </dependency>
-
-        <!-- Lombok (giúp code ngắn gọn) -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.5.18</version> <!-- hoặc mới hơn -->
         </dependency>
 
         <!-- MySQL Connector -->

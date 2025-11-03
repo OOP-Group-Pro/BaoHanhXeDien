@@ -7,6 +7,7 @@
         <groupId>com.oem.evwarranty</groupId>
         <artifactId>ev-warranty-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath/>
     </parent>
 
     <artifactId>warranty-service</artifactId>

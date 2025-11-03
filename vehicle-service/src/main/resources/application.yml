@@ -2,6 +2,9 @@ server:
   port: 8080
   servlet:
     context-path: /vehicle-service
+  error:
+    include-message: always
+    include-binding-errors: always
 
 spring:
   application:
@@ -20,6 +23,11 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
   profiles:
     active: dev
+  security:
+    user:
+      name: admin
+      password: 1234
+      roles: ADMIN
 
 feign:
   circuitbreaker:
