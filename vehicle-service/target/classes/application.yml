@@ -3,6 +3,7 @@ server:
   servlet:
     context-path: /vehicle-service
 
+
 spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
