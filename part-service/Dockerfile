@@ -1,37 +1,37 @@
-# GIAI ĐOẠN 1: Build (Xây dựng)
-# Sử dụng một image Maven đầy đủ (với Java 21) để build file .jar
+# --- GIAI ĐOẠN 1: Build (Dùng Maven + JDK 21) ---
+ARG MODULE_NAME=part-service
 FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Tên của module này (Dùng cho bước 4, 5, 6)
+ARG MODULE_NAME
 WORKDIR /app
 
-# --- Sửa lỗi tìm Parent POM ---
-# 1. Sao chép file pom.xml CỦA CHA (từ thư mục gốc)
-COPY ../pom.xml .
-
-# 2. Sao chép file pom.xml CỦA CON (part-service)
-# (Dấu . đại diện cho thư mục /app)
+# 1. Copy POM cha
 COPY pom.xml .
 
-# 3. Tải dependency (tối ưu cache)
-RUN mvn dependency:go-offline
+# 2. Copy TẤT CẢ 5 file POM con (Rất quan trọng)
+COPY user-service/pom.xml ./user-service/
+COPY vehicle-service/pom.xml ./vehicle-service/
+COPY part-service/pom.xml ./part-service/
+COPY campaign-service/pom.xml ./campaign-service/
+COPY warranty-service/pom.xml ./warranty-service/
 
-# 4. Sao chép toàn bộ source code của part-service
-COPY src ./src
+# 3. Tải dependencies (chỉ cho module này)
+RUN mvn -pl ${MODULE_NAME} -am dependency:go-offline
 
-# 5. Build dự án, bỏ qua test (vì test nên chạy ở pipeline riêng)
-RUN mvn clean package -DskipTests
+# 4. Copy code nguồn (chỉ cho module này)
+COPY ${MODULE_NAME}/src ./${MODULE_NAME}/src
 
-# --- GIAI ĐOẠN 2: Run (Chạy) ---
-# Sử dụng một image JRE (Java Runtime) nhỏ gọn hơn
-FROM eclipse-temurin:21-jre-jammy
+# 5. Build (chỉ module này)
+RUN mvn -pl ${MODULE_NAME} -am clean package -DskipTests
+
+# --- GIAI ĐOẠN 2: Run (Dùng JRE 21 Tối ưu) ---
+FROM eclipse-temurin:21-jre-alpine
+ARG MODULE_NAME
 WORKDIR /app
+EXPOSE 8080
 
-# Lấy file .jar đã được build từ Giai đoạn 1
-# (Sử dụng wildcard * để tự động lấy đúng phiên bản)
-COPY --from=build /app/target/part-service-*.jar app.jar
+# 6. Copy file .jar đã build từ Giai đoạn 1
+COPY --from=build /app/${MODULE_NAME}/target/*.jar app.jar
 
-# Mở cổng 8004 (port mà service của bạn đang chạy)
-EXPOSE 8004
-
-# Lệnh để chạy ứng dụng khi container khởi động
 ENTRYPOINT ["java", "-jar", "app.jar"]
-

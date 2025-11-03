@@ -9,5 +9,6 @@ public class ServiceHistoryResponseDTO {
     private LocalDateTime performedDate;
     private String description;
     private Long vehicleId;
-    private TechnicianResponseDTO technician; // Nested DTO for technician details
+    private String technicianName; // Lấy từ UserClient
+    private String centerName;     // Lấy từ CenterClient
 }

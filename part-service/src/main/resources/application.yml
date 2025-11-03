@@ -1,5 +1,5 @@
 server:
-  port: 8004
+  port: 8080 #Thay port cho moi service
 
 logging:
   level:
@@ -9,7 +9,7 @@ spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: jdbc:mysql://localhost:3306/part_service
+    url: "jdbc:mysql://mysql-db:3306/part_service?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -20,13 +20,13 @@ spring:
 
 # Các service URL (tốt, giữ nguyên)
 vehicle-service:
-  url: http://localhost:8002/
+  url: http://vehicle-service:8080/
 user-service:
-  url: http://localhost:8001/
+  url: http://user-service:8080/
 warranty-service:
-  url: http://localhost:8005/
+  url: http://warranty-service:8080/
 campaign-service:
-  url: http://localhost:8003/
+  url: http://campaign-service:8080/
 
 
 feign:
@@ -36,3 +36,4 @@ feign:
         connectTimeout: 5000
         readTimeout: 10000
         loggerLevel: full
+
