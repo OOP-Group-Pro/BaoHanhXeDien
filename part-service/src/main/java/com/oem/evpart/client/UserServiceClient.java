@@ -29,7 +29,7 @@ public interface UserServiceClient {
      * Dùng cho nghiệp vụ AuthenticationFilter
      * Lấy thông tin User (username, roles) để xác thực.
      */
-    @GetMapping("/users/{id}")
+    @GetMapping("/api/v1/users/{id}")
     ResponseEntity <UserResponseDTO> getUserById(@PathVariable("id") Long id);
 }
 

@@ -1,37 +1,23 @@
-# --- GIAI ĐOẠN 1: Build (Dùng Maven + JDK 21) ---
-ARG MODULE_NAME=part-service
+# --- GIAI ĐOẠN 1: Build ---
 FROM maven:3.9-eclipse-temurin-21 AS build
-
-# Tên của module này (Dùng cho bước 4, 5, 6)
-ARG MODULE_NAME
 WORKDIR /app
 
-# 1. Copy POM cha
-COPY pom.xml .
+# Copy toàn bộ project (bao gồm parent pom.xml và các module con)
+COPY ../ /app
 
-# 2. Copy TẤT CẢ 5 file POM con (Rất quan trọng)
-COPY user-service/pom.xml ./user-service/
-COPY vehicle-service/pom.xml ./vehicle-service/
-COPY part-service/pom.xml ./part-service/
-COPY campaign-service/pom.xml ./campaign-service/
-COPY warranty-service/pom.xml ./warranty-service/
+# Chuyển vào module cần build
+WORKDIR /app/part-service
 
-# 3. Tải dependencies (chỉ cho module này)
-RUN mvn -pl ${MODULE_NAME} -am dependency:go-offline
+# Build module part-service và các module phụ thuộc
+RUN mvn -f /app/pom.xml clean package -pl part-service -am -DskipTests
 
-# 4. Copy code nguồn (chỉ cho module này)
-COPY ${MODULE_NAME}/src ./${MODULE_NAME}/src
 
-# 5. Build (chỉ module này)
-RUN mvn -pl ${MODULE_NAME} -am clean package -DskipTests
-
-# --- GIAI ĐOẠN 2: Run (Dùng JRE 21 Tối ưu) ---
-FROM eclipse-temurin:21-jre-alpine
-ARG MODULE_NAME
+# --- GIAI ĐOẠN 2: Run ---
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-EXPOSE 8080
 
-# 6. Copy file .jar đã build từ Giai đoạn 1
-COPY --from=build /app/${MODULE_NAME}/target/*.jar app.jar
+# Copy file jar từ stage build
+COPY --from=build /app/part-service/target/part-service-*.jar app.jar
 
+EXPOSE 8004
 ENTRYPOINT ["java", "-jar", "app.jar"]

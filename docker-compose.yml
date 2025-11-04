@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   # 1. CSDL MYSQL
@@ -6,10 +7,9 @@ services:
     container_name: mysql-db
     environment:
       MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_ROOT_HOST: '%'
       MYSQL_DATABASE: sharedDB # Dữ liệu này chỉ là DB ban đầu Docker tạo
     ports:
-      - "8080:3306"
+      - "3307:3306"
     networks:
       - oem-network
     volumes:
@@ -26,8 +26,7 @@ services:
   # 2. USER-SERVICE
   user-service:
     build:
-      context: .
-      dockerfile: ./user-service/Dockerfile
+      context: ./user-service
     container_name: user-service
     ports:
       - "8001:8080"
@@ -41,8 +40,7 @@ services:
   # 3. VEHICLE-SERVICE
   vehicle-service:
     build:
-      context: .
-      dockerfile: ./vehicle-service/Dockerfile
+      context: ./vehicle-service
     container_name: vehicle-service
     ports:
       - "8002:8080"
@@ -56,8 +54,7 @@ services:
   # 4. PART-SERVICE (Đã thêm depends_on)
   part-service:
     build:
-      context: . # Sửa thành thư mục gốc
-      dockerfile: ./part-service/Dockerfile # Chỉ định rõ Dockerfile cần dùng
+      context: ./part-service
     container_name: part-service
     ports:
       - "8004:8080"
@@ -71,8 +68,7 @@ services:
   # 5. CAMPAIGN-SERVICE (Đã sửa lỗi cú pháp và depends_on)
   campaign-service:
     build:
-      context: . # Sửa thành thư mục gốc
-      dockerfile: ./campaign-service/Dockerfile # Chỉ định rõ Dockerfile cần dùng
+      context: ./campaign-service
     container_name: campaign-service
     ports:
       - "8003:8080"
@@ -86,8 +82,7 @@ services:
   # 6. WARRANTY-SERVICE (ĐÃ THÊM depends_on CHÍNH XÁC)
   warranty-service:
     build:
-      context: .
-      dockerfile: ./warranty-service/Dockerfile
+      context: ./warranty-service
     container_name: warranty-service
     ports:
       - "8005:8080"
