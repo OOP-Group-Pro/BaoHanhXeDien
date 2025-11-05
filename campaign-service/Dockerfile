@@ -1,3 +1,5 @@
+
+# --- GIAI ĐOẠN 1: Build (Dùng Maven + JDK 21) ---
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
@@ -16,3 +18,4 @@ WORKDIR /app
 COPY --from=build /app/campaign-service/target/campaign-service-*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
+

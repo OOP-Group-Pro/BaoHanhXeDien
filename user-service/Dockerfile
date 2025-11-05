@@ -1,5 +1,9 @@
+
 FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Tên của module này (Dùng cho bước 4, 5, 6)
 WORKDIR /app
+
 
 COPY base-pom/pom.xml .
 RUN mvn install -N -f pom.xml

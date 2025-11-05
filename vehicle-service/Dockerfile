@@ -1,4 +1,7 @@
+
 FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Tên của module này (Dùng cho bước 4, 5, 6)
 WORKDIR /app
 
 COPY base-pom/pom.xml .
@@ -16,3 +19,4 @@ WORKDIR /app
 COPY --from=build /app/vehicle-service/target/vehicle-service-*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
