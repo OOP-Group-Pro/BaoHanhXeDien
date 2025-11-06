@@ -1,9 +1,8 @@
 package com.oem.evwarranty.controller;
 
-import com.oem.evwarranty.dto.request.TechnicianRequestDTO; // <-- SỬ DỤNG
+import com.oem.evwarranty.dto.request.TechnicianRequestDTO;
 import com.oem.evwarranty.dto.response.ApiResponse;
 import com.oem.evwarranty.dto.response.TechnicianResponseDTO;
-// import com.oem.evwarranty.entity.Technician; // <-- KHÔNG CẦN NỮA
 import com.oem.evwarranty.service.TechnicianService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
