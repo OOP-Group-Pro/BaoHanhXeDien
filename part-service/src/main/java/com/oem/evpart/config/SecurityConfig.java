@@ -1,6 +1,6 @@
 package com.oem.evpart.config;
 
-import com.oem.evpart.config.AuthenticationFilter;
+// import com.oem.evpart.config.AuthenticationFilter; // Không cần filter nữa
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,7 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+// import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Không cần
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -20,32 +20,28 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Cần thiết cho @PreAuthorize
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final AuthenticationFilter authenticationFilter;
+    // Không cần tiêm AuthenticationFilter nữa
+    // private final AuthenticationFilter authenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(withDefaults()) // Kích hoạt CORS
+                .cors(withDefaults()) // Vẫn giữ CORS để file HTML của bạn chạy được
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // SỬA LẠI LUẬT:
+                // === SỬA LỖI Ở ĐÂY ===
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Cho phép các đường dẫn public (như Swagger)
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
+                        // 1. Cho phép TẤT CẢ MỌI REQUEST đi qua
+                        .anyRequest().permitAll()
+                );
 
-                        // 2. BẮT BUỘC tất cả các request khác phải được xác thực
-                        .anyRequest().authenticated()
-                )
-                // 3. Thêm Filter của chúng ta vào trước
-                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // 2. Gỡ bỏ Filter (vì đã permitAll)
+        // .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -54,7 +50,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:4200"));
+        // Cho phép file HTML (chạy ở 63342) và React (3000)
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:63342"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-User-Id"));
         configuration.setAllowCredentials(true);

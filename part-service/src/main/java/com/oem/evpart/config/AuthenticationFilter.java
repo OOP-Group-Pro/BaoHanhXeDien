@@ -47,7 +47,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         try {
             log.debug("Đang xác thực User ID: {}", userId);
             // Kích hoạt Feign Client gọi sang User-Service (8001)
-            UserResponseDTO user = userServiceClient.getUserById(Long.parseLong(userId)).getBody();
+            UserResponseDTO user = userServiceClient.getUserById(Long.valueOf(userId)).getBody();
 
             if (user != null && user.getRoles() != null) {
                 // 3. TẠO AUTHENTICATION THÀNH CÔNG
