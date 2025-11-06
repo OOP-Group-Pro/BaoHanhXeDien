@@ -1,23 +1,21 @@
-# --- GIAI ĐOẠN 1: Build ---
+
 FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Tên của module này (Dùng cho bước 4, 5, 6)
 WORKDIR /app
 
-# Copy toàn bộ project (bao gồm parent pom.xml và các module con)
-COPY ../ /app
+COPY base-pom/pom.xml .
+RUN mvn install -N -f pom.xml
 
-# Chuyển vào module cần build
-WORKDIR /app/part-service
+COPY part-service/pom.xml part-service/
+RUN mvn dependency:go-offline -f part-service/pom.xml
 
-# Build module part-service và các module phụ thuộc
-RUN mvn -f /app/pom.xml clean package -pl part-service -am -DskipTests
+COPY part-service/src part-service/src
+RUN mvn clean package -f part-service/pom.xml -DskipTests
 
-
-# --- GIAI ĐOẠN 2: Run ---
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Copy file jar từ stage build
 COPY --from=build /app/part-service/target/part-service-*.jar app.jar
-
-EXPOSE 8004
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

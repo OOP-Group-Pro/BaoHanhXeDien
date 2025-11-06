@@ -1,5 +1,8 @@
 server:
-  port: 8005
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
 # Cấu hình Feign Clients:
 vehicle-service:
   url: http://vehicle-service:8080/ # Giả sử Vehicle Service chạy ở port 8081
@@ -31,6 +34,11 @@ spring:
       dialect: org.hibernate.dialect.MySQLDialect
       ddl-auto: update
     show-sql: true
+  security:
+    user:
+      name: admin
+      password: 1234
+      roles: ADMIN
 
   cloud:
     compatibility-verifier:
