@@ -1,37 +1,21 @@
-# GIAI ĐOẠN 1: Build (Xây dựng)
-# Sử dụng một image Maven đầy đủ (với Java 21) để build file .jar
+
 FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Tên của module này (Dùng cho bước 4, 5, 6)
 WORKDIR /app
 
-# --- Sửa lỗi tìm Parent POM ---
-# 1. Sao chép file pom.xml CỦA CHA (từ thư mục gốc)
-COPY ../pom.xml .
+COPY base-pom/pom.xml .
+RUN mvn install -N -f pom.xml
 
-# 2. Sao chép file pom.xml CỦA CON (part-service)
-# (Dấu . đại diện cho thư mục /app)
-COPY pom.xml .
+COPY part-service/pom.xml part-service/
+RUN mvn dependency:go-offline -f part-service/pom.xml
 
-# 3. Tải dependency (tối ưu cache)
-RUN mvn dependency:go-offline
+COPY part-service/src part-service/src
+RUN mvn clean package -f part-service/pom.xml -DskipTests
 
-# 4. Sao chép toàn bộ source code của part-service
-COPY src ./src
-
-# 5. Build dự án, bỏ qua test (vì test nên chạy ở pipeline riêng)
-RUN mvn clean package -DskipTests
-
-# --- GIAI ĐOẠN 2: Run (Chạy) ---
-# Sử dụng một image JRE (Java Runtime) nhỏ gọn hơn
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Lấy file .jar đã được build từ Giai đoạn 1
-# (Sử dụng wildcard * để tự động lấy đúng phiên bản)
-COPY --from=build /app/target/part-service-*.jar app.jar
-
-# Mở cổng 8004 (port mà service của bạn đang chạy)
-EXPOSE 8004
-
-# Lệnh để chạy ứng dụng khi container khởi động
+COPY --from=build /app/part-service/target/part-service-*.jar app.jar
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
-

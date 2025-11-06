@@ -1,15 +1,22 @@
-# 1. Môi trường nền: Chọn Java 21 Slim để tối ưu dung lượng
-FROM openjdk:21-jdk-slim
 
-# 2. Thiết lập đối số (argument) cho tên file JAR
-# Điều này giúp Docker tìm đúng file JAR trong thư mục target/
-ARG JAR_FILE=target/*.jar
+FROM maven:3.9-eclipse-temurin-21 AS build
 
-# 3. Copy file JAR: Chuyển file JAR đã build từ Host (máy tính của bạn) vào Container
-COPY ${JAR_FILE} app.jar
+# Tên của module này (Dùng cho bước 4, 5, 6)
+WORKDIR /app
 
-# 4. Công khai cổng: Báo cho Docker biết ứng dụng lắng nghe ở cổng 8080 nội bộ
+
+COPY base-pom/pom.xml .
+RUN mvn install -N -f pom.xml
+
+COPY user-service/pom.xml user-service/
+RUN mvn dependency:go-offline -f user-service/pom.xml
+
+COPY user-service/src user-service/src
+RUN mvn clean package -f user-service/pom.xml -DskipTests
+
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+
+COPY --from=build /app/user-service/target/user-service-*.jar app.jar
 EXPOSE 8080
-
-# 5. Lệnh chạy: Lệnh thực thi ứng dụng khi Container được khởi động
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

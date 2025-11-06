@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Sử dụng để validate DTO
 
 @RestController
+@CrossOrigin(origins = "http://localhost:63342")
 @RequestMapping("/api/v1/claims")
 public class WarrantyController {
 

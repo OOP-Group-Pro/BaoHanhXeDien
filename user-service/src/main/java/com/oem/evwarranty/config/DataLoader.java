@@ -24,7 +24,7 @@ public class DataLoader {
         return args -> {
 
             // Danh sách role cần tạo
-            String[] roles = {"ADMIN", "SC_STAFF", "SC_TECHNICIAN", "EVM_STAFF"};
+            String[] roles = {"ADMIN", "SC_STAFF", "SC_TECHNICIAN", "EVM_STAFF","MANAGER"};
 
             // Tạo role nếu chưa tồn tại
             for (String roleName : roles) {
@@ -41,6 +41,8 @@ public class DataLoader {
                     "SCTechnician", "tech123", "SC_TECHNICIAN");
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
                     "EVMStaff", "evm123", "EVM_STAFF");
+            createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
+                    "Manager", "manager123", "MANAGER");
         };
     }
 

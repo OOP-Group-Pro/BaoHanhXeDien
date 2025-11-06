@@ -1,16 +1,22 @@
-FROM eclipse-temurin:21-jre-alpine
 
+FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Tên của module này (Dùng cho bước 4, 5, 6)
 WORKDIR /app
 
-# Expose port (từ application.yml của bạn)
-EXPOSE 8002
+COPY base-pom/pom.xml .
+RUN mvn install -N -f pom.xml
 
-# Tên file .jar (lấy từ thư mục target)
-# Nó sẽ tìm bất kỳ file .jar nào trong thư mục target
-ARG JAR_FILE=target/*.jar
+COPY vehicle-service/pom.xml vehicle-service/
+RUN mvn dependency:go-offline -f vehicle-service/pom.xml
 
-# Copy file .jar (đã build) từ máy của bạn vào image
-COPY ${JAR_FILE} app.jar
+COPY vehicle-service/src vehicle-service/src
+RUN mvn clean package -f vehicle-service/pom.xml -DskipTests
 
-# Lệnh chạy
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+
+COPY --from=build /app/vehicle-service/target/vehicle-service-*.jar app.jar
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
