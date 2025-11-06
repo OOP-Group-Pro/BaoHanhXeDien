@@ -17,7 +17,7 @@ public class ClaimRepairResultDto {
     private Long technicianId; // ID Kỹ thuật viên hoàn thành
     private String finalNotes; // Ghi chú kết quả sửa chữa
 
-    // Map chứa {Mã phụ tùng yêu cầu : Số Seri mới được lắp}
+    // Map chứa {Mã phụ tùng yêu cầu (partnumber : Số Seri mới được lắp (số serial của phụ tùng mới) }
     // Logic của Service sẽ dùng thông tin này để cập nhật ClaimPartDetail
     private Map<String, SerialUpdateDetail> serialUpdates;
 }

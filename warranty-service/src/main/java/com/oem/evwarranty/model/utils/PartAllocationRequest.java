@@ -13,7 +13,7 @@ import java.util.List;
 public class PartAllocationRequest {
     private Long claimId;
     private List<String> partNumbers;
-    private String serviceCenterId;
+    private Long serviceCenterId;
     private Long requestingStaffId;
     // ... (Thêm serviceCenterId để PartService biết gửi về đâu)
 }
