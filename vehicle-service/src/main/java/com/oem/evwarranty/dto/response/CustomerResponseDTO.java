@@ -6,5 +6,6 @@ import lombok.Data;
 public class CustomerResponseDTO {
     private Long customerId;
     private String customerName;
+    private String phoneNum;
     private String email;
 }

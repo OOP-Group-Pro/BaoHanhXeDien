@@ -67,6 +67,13 @@ public class VehicleController {
                 HttpStatus.OK.value(), "Successfully retrieved parts for vehicle " + vehicleId, parts);
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/vin/{vin}")
+    public ResponseEntity<ApiResponse<VehicleResponseDTO>> getVehicleByVin(@PathVariable String vin) {
+        VehicleResponseDTO vehicle = vehicleService.getVehicleByVin(vin); // Bạn cần tạo service method này
+        ApiResponse<VehicleResponseDTO> response = ApiResponse.success(
+                HttpStatus.OK.value(), "Successfully retrieved vehicle with vin " + vin, vehicle);
+        return ResponseEntity.ok(response);
+    }
 
     @DeleteMapping("/{vehicleId}/parts/{installedPartId}")
     public ResponseEntity<ApiResponse<Object>> removePartFromVehicle(@PathVariable Long vehicleId, @PathVariable Long installedPartId) {

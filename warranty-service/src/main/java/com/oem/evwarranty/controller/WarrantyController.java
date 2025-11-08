@@ -15,6 +15,7 @@ import jakarta.validation.Valid; // Sử dụng để validate DTO
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:63342")
 @RequestMapping("/api/v1/claims")
 public class WarrantyController {
 

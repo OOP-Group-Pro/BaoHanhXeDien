@@ -27,6 +27,8 @@ public class Vehicle {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "license_plate", length = 20, unique = true)
+    private String licensePlate;
     //Kết nối với Customers
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)

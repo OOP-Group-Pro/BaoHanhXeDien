@@ -16,10 +16,11 @@ public interface PartInventoryService {
      */
     PartInventoryResponse decrementStock(DecrementStockRequest request); // Thêm phương thức này
 
+    List<PartInventoryResponse> getAllInventory();
     List<PartInventoryResponse> getInventoryByPartId(Long partId);
     List<PartInventoryResponse> getInventoryByLocation(String location);
     PartInventoryResponse updateInventoryStatus(Long inventoryId, String status);
-
+    PartInventoryResponse updateInventoryQuantity(Long inventoryId, Long newQuantity);
     /**
      * Kiểm tra xem còn đủ hàng tại một địa điểm cụ thể không.
      * (Hàm này có thể không cần nữa nếu logic kiểm tra được chuyển sang hàm decrementStock)
