@@ -24,3 +24,8 @@ spring:
       name: admin
       password: 1234
       roles: ADMIN
+
+  main:
+    allow-bean-definition-overriding: true
+app:
+  internal-secret: ${INTERNAL_SERVICE_SECRET}

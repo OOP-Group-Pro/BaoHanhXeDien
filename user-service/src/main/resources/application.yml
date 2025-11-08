@@ -26,6 +26,8 @@ spring:
       name: admin
       password: 1234
       roles: ADMIN
+  main:
+    allow-bean-definition-overriding: true
 
 service:
   vehicle:
@@ -60,3 +62,8 @@ error:
   include-message: always
   include-binding-errors: always
   include-stacktrace: always
+
+app:
+  internal-secret: ${INTERNAL_SERVICE_SECRET}
+jwt:
+  secret: ${JWT_SECRET}

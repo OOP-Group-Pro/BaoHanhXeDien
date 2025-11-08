@@ -6,7 +6,7 @@ server:
 # Cấu hình Feign Clients:
 vehicle-service:
   url: http://vehicle-service:8080/ # Giả sử Vehicle Service chạy ở port 8081
-user-service:
+user-staff-service:
   url: http://user-service:8080/ # Giả sử User Service chạy ở port 8082
 part-service:
   url: http://part-service:8080/ # Giả sử Part Service chạy ở port 8083
@@ -43,3 +43,9 @@ spring:
   cloud:
     compatibility-verifier:
       enabled: false
+
+  main:
+    allow-bean-definition-overriding: true
+
+app:
+  internal-secret: ${INTERNAL_SERVICE_SECRET}

@@ -1,0 +1,93 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    config:
+      enabled: false
+
+    gateway:
+      default-filters: [ ]
+      routes:
+
+        # === USER-SERVICE (Hoạt động tốt, giữ nguyên) ===
+        - id: user_service_users
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/v1/users/**
+        - id: user_service_auth
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/v1/auth/**
+
+        # === PART-SERVICE (Sửa lỗi 404) ===
+        # FIX: Tạo 4 route riêng, dùng cú pháp /** đã chạy
+        - id: part_service_parts
+          uri: http://part-service:8080
+          predicates:
+            - Path=/api/v1/parts/** # Sẽ khớp /api/v1/parts VÀ /api/v1/parts/{id}
+
+        - id: part_service_allocations
+          uri: http://part-service:8080
+          predicates:
+            - Path=/api/v1/allocations/**
+
+        - id: part_service_inventory
+          uri: http://part-service:8080
+          predicates:
+            - Path=/api/v1/inventory/**
+
+        - id: part_service_policies
+          uri: http://part-service:8080
+          predicates:
+            - Path=/api/v1/warranty-policies/**
+
+        # === VEHICLE-SERVICE (CÓ context-path: /vehicle-service) ===
+        # FIX: Quay lại Path đơn giản VÀ thêm RewritePath
+
+        - id: vehicle_service_vehicles
+          uri: http://vehicle-service:8080
+          predicates:
+            - Path=/api/v1/vehicles/** # ⬅️ Dùng cú pháp đơn giản
+          filters:
+            - RewritePath=/(?<segment>.*), /vehicle-service/${segment} # ⬅️ THÊM filter này
+
+        - id: vehicle_service_technicians
+          uri: http://vehicle-service:8080
+          predicates:
+            - Path=/api/v1/technicians/** # ⬅️ Dùng cú pháp đơn giản
+          filters:
+            - RewritePath=/(?<segment>.*), /vehicle-service/${segment} # ⬅️ THÊM filter này
+
+        - id: vehicle_service_customers
+          uri: http://vehicle-service:8080
+          predicates:
+            - Path=/api/v1/customers/** # ⬅️ Dùng cú pháp đơn giản
+          filters:
+            - RewritePath=/(?<segment>.*), /vehicle-service/${segment} # ⬅️ THÊM filter này
+
+        - id: vehicle_service_history
+          uri: http://vehicle-service:8080
+          predicates:
+            - Path=/api/v1/history/** # ⬅️ Dùng cú pháp đơn giản
+          filters:
+            - RewritePath=/(?<segment>.*), /vehicle-service/${segment} # ⬅️ THÊM filter này
+
+        # === WARRANTY-SERVICE (KHÔNG context-path) ===
+        - id: warranty_service_claims # ⬅️ Sửa tên ID cho rõ ràng
+          uri: http://warranty-service:8080
+          predicates:
+            - Path=/api/v1/claims/** #
+
+        # === CAMPAIGN-SERVICE (Áp dụng logic tương tự) ===
+        - id: campaign_service
+          uri: http://campaign-service:8080
+          predicates:
+            - Path=/api/v1/campaigns/**
+
+jwt:
+  secret: ${JWT_SECRET}

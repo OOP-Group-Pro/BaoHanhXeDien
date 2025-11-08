@@ -32,6 +32,9 @@ services:
       - "8001:8080"
     networks:
       - oem-network
+    environment:
+      JWT_SECRET: "we_dont_talk_anymore_like_we_used_to_do"
+      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -46,6 +49,8 @@ services:
       - "8002:8080"
     networks:
       - oem-network
+    environment:
+      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -60,6 +65,8 @@ services:
       - "8004:8080"
     networks:
       - oem-network
+    environment:
+      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -74,6 +81,8 @@ services:
       - "8003:8080"
     networks:
       - oem-network
+    environment:
+      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -90,6 +99,8 @@ services:
       - oem-network
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
     # Khai báo phụ thuộc cho WARRANTY-SERVICE
+    environment:
+      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -102,6 +113,31 @@ services:
       campaign-service:
         condition: service_started
       # Đảm bảo tất cả chạy trước khi Warranty Service khởi động
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "80:8080"
+    networks:
+      - oem-network
+    environment:
+      JWT_SECRET: "we_dont_talk_anymore_like_we_used_to_do"
+      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+    command: /bin/sh -c "sleep 15 && java -jar /app.jar"
+    depends_on:
+      user-service:
+        condition: service_started
+      vehicle-service:
+        condition: service_started
+      part-service:
+        condition: service_started
+      campaign-service:
+        condition: service_started
+      warranty-service:
+        condition: service_started
 
 networks:
   oem-network:
