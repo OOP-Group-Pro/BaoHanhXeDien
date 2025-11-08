@@ -1,7 +1,7 @@
 package com.oem.evwarranty.service;
 
 import com.oem.evwarranty.model.utils.UserResponseDto;
-import com.oem.evwarranty.client.UserServiceClient;
+import com.oem.evwarranty.client.warranty.UserServiceClient;
 import com.oem.evwarranty.dto.ClaimDto;
 import com.oem.evwarranty.dto.ClaimRepairResultDto;
 import com.oem.evwarranty.dto.ClaimStatusLogDto;
@@ -13,8 +13,8 @@ import com.oem.evwarranty.model.ClaimStatusLog;
 import com.oem.evwarranty.model.WarrantyClaim;
 import com.oem.evwarranty.model.utils.PartAllocationRequest;
 import com.oem.evwarranty.model.utils.SerialUpdateDetail;
-import com.oem.evwarranty.client.VehicleServiceClient; // Feign Client
-import com.oem.evwarranty.client.PartServiceClient;    // Feign Client
+import com.oem.evwarranty.client.warranty.VehicleServiceClient; // Feign Client
+import com.oem.evwarranty.client.warranty.PartServiceClient;    // Feign Client
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.oem.evwarranty.mapper.ClaimMapper.mapToClaimDto;
 import static com.oem.evwarranty.mapper.PartMapper.mapToPartDetail;
@@ -289,5 +290,11 @@ public class WarrantyService {
     private String generateClaimCode() {
         // Logic tạo mã Claim duy nhất (Ví dụ: WC-2025-00001)
         return "WC-" + LocalDateTime.now().getYear() + "-" + System.currentTimeMillis() % 100000;
+    }
+
+    public List<ClaimDto> getAllClaims() {
+        return claimRepo.findAll().stream()
+                .map(ClaimMapper::mapToClaimDto)
+                .collect(Collectors.toList());
     }
 }

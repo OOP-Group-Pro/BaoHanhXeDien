@@ -8,8 +8,11 @@ import com.oem.evwarranty.service.WarrantyService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Sử dụng để validate DTO
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/claims")
@@ -98,5 +101,11 @@ public class WarrantyController {
     public ResponseEntity<?> getClaimStatusHistory(@PathVariable Long claimId) {
         // Thay vì trả về List<ClaimStatusLogDto>, bạn có thể trả về một đối tượng Response có List bên trong
         return ResponseEntity.ok(warrantyService.getClaimStatusHistory(claimId));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @GetMapping
+    public ResponseEntity<List<ClaimDto>> getAllClaims() {
+        return ResponseEntity.ok(warrantyService.getAllClaims());
     }
 }

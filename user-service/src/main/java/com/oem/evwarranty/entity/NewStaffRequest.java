@@ -33,7 +33,7 @@ public class NewStaffRequest {
     )
     private Set<Role> proposedRoles = new HashSet<>();
 
-    private String createdBy; // Manager username
+    private String createdBy; // Manager ID
     private String status; // PENDING, APPROVED, REJECTED
     private LocalDateTime createdAt;
     private LocalDateTime approvedAt;

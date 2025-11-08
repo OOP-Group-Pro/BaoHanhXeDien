@@ -1,6 +1,7 @@
 package com.oem.evwarranty.config;
 
-import com.oem.evwarranty.security.JwtAuthenticationFilter;
+import com.oem.evwarranty.security.GatewayAuthFilter;
+import com.oem.evwarranty.security.InternalAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,10 +24,12 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final InternalAuthFilter internalAuthFilter;
+    private final GatewayAuthFilter gatewayAuthFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
-        this.jwtAuthFilter = jwtAuthFilter;
+    public SecurityConfig(InternalAuthFilter internalAuthFilter, GatewayAuthFilter gatewayAuthFilter) {
+        this.internalAuthFilter = internalAuthFilter;
+        this.gatewayAuthFilter = gatewayAuthFilter;
     }
 
     @Bean
@@ -38,7 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Auth service public
                         .requestMatchers("/api/v1/auth/**").permitAll()
-
+                /*
                         // Feign client
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/service-centers/**").permitAll()
@@ -51,13 +54,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/staff-requests/approve/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/staff-requests/all").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/staff-requests/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/staff-requests/*/reject").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/staff-requests/.../reject").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/admin/**").hasRole("ADMIN")
 
                         // Còn lại yêu cầu auth
                         .anyRequest().authenticated()
+                */
+                                .anyRequest().permitAll()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(internalAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

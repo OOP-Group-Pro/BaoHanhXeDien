@@ -22,6 +22,8 @@ spring:
       name: admin
       password: 1234
       roles: ADMIN
+  main:
+    allow-bean-definition-overriding: true
 
 # Các service URL (tốt, giữ nguyên)
 vehicle-service:
@@ -42,3 +44,5 @@ feign:
         readTimeout: 10000
         loggerLevel: full
 
+app:
+  internal-secret: ${INTERNAL_SERVICE_SECRET}

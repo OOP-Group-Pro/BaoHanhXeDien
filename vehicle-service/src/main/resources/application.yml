@@ -28,13 +28,17 @@ spring:
       name: admin
       password: 1234
       roles: ADMIN
+  main:
+    allow-bean-definition-overriding: true
 
 feign:
   circuitbreaker:
     enabled: true
   client:
     config:
-      user-service:
+      user-center-service:
+        url: http://user-service:8080/
+      user-technician-service:
         url: http://user-service:8080/
       campaign-service:
         url: http://campaign-service:8080/
@@ -45,3 +49,6 @@ feign:
       default:
         connectTimeout: 5000
         readTimeout: 10000
+
+app:
+  internal-secret: ${INTERNAL_SERVICE_SECRET}

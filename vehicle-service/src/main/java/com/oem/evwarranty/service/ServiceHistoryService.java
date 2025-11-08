@@ -1,7 +1,7 @@
 package com.oem.evwarranty.service;
 
-import com.oem.evwarranty.client.CenterClient;
-import com.oem.evwarranty.client.TechnicianClient;
+import com.oem.evwarranty.client.vehicle.CenterClient;
+import com.oem.evwarranty.client.vehicle.TechnicianClient;
 import com.oem.evwarranty.dto.external.CenterDetailsDTO;
 import com.oem.evwarranty.dto.external.TechnicianDetailsDTO;
 import com.oem.evwarranty.dto.request.ServiceHistoryRequestDTO;

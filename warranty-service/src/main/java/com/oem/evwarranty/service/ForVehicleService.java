@@ -1,6 +1,7 @@
 package com.oem.evwarranty.service;
 
 import com.oem.evwarranty.dto.ClaimDto;
+import com.oem.evwarranty.enums.ClaimStatus;
 import com.oem.evwarranty.mapper.ClaimMapper;
 import com.oem.evwarranty.model.WarrantyClaim;
 import com.oem.evwarranty.repository.WarrantyClaimRepository;
@@ -20,7 +21,8 @@ public class ForVehicleService {
     private WarrantyClaimRepository claimRepo;
 
     public List<ClaimDto> getClaimsByStatus(String status) {
-        List<WarrantyClaim> warrantyClaimList = claimRepo.getByStatus(status);
+        ClaimStatus claimStatus = ClaimStatus.valueOf(status);
+        List<WarrantyClaim> warrantyClaimList = claimRepo.getByCurrentStatus(claimStatus);
         if (warrantyClaimList.isEmpty()) {
             return null;
         }

@@ -1,6 +1,7 @@
 package com.oem.evpart.config;
 
-import com.oem.evpart.config.AuthenticationFilter;
+import com.oem.evpart.security.GatewayAuthFilter;
+import com.oem.evpart.security.InternalAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,10 +22,15 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true) // Cần thiết cho @PreAuthorize
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final AuthenticationFilter authenticationFilter;
+    private final InternalAuthFilter internalAuthFilter;
+    private final GatewayAuthFilter gatewayAuthFilter;
+
+    public SecurityConfig(InternalAuthFilter internalAuthFilter, GatewayAuthFilter gatewayAuthFilter) {
+        this.internalAuthFilter = internalAuthFilter;
+        this.gatewayAuthFilter = gatewayAuthFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,8 +51,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // 3. Thêm Filter của chúng ta vào trước
-                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+                .addFilterBefore(internalAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

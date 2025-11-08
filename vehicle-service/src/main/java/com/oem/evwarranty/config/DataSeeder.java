@@ -29,9 +29,6 @@ public class DataSeeder implements CommandLineRunner {
 
     // 2. INJECT THÊM CUSTOMER REPOSITORY
     @Autowired
-    private CustomerRepository customerRepository;
-
-    @Autowired
     private VehicleRepository vehicleRepository;
     @Autowired
     private TechnicianRepository technicianRepository;
@@ -65,13 +62,6 @@ public class DataSeeder implements CommandLineRunner {
             tech1.setStatus("Active");
             tech1.setTechnicianName("Nguyen Van A"); // 👈 BẮT BUỘC: thêm dòng này
             technicianRepository.save(tech1);
-
-            // --- Tạo customer ---
-            Customer customer1 = new Customer();
-            customer1.setCustomerName("Tran Van B");
-            customer1.setPhoneNum("0987654321");
-            customer1.setEmail("tranb@example.com");
-            customerRepository.save(customer1);
 
 
             // --- 2. Tạo Vehicle ---
