@@ -1,7 +1,5 @@
 package com.oem.evwarranty.service;
 
-import com.oem.evwarranty.dto.request.CustomerRequestDTO;
-import com.oem.evwarranty.dto.response.CustomerResponseDTO;
 import com.oem.evwarranty.entity.Customer;
 import com.oem.evwarranty.exception.ResourceNotFoundException;
 import com.oem.evwarranty.repository.CustomerRepository;
@@ -11,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CustomerService {
@@ -19,80 +16,61 @@ public class CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    // SỬA 1: Nhận RequestDTO, trả về ResponseDTO
-    public CustomerResponseDTO createCustomer(CustomerRequestDTO requestDTO) {
-        // Kiểm tra email trùng lặp
-        if (customerRepository.findByEmail(requestDTO.getEmail()).isPresent()) {
-            throw new DataIntegrityViolationException("Email '" + requestDTO.getEmail() + "' is already in use.");
-        }
-
-        Customer newCustomer = new Customer();
-        newCustomer.setCustomerName(requestDTO.getCustomerName());
-        newCustomer.setPhoneNum(requestDTO.getPhoneNum());
-        newCustomer.setEmail(requestDTO.getEmail());
-
-        Customer savedCustomer = customerRepository.save(newCustomer);
-        return convertToDTO(savedCustomer);
+    // 1. CREATE: Tạo khách hàng mới (Đã có)
+    public Customer createCustomer(Customer customer) {
+        return customerRepository.save(customer);
     }
 
-    // SỬA 2: Trả về List<ResponseDTO>
-    public List<CustomerResponseDTO> getAllCustomers() {
-        return customerRepository.findAll()
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    // 2. READ: Lấy tất cả khách hàng (Đã có)
+    public List<Customer> getAllCustomers() {
+        return customerRepository.findAll();
     }
 
-    // SỬA 3: Trả về ResponseDTO
-    public CustomerResponseDTO getCustomerById(Long id) {
-        Customer customer = customerRepository.findById(id)
+    // 3. READ: Lấy một khách hàng theo ID
+    public Customer getCustomerById(Long id) {
+        return customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
-        return convertToDTO(customer);
     }
 
-    // SỬA 4: Nhận RequestDTO, trả về ResponseDTO
-    public CustomerResponseDTO updateCustomer(Long id, CustomerRequestDTO requestDTO) {
-        Customer customerToUpdate = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
+    // 4. UPDATE: Cập nhật thông tin khách hàng
+    public Customer updateCustomer(Long id, Customer customerDetails) {
+        // 1. Tìm khách hàng cần cập nhật
+        Customer customerToUpdate = getCustomerById(id);
 
-        String newEmail = requestDTO.getEmail();
+        // 2. Lấy email mới từ yêu cầu
+        String newEmail = customerDetails.getEmail();
 
-        // (Logic kiểm tra email trùng lặp của bạn rất tốt, giữ nguyên)
+        // 3. Kiểm tra xem email có bị thay đổi không và email mới có bị trùng không
+        // So sánh email mới với email cũ. Nếu khác nhau, ta mới cần kiểm tra.
         if (!customerToUpdate.getEmail().equals(newEmail)) {
-            Optional<Customer> existing = customerRepository.findByEmail(newEmail);
-            if (existing.isPresent()) {
-                throw new DataIntegrityViolationException("Email '" + newEmail + "' is already in use.");
+            // Tìm xem có khách hàng nào khác đang dùng email mới này không
+            Optional<Customer> existingCustomerWithNewEmail = customerRepository.findByEmail(newEmail);
+
+            // Nếu tìm thấy một khách hàng khác, ném ra lỗi
+            if (existingCustomerWithNewEmail.isPresent()) {
+                // Chúng ta có thể dùng DataIntegrityViolationException hoặc một exception tùy chỉnh khác
+                throw new DataIntegrityViolationException("Email '" + newEmail + "' is already in use by another customer.");
             }
         }
-
-        customerToUpdate.setCustomerName(requestDTO.getCustomerName());
-        customerToUpdate.setPhoneNum(requestDTO.getPhoneNum());
+        customerToUpdate.setCustomerName(customerDetails.getCustomerName());
+        customerToUpdate.setPhoneNum(customerDetails.getPhoneNum());
         customerToUpdate.setEmail(newEmail);
 
-        Customer updatedCustomer = customerRepository.save(customerToUpdate);
-        return convertToDTO(updatedCustomer);
+        return customerRepository.save(customerToUpdate);
     }
 
+    // 5. DELETE: Xóa một khách hàng
     public void deleteCustomer(Long id) {
+        // Kiểm tra xem khách hàng có tồn tại không trước khi xóa
         if(!customerRepository.existsById(id)){
             throw new ResourceNotFoundException("Customer not found with id: " + id);
         }
         customerRepository.deleteById(id);
     }
 
-    public CustomerResponseDTO getCustomerByEmail(String email) {
-        Customer customer = customerRepository.findByEmail(email)
+    // 6. SEARCH: Tìm khách hàng theo email
+    public Customer getCustomerByEmail(String email) {
+        return customerRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with email: " + email));
-        return convertToDTO(customer);
-    }
-
-    // --- HÀM HELPER CHUYỂN ĐỔI ---
-    private CustomerResponseDTO convertToDTO(Customer customer) {
-        CustomerResponseDTO dto = new CustomerResponseDTO();
-        dto.setCustomerId(customer.getCustomerId());
-        dto.setCustomerName(customer.getCustomerName());
-        dto.setPhoneNum(customer.getPhoneNum());
-        dto.setEmail(customer.getEmail());
-        return dto;
     }
 }

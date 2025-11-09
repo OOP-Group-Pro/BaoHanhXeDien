@@ -44,33 +44,6 @@ public class InstalledPartService {
 
         return convertToDTO(savedPart);
     }
-    public InstalledPartResponseDTO getPartById(Long id) {
-        InstalledPart part = installedPartRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("InstalledPart not found with ID: " + id));
-        return convertToDTO(part);
-    }
-
-    // 3. UPDATE (MỚI)
-    @Transactional
-    public InstalledPartResponseDTO updatePart(Long id, InstalledPartRequestDTO requestDTO) {
-        // Tìm Part cũ
-        InstalledPart existingPart = installedPartRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("InstalledPart not found with ID: " + id));
-
-        // Tìm Vehicle (nếu có đổi xe)
-        Vehicle vehicle = vehicleRepository.findById(requestDTO.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + requestDTO.getVehicleId()));
-
-        // Cập nhật các trường
-        existingPart.setPartId(requestDTO.getPartId());
-        existingPart.setSerialNumber(requestDTO.getSerialNumber());
-        existingPart.setInstallDate(requestDTO.getInstallDate());
-        existingPart.setStatus(requestDTO.getStatus());
-        existingPart.setVehicle(vehicle); // Cho phép gán sang xe khác (nếu cần)
-
-        InstalledPart updatedPart = installedPartRepository.save(existingPart);
-        return convertToDTO(updatedPart);
-    }
 
 
     public List<InstalledPartResponseDTO> getPartsByVehicleId(Long vehicleId) {

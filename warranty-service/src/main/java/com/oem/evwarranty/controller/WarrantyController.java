@@ -15,7 +15,6 @@ import jakarta.validation.Valid; // Sử dụng để validate DTO
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:63342")
 @RequestMapping("/api/v1/claims")
 public class WarrantyController {
 
@@ -108,11 +107,5 @@ public class WarrantyController {
     @GetMapping
     public ResponseEntity<List<ClaimDto>> getAllClaims() {
         return ResponseEntity.ok(warrantyService.getAllClaims());
-    }
-
-
-    @GetMapping("/claims-by-status/{status}")
-    public ResponseEntity<List<ClaimDto>> getClaimsByStatus(@RequestParam @PathVariable("status") String status) {
-        return ResponseEntity.ok().body(warrantyService.getClaimsByStatus(status));
     }
 }

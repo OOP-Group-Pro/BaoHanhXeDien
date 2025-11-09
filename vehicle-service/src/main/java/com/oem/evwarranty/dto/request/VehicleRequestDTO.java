@@ -3,8 +3,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
 public class VehicleRequestDTO {
     @NotBlank(message = "VIN không được để trống")
@@ -13,9 +11,7 @@ public class VehicleRequestDTO {
 
     @NotBlank
     private String model;
-    private LocalDateTime manufacturedDate;
 
-    private String status;
-    private String licensePlate;
+
     private Long customerId; // Chỉ cần ID của customer
 }

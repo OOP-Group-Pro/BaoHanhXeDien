@@ -10,5 +10,4 @@ import java.util.List;
 public interface ServiceHistoryRepository extends JpaRepository<ServiceHistory, Long> {
     // Find all history records for a specific vehicle
     List<ServiceHistory> findByVehicleVehicleId(Long vehicleId);
-    List<ServiceHistory> findByTechnicianTechnicianId(Long technicianId);
 }
