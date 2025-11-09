@@ -19,4 +19,6 @@ public class ClaimDto {
 
     // Bao gồm cả lịch sử trạng thái
     private List<ClaimStatusLogDto> statusHistory;
+    private String prepairProcedure;
+    private List<ClaimPartDetailDto> partList;
 }

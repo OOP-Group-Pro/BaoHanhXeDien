@@ -21,6 +21,12 @@ spring:
     init:
       mode: always
 
+  security:
+    user:
+      name: admin
+      password: 1234
+      roles: ADMIN
+
 service:
   vehicle:
     url: http://vehicle-service:8080
