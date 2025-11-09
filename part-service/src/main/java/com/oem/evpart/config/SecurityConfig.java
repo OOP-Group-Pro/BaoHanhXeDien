@@ -1,6 +1,7 @@
 package com.oem.evpart.config;
 
-// import com.oem.evpart.config.AuthenticationFilter; // Không cần filter nữa
+import com.oem.evpart.security.GatewayAuthFilter;
+import com.oem.evpart.security.InternalAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,7 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-// import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Không cần
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -20,29 +21,33 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
-@RequiredArgsConstructor
+@EnableMethodSecurity(prePostEnabled = true) // Cần thiết cho @PreAuthorize
 public class SecurityConfig {
 
-    // Không cần tiêm AuthenticationFilter nữa
-    // private final AuthenticationFilter authenticationFilter;
+    private final InternalAuthFilter internalAuthFilter;
+    private final GatewayAuthFilter gatewayAuthFilter;
+
+    public SecurityConfig(InternalAuthFilter internalAuthFilter, GatewayAuthFilter gatewayAuthFilter) {
+        this.internalAuthFilter = internalAuthFilter;
+        this.gatewayAuthFilter = gatewayAuthFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(withDefaults()) // Vẫn giữ CORS để file HTML của bạn chạy được
+                .cors(withDefaults()) // Kích hoạt CORS
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // === SỬA LỖI Ở ĐÂY ===
+                // SỬA LẠI LUẬT:
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Cho phép TẤT CẢ MỌI REQUEST đi qua
-                        .anyRequest().permitAll()
-                );
 
-        // 2. Gỡ bỏ Filter (vì đã permitAll)
-        // .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+                        // 2. BẮT BUỘC tất cả các request khác phải được xác thực
+                        .anyRequest().authenticated()
+                )
+                // 3. Thêm Filter của chúng ta vào trước
+                .addFilterBefore(internalAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -50,13 +55,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép file HTML (chạy ở 63342) và React (3000)
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:63342"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:5173",  // 1. Cho Vite (Dev)
+                "http://oem.webhop.me"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-User-Id"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }

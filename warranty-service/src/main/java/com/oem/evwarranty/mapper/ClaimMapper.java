@@ -1,17 +1,12 @@
 package com.oem.evwarranty.mapper;
 
-import com.oem.evwarranty.client.UserServiceClient;
-import com.oem.evwarranty.client.VehicleServiceClient;
+import com.oem.evwarranty.client.warranty.UserServiceClient;
+import com.oem.evwarranty.client.warranty.VehicleServiceClient;
 import com.oem.evwarranty.dto.ClaimDto;
 import com.oem.evwarranty.dto.ClaimStatusLogDto;
 import com.oem.evwarranty.model.ClaimStatusLog;
 import com.oem.evwarranty.model.WarrantyClaim;
-import com.oem.evwarranty.model.utils.UserResponseDto;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public class ClaimMapper {

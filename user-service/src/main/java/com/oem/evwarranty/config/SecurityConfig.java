@@ -1,9 +1,9 @@
 package com.oem.evwarranty.config;
 
-import com.oem.evwarranty.security.JwtAuthenticationFilter;
+import com.oem.evwarranty.security.GatewayAuthFilter;
+import com.oem.evwarranty.security.InternalAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,28 +17,32 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 import java.util.List;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final InternalAuthFilter internalAuthFilter;
+    private final GatewayAuthFilter gatewayAuthFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
-        this.jwtAuthFilter = jwtAuthFilter;
+    public SecurityConfig(InternalAuthFilter internalAuthFilter, GatewayAuthFilter gatewayAuthFilter) {
+        this.internalAuthFilter = internalAuthFilter;
+        this.gatewayAuthFilter = gatewayAuthFilter;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {})
+                .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Auth service public
                         .requestMatchers("/api/v1/auth/**").permitAll()
-
+                /*
                         // Feign client
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/service-centers/**").permitAll()
@@ -51,13 +55,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/staff-requests/approve/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/staff-requests/all").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/staff-requests/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/staff-requests/*/reject").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/staff-requests/.../reject").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/admin/**").hasRole("ADMIN")
 
                         // Còn lại yêu cầu auth
                         .anyRequest().authenticated()
+                */
+                                .anyRequest().permitAll()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(internalAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -72,14 +79,22 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // Cấu hình CORS cho frontend / client
+    // Trong TẤT CẢ các file SecurityConfig.java của backend
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*")); // Hoặc domain frontend
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+
+        // FIX: Cho phép cả 2 môi trường Dev và Production
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",  // 1. Cho Vite (Dev)
+                "http://oem.webhop.me"      // 2. Cho Nginx (Production)
+        ));
+
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

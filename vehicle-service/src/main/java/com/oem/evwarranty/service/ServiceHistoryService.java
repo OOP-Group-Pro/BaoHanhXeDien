@@ -1,11 +1,11 @@
 package com.oem.evwarranty.service;
 
-import com.oem.evwarranty.client.CenterClient;
-import com.oem.evwarranty.client.TechnicianClient;
+import com.oem.evwarranty.client.vehicle.CenterClient;
+import com.oem.evwarranty.client.vehicle.TechnicianClient;
 import com.oem.evwarranty.dto.external.CenterDetailsDTO;
 import com.oem.evwarranty.dto.external.TechnicianDetailsDTO;
 import com.oem.evwarranty.dto.request.ServiceHistoryRequestDTO;
-import com.oem.evwarranty.dto.response.ServiceHistoryResponseDTO; // Dùng DTO phẳng
+import com.oem.evwarranty.dto.response.ServiceHistoryResponseDTO;
 import com.oem.evwarranty.entity.InstalledPart;
 import com.oem.evwarranty.entity.ServiceHistory;
 import com.oem.evwarranty.entity.Technician;
@@ -66,9 +66,15 @@ public class ServiceHistoryService {
         ServiceHistory savedHistory = historyRepository.save(newHistory);
         return convertToDTO(savedHistory);
     }
+    public ServiceHistoryResponseDTO getHistoryById(Long id) {
+        ServiceHistory history = historyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ServiceHistory not found with ID: " + id));
+        return convertToDTO(history);
+    }
 
     /**
-     * Hàm này không thay đổi
+     * 3. READ (Get by Vehicle ID - Bạn đã có)
+     * (Hàm này được VehicleController gọi)
      */
     public List<ServiceHistoryResponseDTO> getHistoryByVehicleId(Long vehicleId) {
         if (!vehicleRepository.existsById(vehicleId)) {
@@ -78,6 +84,61 @@ public class ServiceHistoryService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 4. READ (Get by Technician ID - MỚI)
+     */
+    public List<ServiceHistoryResponseDTO> getHistoryByTechnician(Long technicianId) {
+        List<ServiceHistory> histories = historyRepository.findByTechnicianTechnicianId(technicianId);
+        return histories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 5. UPDATE (MỚI)
+     */
+    public ServiceHistoryResponseDTO updateServiceHistory(Long id, ServiceHistoryRequestDTO requestDTO) {
+        // Tìm bản ghi cũ
+        ServiceHistory existingHistory = historyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ServiceHistory not found with ID: " + id));
+
+        // Tìm các Entity liên quan (có thể người dùng muốn đổi KTV)
+        Vehicle vehicle = vehicleRepository.findById(requestDTO.getVehicleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + requestDTO.getVehicleId()));
+
+        Technician technician = technicianRepository.findById(requestDTO.getTechnicianId())
+                .orElseThrow(() -> new ResourceNotFoundException("Technician not found with ID: " + requestDTO.getTechnicianId()));
+
+        // Cập nhật các trường
+        existingHistory.setDescription(requestDTO.getDescription());
+        existingHistory.setPerformedDate(requestDTO.getPerformedDate());
+        existingHistory.setVehicle(vehicle);
+        existingHistory.setTechnician(technician);
+
+        // Cập nhật PartIds
+        if (requestDTO.getPartIds() != null) {
+            if (requestDTO.getPartIds().isEmpty()) {
+                existingHistory.getPartsInvolved().clear();
+            } else {
+                List<InstalledPart> parts = installedPartRepository.findAllById(requestDTO.getPartIds());
+                existingHistory.setPartsInvolved(new HashSet<>(parts));
+            }
+        }
+
+        ServiceHistory updatedHistory = historyRepository.save(existingHistory);
+        return convertToDTO(updatedHistory);
+    }
+
+    /**
+     * 6. DELETE (MỚI)
+     */
+    public void deleteServiceHistory(Long id) {
+        if (!historyRepository.existsById(id)) {
+            throw new ResourceNotFoundException("ServiceHistory not found with ID: " + id);
+        }
+        historyRepository.deleteById(id);
     }
 
     // --- HÀM CONVERT DTO (ĐÃ ĐƯỢC CẬP NHẬT) ---

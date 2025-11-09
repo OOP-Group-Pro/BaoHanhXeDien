@@ -1,6 +1,6 @@
 package com.oem.evwarranty.service;
 
-import com.oem.evwarranty.client.WarrantyClient;
+import com.oem.evwarranty.client.user.WarrantyClient;
 import com.oem.evwarranty.dto.request.WarrantyRequest;
 import com.oem.evwarranty.dto.response.WarrantyResponse;
 import lombok.RequiredArgsConstructor;
