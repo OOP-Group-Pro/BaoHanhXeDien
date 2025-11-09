@@ -24,26 +24,19 @@ public class InstalledPartController {
                 HttpStatus.CREATED.value(), "Part installed successfully.", installedPart);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-    // 2. READ (Get By ID - MỚI)
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<InstalledPartResponseDTO>> getInstalledPartById(
-            @PathVariable Long id) {
 
-        InstalledPartResponseDTO part = installedPartService.getPartById(id);
-        ApiResponse<InstalledPartResponseDTO> response = ApiResponse.success(
-                HttpStatus.OK.value(), "Part retrieved successfully.", part);
-        return ResponseEntity.ok(response);
-    }
+    @DeleteMapping("/{vehicleId}/parts/{installedPartId}")
+    public ResponseEntity<ApiResponse<Object>> removePartFromVehicle(
+            @PathVariable Long vehicleId,
+            @PathVariable Long installedPartId) {
 
-    // 3. UPDATE (MỚI)
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<InstalledPartResponseDTO>> updateInstalledPart(
-            @PathVariable Long id,
-            @Valid @RequestBody InstalledPartRequestDTO requestDTO) {
+        installedPartService.removePartFromVehicle(vehicleId, installedPartId);
 
-        InstalledPartResponseDTO updatedPart = installedPartService.updatePart(id, requestDTO);
-        ApiResponse<InstalledPartResponseDTO> response = ApiResponse.success(
-                HttpStatus.OK.value(), "Part updated successfully.", updatedPart);
+        ApiResponse<Object> response = ApiResponse.success(
+                HttpStatus.OK.value(),
+                "Part with id " + installedPartId + " removed successfully from vehicle with id: " + vehicleId
+        );
+
         return ResponseEntity.ok(response);
     }
 }
