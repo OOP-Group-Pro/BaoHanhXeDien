@@ -36,6 +36,8 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
                         .collect(Collectors.toList())
                 : List.of();
 
+
+
             // 4. Tạo đối tượng Authentication nhẹ
             Authentication authentication =  new UsernamePasswordAuthenticationToken(userId, null, authorities);
             // 5. Thiết lập Security Context (Đây là bước quan trọng nhất cho @PreAuthorize)

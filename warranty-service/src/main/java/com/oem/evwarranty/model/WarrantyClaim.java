@@ -1,5 +1,6 @@
 package com.oem.evwarranty.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.oem.evwarranty.enums.ClaimStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,6 +24,8 @@ public class WarrantyClaim {
     private String vin;         //Ma xe
     @Column(nullable = false)
     private Long scStaffId;     // Id Nhan vien tao don
+    @Column
+    private Long centerId;
     @Column(nullable = true)
     private Long technicalStaffId;
     @Enumerated(EnumType.STRING)
@@ -33,12 +36,16 @@ public class WarrantyClaim {
     @Column(nullable = true)
     private String description;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "claim", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClaimStatusLog> statusLogs;
+    @JsonManagedReference
     @OneToMany(mappedBy = "claim", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClaimCost> costs;
+    @JsonManagedReference
     @OneToMany(mappedBy = "claim",  cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AttachedDocument> documents;
+    @JsonManagedReference
     @OneToMany(mappedBy = "claim",  cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClaimPartDetail> partDetails;
 
