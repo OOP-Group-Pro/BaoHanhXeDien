@@ -1,5 +1,6 @@
 package com.oem.evwarranty.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.oem.evwarranty.enums.ClaimStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,6 +21,7 @@ public class ClaimStatusLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="claim_id", nullable=false)
     private WarrantyClaim claim;

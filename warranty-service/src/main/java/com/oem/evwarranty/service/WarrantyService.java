@@ -16,9 +16,23 @@ import com.oem.evwarranty.model.utils.SerialUpdateDetail;
 import com.oem.evwarranty.client.warranty.VehicleServiceClient; // Feign Client
 import com.oem.evwarranty.client.warranty.PartServiceClient;    // Feign Client
 
+import com.oem.evwarranty.repository.specification.WarrantyClaimSpecification;
+import com.oem.evwarranty.security.UserDetailsPrincipal;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -80,12 +94,15 @@ public class WarrantyService {
             throw new IllegalArgumentException("VIN không hợp lệ hoặc không tồn tại.");
         }
 
+        UserResponseDto userInfo = userClient.getScStaffById(scStaffId);
+
         // BƯỚC 2: MAP DTO SANG ENTITY VÀ LƯU
         WarrantyClaim newClaim = // Giả sử đã có Mapper để chuyển DTO sang Entity
                 WarrantyClaim.builder()
                         .claimCode(generateClaimCode()) // Hàm tự tạo mã claim
                         .vin(dto.getVin())
                         .scStaffId(scStaffId) // ID nhân viên tạo
+                        .centerId(userInfo.getServiceCenterId())
                         .description(dto.getDescription())
                         .currentStatus(ClaimStatus.WAITING_APPROVAL)
                         .dateCreated(LocalDateTime.now())
@@ -160,14 +177,13 @@ public class WarrantyService {
 
         // BƯỚC 5: GỌI SERVICE NGOÀI - YÊU CẦU CẤP PHÁT PHỤ TÙNG
         // De yeu cau cap phat, can biet Ai, noi nao yeu cau cap phat :
-        UserResponseDto userResponseDto = userClient.getScStaffById(claim.getScStaffId());
         //Bước 5 chỉ thực hiện sau khi đã biết api của bên part-service cho nên hiện tại chưa dùng
         // Tao request cap phat:
         PartAllocationRequest partAllocationRequest = new PartAllocationRequest(
                 claimId,
                 partNumbers,
-                userResponseDto.getServiceCenterId(),
-                userResponseDto.getUserId()
+                claim.getCenterId(),
+                claim.getScStaffId()
         );
         // Gui yeu cau
         partClient.requestPartAllocation(partAllocationRequest);
@@ -296,5 +312,66 @@ public class WarrantyService {
         return claimRepo.findAll().stream()
                 .map(ClaimMapper::mapToClaimDto)
                 .collect(Collectors.toList());
+    }
+
+
+    // =======Ham lay claims duoc loc:========
+        public Page<ClaimDto> getClaims(
+            String claimCode,
+            String vin,
+            String statusStr,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable,
+            Authentication authentication
+    ) {
+        Specification<WarrantyClaim> specification = Specification.where(null);
+
+        // Convert String to Enum:
+        ClaimStatus status = null;
+        if (statusStr != null && !statusStr.isBlank()) {
+            try {
+                status = ClaimStatus.valueOf(statusStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status value: " + statusStr);
+            }
+        }
+
+        specification = specification.and(WarrantyClaimSpecification.hasClaimCode(claimCode))
+                .and(WarrantyClaimSpecification.hasVin(vin));
+
+        if (status != null) {
+            specification = specification.and(WarrantyClaimSpecification.hasStatus(status));
+        }
+
+        specification = specification.and(WarrantyClaimSpecification.createdAfter(fromDate))
+                .and(WarrantyClaimSpecification.createdBefore(toDate));
+
+            // Lay Principal tu SecurityContext
+        Object principal = authentication.getPrincipal();
+            // Ap dung logic phan quyen theo loai Principal:
+        if (principal instanceof UserDetailsPrincipal userDetails) {
+
+            Long currentUserId = userDetails.getUserId();
+            Long currentCenterId = userDetails.getCenterId();
+
+            List<String> roles = authentication.getAuthorities().stream()
+                    .map(auth -> auth.getAuthority())
+                    .toList();
+
+            if (!roles.contains("ROLE_ADMIN")) {
+                if (roles.contains("ROLE_MANAGER")) {
+                    specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
+                }
+                else specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
+            }
+        } else if (principal instanceof String && principal.equals("internal-service")) {
+        } else {
+            // Case C: Lỗi bảo mật không xác định
+            throw new AccessDeniedException("Cannot determine user identity or authorization context.");
+        }
+
+        // 4️⃣ Lấy page
+        return claimRepo.findAll(specification, pageable);
     }
 }
