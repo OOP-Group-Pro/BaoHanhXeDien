@@ -301,9 +301,12 @@ public class WarrantyService {
     public List<ClaimDto> getClaimsByStatus(String status) {
         ClaimStatus claimStatus = ClaimStatus.valueOf(status);
         List<WarrantyClaim> warrantyClaimList = claimRepo.getByCurrentStatus(claimStatus);
-
-        return warrantyClaimList.stream()
+        if (warrantyClaimList.isEmpty()) {
+            return null;
+        }
+        List<ClaimDto> claimDtoList = warrantyClaimList.stream()
                 .map(ClaimMapper::mapToClaimDto)
                 .toList();
+        return claimDtoList;
     }
 }

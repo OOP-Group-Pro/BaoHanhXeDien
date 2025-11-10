@@ -10,6 +10,5 @@ public class VehicleResponseDTO {
     private String model;
     private LocalDateTime manufacturedDate;
     private String status;
-    private CustomerResponseDTO customer;// Lồng DTO của Customer vào đây
-    private String licensePlate;
+    private CustomerResponseDTO customer; // Lồng DTO của Customer vào đây
 }

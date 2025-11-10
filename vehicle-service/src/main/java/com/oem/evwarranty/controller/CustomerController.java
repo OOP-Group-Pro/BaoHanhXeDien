@@ -1,9 +1,8 @@
 package com.oem.evwarranty.controller;
 
-import com.oem.evwarranty.dto.request.CustomerRequestDTO;
 import com.oem.evwarranty.dto.response.ApiResponse;
-import com.oem.evwarranty.dto.response.CustomerResponseDTO;
 import com.oem.evwarranty.dto.response.VehicleResponseDTO;
+import com.oem.evwarranty.entity.Customer;
 import com.oem.evwarranty.service.CustomerService;
 import com.oem.evwarranty.service.VehicleService;
 import jakarta.validation.Valid;
@@ -23,13 +22,11 @@ public class CustomerController {
     @Autowired
     private VehicleService vehicleService;
 
-    // POST - Sửa: Nhận RequestDTO, trả về ResponseDTO
+    // POST - Tạo mới
     @PostMapping
-    public ResponseEntity<ApiResponse<CustomerResponseDTO>> createCustomer(
-            @Valid @RequestBody CustomerRequestDTO requestDTO) {
-
-        CustomerResponseDTO createdCustomer = customerService.createCustomer(requestDTO);
-        ApiResponse<CustomerResponseDTO> response = ApiResponse.success(
+    public ResponseEntity<ApiResponse<Customer>> createCustomer(@Valid @RequestBody Customer customer) {
+        Customer createdCustomer = customerService.createCustomer(customer);
+        ApiResponse<Customer> response = ApiResponse.success(
                 HttpStatus.CREATED.value(),
                 "Customer created successfully.",
                 createdCustomer
@@ -37,11 +34,11 @@ public class CustomerController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    // GET
+    // GET - Lấy tất cả
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CustomerResponseDTO>>> getAllCustomers() {
-        List<CustomerResponseDTO> customers = customerService.getAllCustomers();
-        ApiResponse<List<CustomerResponseDTO>> response = ApiResponse.success(
+    public ResponseEntity<ApiResponse<List<Customer>>> getAllCustomers() {
+        List<Customer> customers = customerService.getAllCustomers();
+        ApiResponse<List<Customer>> response = ApiResponse.success(
                 HttpStatus.OK.value(),
                 "Successfully retrieved all customers.",
                 customers
@@ -49,11 +46,11 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    // GET
+    // GET - Lấy theo ID
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<CustomerResponseDTO>> getCustomerById(@PathVariable Long id) {
-        CustomerResponseDTO customer = customerService.getCustomerById(id);
-        ApiResponse<CustomerResponseDTO> response = ApiResponse.success(
+    public ResponseEntity<ApiResponse<Customer>> getCustomerById(@PathVariable Long id) {
+        Customer customer = customerService.getCustomerById(id);
+        ApiResponse<Customer> response = ApiResponse.success(
                 HttpStatus.OK.value(),
                 "Successfully retrieved customer with id " + id,
                 customer
@@ -61,14 +58,11 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    // PUT
+    // PUT - Cập nhật
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<CustomerResponseDTO>> updateCustomer(
-            @PathVariable Long id,
-            @Valid @RequestBody CustomerRequestDTO requestDTO) { // Thêm @Valid
-
-        CustomerResponseDTO updatedCustomer = customerService.updateCustomer(id, requestDTO);
-        ApiResponse<CustomerResponseDTO> response = ApiResponse.success(
+    public ResponseEntity<ApiResponse<Customer>> updateCustomer(@PathVariable Long id, @RequestBody Customer customerDetails) {
+        Customer updatedCustomer = customerService.updateCustomer(id, customerDetails);
+        ApiResponse<Customer> response = ApiResponse.success(
                 HttpStatus.OK.value(),
                 "Customer with id " + id + " updated successfully.",
                 updatedCustomer
@@ -76,7 +70,7 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    // DELETE
+    // DELETE - Xóa
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> deleteCustomer(@PathVariable Long id) {
         customerService.deleteCustomer(id);
@@ -87,7 +81,7 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    // GET (Nested)
+    // GET - Lấy tất cả xe của một khách hàng
     @GetMapping("/{customerId}/vehicles")
     public ResponseEntity<ApiResponse<List<VehicleResponseDTO>>> getVehiclesForCustomer(@PathVariable Long customerId) {
         List<VehicleResponseDTO> vehicles = vehicleService.getVehiclesByCustomerId(customerId);
@@ -96,17 +90,6 @@ public class CustomerController {
                 "Successfully retrieved vehicles for customer " + customerId,
                 vehicles
         );
-        return ResponseEntity.ok(response);
-    }
-
-    // GET (Search)
-    @GetMapping("/search/email") // Thêm /search/email để rõ ràng hơn
-    public ResponseEntity<ApiResponse<CustomerResponseDTO>> getCustomerByEmail(
-            @RequestParam String email) {
-
-        CustomerResponseDTO customer = customerService.getCustomerByEmail(email);
-        ApiResponse<CustomerResponseDTO> response = ApiResponse.success(
-                HttpStatus.OK.value(), "Customer retrieved successfully.", customer);
         return ResponseEntity.ok(response);
     }
 }

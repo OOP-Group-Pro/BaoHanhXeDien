@@ -112,7 +112,7 @@ public class WarrantyController {
 
 
     @GetMapping("/claims-by-status/{status}")
-    public ResponseEntity<List<ClaimDto>> getClaimsByStatus(@PathVariable("status") String status) {
+    public ResponseEntity<List<ClaimDto>> getClaimsByStatus(@RequestParam @PathVariable("status") String status) {
         return ResponseEntity.ok().body(warrantyService.getClaimsByStatus(status));
     }
 }

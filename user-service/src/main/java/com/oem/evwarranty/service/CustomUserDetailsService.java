@@ -1,6 +1,7 @@
 package com.oem.evwarranty.service;
 
 
+import com.oem.evwarranty.entity.CustomUserDetails;
 import com.oem.evwarranty.entity.User;
 import com.oem.evwarranty.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,9 +44,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         System.out.println("🔑 [LOGIN] User: " + username);
         System.out.println("🧩 Authorities: " + authorities);
 
-        return new org.springframework.security.core.userdetails.User(
+        return new CustomUserDetails(
+                user.getUserId(),
                 user.getUsername(),
                 user.getPassword(),
+                user.getServiceCenterId(), // ⬅️ Thêm centerId
                 authorities
         );
     }

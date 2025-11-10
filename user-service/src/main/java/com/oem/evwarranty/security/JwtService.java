@@ -1,5 +1,6 @@
 package com.oem.evwarranty.security;
 
+import com.oem.evwarranty.entity.CustomUserDetails;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -27,16 +28,19 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        // Lấy danh sách quyền (vd: [ROLE_ADMIN])
-        extraClaims.put("roles", userDetails.getAuthorities().stream()
+        CustomUserDetails user = (CustomUserDetails) userDetails;
+
+        extraClaims.put("roles", user.getAuthorities().stream()
                 .map(auth -> auth.getAuthority())
                 .toList());
 
+        extraClaims.put("centerId", user.getCenterId());
+
         return Jwts.builder()
                 .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .setSubject(user.getId().toString()) // dùng userId
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24)) // 1 ngày
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
