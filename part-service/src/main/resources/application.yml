@@ -1,8 +1,5 @@
 server:
-  port: 8004 #Thay port cho moi service
-app:
-  security:
-    enabled: false  # 🚀 false = bỏ xác thực, true = bật xác thực
+  port: 8080 #Thay port cho moi service
 
 logging:
   level:
@@ -12,7 +9,7 @@ spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: "jdbc:mysql://localhost:3306/part_service"
+    url: "jdbc:mysql://mysql-db:3306/part_service?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver

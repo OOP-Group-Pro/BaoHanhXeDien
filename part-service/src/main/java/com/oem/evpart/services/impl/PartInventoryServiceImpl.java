@@ -51,18 +51,6 @@ public class PartInventoryServiceImpl implements PartInventoryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<PartInventoryResponse> getAllInventory() {
-        // 1. Gọi repository để lấy tất cả Entity (dữ liệu thô)
-        List<PartInventory> inventoryList = inventoryRepository.findAll();
-
-        // 2. Dùng Stream và Mapper để chuyển đổi List<Entity> thành List<DTO>
-        return inventoryList.stream()
-                .map(inventoryMapper::toPartInventoryResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional
     public PartInventoryResponse decrementStock(DecrementStockRequest request) {
         // 1. Tìm bản ghi tồn kho tương ứng với partId và location
@@ -130,29 +118,5 @@ public class PartInventoryServiceImpl implements PartInventoryService {
         return inventoryRepository.findByPart_PartIdAndLocation(partId, location)
                 .map(inv -> inv.getQuantity() >= requiredQuantity && "Available".equals(inv.getStatus()))
                 .orElse(false);
-    }
-
-    // Thêm phương thức này vào bên trong class PartInventoryServiceImpl
-
-    @Override
-    @Transactional
-    public PartInventoryResponse updateInventoryQuantity(Long inventoryId, Long newQuantity) {
-        // 1. Kiểm tra số lượng hợp lệ (không âm)
-        if (newQuantity < 0) {
-            throw new IllegalArgumentException("Số lượng không thể là số âm.");
-        }
-
-        // 2. Tìm bản ghi tồn kho
-        PartInventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản ghi tồn kho (Inventory) với ID: " + inventoryId));
-
-        // 3. Cập nhật số lượng
-        inventory.setQuantity(newQuantity);
-
-        // 4. Lưu lại vào DB
-        PartInventory updatedInventory = inventoryRepository.save(inventory);
-
-        // 5. Trả về DTO cho client
-        return inventoryMapper.toPartInventoryResponse(updatedInventory);
     }
 }

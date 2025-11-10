@@ -4,18 +4,24 @@ package com.oem.evwarranty.controller;
 import com.oem.evwarranty.dto.ClaimDto;
 import com.oem.evwarranty.dto.CreateClaimDto;
 import com.oem.evwarranty.dto.ClaimRepairResultDto;
+import com.oem.evwarranty.enums.ClaimStatus;
 import com.oem.evwarranty.service.WarrantyService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Sử dụng để validate DTO
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:63342")
 @RequestMapping("/api/v1/claims")
 public class WarrantyController {
 
@@ -104,15 +110,17 @@ public class WarrantyController {
         return ResponseEntity.ok(warrantyService.getClaimStatusHistory(claimId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SC_STAFF', 'EVM_STAFF', 'TECHNICIAN')")
     @GetMapping
-    public ResponseEntity<List<ClaimDto>> getAllClaims() {
-        return ResponseEntity.ok(warrantyService.getAllClaims());
-    }
-
-
-    @GetMapping("/claims-by-status/{status}")
-    public ResponseEntity<List<ClaimDto>> getClaimsByStatus(@PathVariable("status") String status) {
-        return ResponseEntity.ok().body(warrantyService.getClaimsByStatus(status));
+    public Page<ClaimDto> getClaims(
+            @RequestParam(required = false) String claimCode,
+            @RequestParam(required = false) String vin,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            Pageable pageable,
+            Authentication authentication
+    ) {
+        return warrantyService.getClaims(claimCode, vin, status, fromDate, toDate, pageable, authentication);
     }
 }
