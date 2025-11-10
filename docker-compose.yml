@@ -7,15 +7,13 @@ services:
     container_name: mysql-db
     environment:
       MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: sharedDB # Dữ liệu này chỉ là DB ban đầu Docker tạo
+      MYSQL_DATABASE: sharedDB
     ports:
       - "3307:3306"
     networks:
       - oem-network
     volumes:
       - db_data:/var/lib/mysql
-
-    # 🌟 BỔ SUNG QUAN TRỌNG: Healthcheck
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234" ]
       interval: 5s
@@ -26,7 +24,8 @@ services:
   # 2. USER-SERVICE
   user-service:
     build:
-      context: ./user-service
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: user-service
     ports:
       - "8001:8080"
@@ -43,7 +42,8 @@ services:
   # 3. VEHICLE-SERVICE
   vehicle-service:
     build:
-      context: ./vehicle-service
+      context: .
+      dockerfile: vehicle-service/Dockerfile
     container_name: vehicle-service
     ports:
       - "8002:8080"
@@ -56,10 +56,11 @@ services:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
 
-  # 4. PART-SERVICE (Đã thêm depends_on)
+  # 4. PART-SERVICE
   part-service:
     build:
-      context: ./part-service
+      context: .
+      dockerfile: part-service/Dockerfile
     container_name: part-service
     ports:
       - "8004:8080"
@@ -72,10 +73,11 @@ services:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
 
-  # 5. CAMPAIGN-SERVICE (Đã sửa lỗi cú pháp và depends_on)
+  # 5. CAMPAIGN-SERVICE
   campaign-service:
     build:
-      context: ./campaign-service
+      context: .
+      dockerfile: campaign-service/Dockerfile
     container_name: campaign-service
     ports:
       - "8003:8080"
@@ -88,17 +90,17 @@ services:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
 
-  # 6. WARRANTY-SERVICE (ĐÃ THÊM depends_on CHÍNH XÁC)
+  # 6. WARRANTY-SERVICE
   warranty-service:
     build:
-      context: ./warranty-service
+      context: .
+      dockerfile: warranty-service/Dockerfile
     container_name: warranty-service
     ports:
       - "8005:8080"
     networks:
       - oem-network
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
-    # Khai báo phụ thuộc cho WARRANTY-SERVICE
     environment:
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
@@ -112,12 +114,12 @@ services:
         condition: service_started
       campaign-service:
         condition: service_started
-      # Đảm bảo tất cả chạy trước khi Warranty Service khởi động
 
+  # 7. API-GATEWAY (Đã đúng từ trước)
   api-gateway:
     build:
       context: .
-      dockerfile: ./api-gateway/Dockerfile
+      dockerfile: api-gateway/Dockerfile # <-- ĐÃ SỬA (Đúng)
     container_name: api-gateway
     ports:
       - "80:8080"
