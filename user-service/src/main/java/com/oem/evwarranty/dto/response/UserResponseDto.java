@@ -1,5 +1,10 @@
 package com.oem.evwarranty.dto.response;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserResponseDto {
     private Long userId;
     private String fullName;
