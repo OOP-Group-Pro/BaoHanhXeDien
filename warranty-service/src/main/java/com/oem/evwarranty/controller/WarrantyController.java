@@ -5,6 +5,7 @@ import com.oem.evwarranty.dto.ClaimDto;
 import com.oem.evwarranty.dto.CreateClaimDto;
 import com.oem.evwarranty.dto.ClaimRepairResultDto;
 import com.oem.evwarranty.enums.ClaimStatus;
+import com.oem.evwarranty.security.UserDetailsPrincipal;
 import com.oem.evwarranty.service.WarrantyService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Sử dụng để validate DTO
 
@@ -39,9 +41,10 @@ public class WarrantyController {
      */
     @PostMapping
     // @PreAuthorize("hasRole('SC_STAFF')") // Ví dụ về phân quyền
-    public ResponseEntity<Long> createClaim(@Valid @RequestBody CreateClaimDto createDto) {
+    public ResponseEntity<Long> createClaim(@Valid @RequestBody CreateClaimDto createDto, Authentication authentication) {
         // Giả định chúng ta lấy ID nhân viên từ token JWT đã được xác thực
-        Long scStaffId = 101L;
+        UserDetailsPrincipal userPrincipal = (UserDetailsPrincipal) authentication.getPrincipal();
+        Long scStaffId = userPrincipal.getUserId();
         Long newClaimId = warrantyService.createClaim(createDto, scStaffId);
         return new ResponseEntity<>(newClaimId, HttpStatus.CREATED);
     }

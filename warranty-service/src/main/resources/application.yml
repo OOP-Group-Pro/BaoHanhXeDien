@@ -5,7 +5,7 @@ server:
     include-binding-errors: always
 # Cấu hình Feign Clients:
 vehicle-service:
-  url: http://vehicle-service:8080/ # Giả sử Vehicle Service chạy ở port 8081
+  url: http://vehicle-service:8080/vehicle-service/ # Giả sử Vehicle Service chạy ở port 8081
 user-staff-service:
   url: http://user-service:8080/ # Giả sử User Service chạy ở port 8082
 part-service:
