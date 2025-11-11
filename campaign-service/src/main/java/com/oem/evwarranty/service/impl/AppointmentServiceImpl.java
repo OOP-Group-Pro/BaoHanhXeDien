@@ -60,14 +60,14 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public AppointmentResponse get(Integer appointmentId) {
+    public AppointmentResponse get(Long appointmentId) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
         return AppointmentMapper.toResponse(a);
     }
 
     @Override
-    public AppointmentResponse update(Integer appointmentId, AppointmentUpdateRequest req) {
+    public AppointmentResponse update(Long appointmentId, AppointmentUpdateRequest req) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
 
@@ -81,7 +81,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse reschedule(Integer appointmentId, AppointmentRescheduleRequest req) {
+    public AppointmentResponse reschedule(Long appointmentId, AppointmentRescheduleRequest req) {
         Appointment a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
 
@@ -105,7 +105,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
 
     @Override
-    public AppointmentResponse complete(Integer appointmentId, AppointmentCompleteRequest req) {
+    public AppointmentResponse complete(Long appointmentId, AppointmentCompleteRequest req) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
         a.setStatus(AppointmentStatus.DONE);
@@ -114,21 +114,21 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public void delete(Integer appointmentId) {
+    public void delete(Long appointmentId) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
         appRepo.delete(a);
     }
 
     @Override
-    public Page<AppointmentResponse> search(Integer campaignId, Integer affectedId, Pageable pageable) {
+    public Page<AppointmentResponse> search(Long campaignId, Long affectedId, Pageable pageable) {
         // Nếu đã có các hàm query trong repository thì thay thế tại đây.
         // Tạm thời trả về tất cả rồi map (đơn giản/nhanh để build qua).
         return appRepo.findAll(pageable).map(AppointmentMapper::toResponse);
     }
 
     @Override
-    public Page<AppointmentResponse> listByCampaign(Integer campaignId, AppointmentStatus status, Pageable pageable) {
+    public Page<AppointmentResponse> listByCampaign(Long campaignId, AppointmentStatus status, Pageable pageable) {
         // Ưu tiên dùng repository query nếu bạn đã khai báo:
         //   Page<Appointment> p = appRepo.findByCampaign_IdAndStatus(campaignId, status, pageable);
         // Hoặc:
@@ -141,7 +141,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
 
     @Override
-    public Page<AppointmentResponse> listByAffected(Integer affectedId, Pageable pageable) {
+    public Page<AppointmentResponse> listByAffected(Long affectedId, Pageable pageable) {
         return appRepo
                 .findByAffected_Id(affectedId, pageable)   // lấy theo affected.id
                 .map(AppointmentMapper::toResponse);

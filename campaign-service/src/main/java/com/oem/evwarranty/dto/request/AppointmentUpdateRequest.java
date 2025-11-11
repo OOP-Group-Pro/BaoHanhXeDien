@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public class AppointmentUpdateRequest {
 
     private LocalDateTime scheduledAt;
-    private Long serviceCenterId;          // dùng Long cho đồng bộ với entity
+    private Long serviceCenterId;
     private AppointmentStatus status;
 
     public LocalDateTime getScheduledAt() {

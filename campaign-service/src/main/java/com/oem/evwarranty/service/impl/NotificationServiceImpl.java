@@ -50,25 +50,25 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationResponse get(Integer id) {
+    public NotificationResponse get(Long id) {
         return notiRepo.findById(id)
                 .map(NotificationMapper::toResponse)
                 .orElseThrow(() -> new NotFoundException("Notification not found"));
     }
 
     @Override
-    public void delete(Integer id) {
+    public void delete(Long id) {
         if (!notiRepo.existsById(id)) throw new NotFoundException("Notification not found");
         notiRepo.deleteById(id);
     }
 
     @Override
-    public Page<NotificationResponse> listByCampaign(Integer campaignId, Pageable pageable) {
+    public Page<NotificationResponse> listByCampaign(Long campaignId, Pageable pageable) {
         return notiRepo.findByCampaignId(campaignId, pageable).map(NotificationMapper::toResponse);
     }
 
     @Override
-    public Page<NotificationResponse> listByAffected(Integer affectedId, Pageable pageable) {
+    public Page<NotificationResponse> listByAffected(Long affectedId, Pageable pageable) {
         return notiRepo.findByAffectedId(affectedId, pageable).map(NotificationMapper::toResponse);
     }
 }

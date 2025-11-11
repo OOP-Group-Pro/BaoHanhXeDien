@@ -1,5 +1,6 @@
 package com.oem.evwarranty.controller;
 
+import com.oem.evwarranty.config.ApiConstants;
 import com.oem.evwarranty.dto.request.NotificationCreateRequest;
 import com.oem.evwarranty.dto.response.NotificationResponse;
 import com.oem.evwarranty.service.NotificationService;
@@ -9,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping(ApiConstants.API_V1 + "/notifications")
 public class NotificationController {
 
     private final NotificationService service;
@@ -24,22 +25,22 @@ public class NotificationController {
     }
 
     @GetMapping("/{id}")
-    public NotificationResponse get(@PathVariable Integer id) {
+    public NotificationResponse get(@PathVariable Long id) {
         return service.get(id);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
+    public void delete(@PathVariable Long id) {
         service.delete(id);
     }
 
     @GetMapping("/by-campaign/{campaignId}")
-    public Page<NotificationResponse> listByCampaign(@PathVariable Integer campaignId, Pageable pageable) {
+    public Page<NotificationResponse> listByCampaign(@PathVariable Long campaignId, Pageable pageable) {
         return service.listByCampaign(campaignId, pageable);
     }
 
     @GetMapping("/by-affected/{affectedId}")
-    public Page<NotificationResponse> listByAffected(@PathVariable Integer affectedId, Pageable pageable) {
+    public Page<NotificationResponse> listByAffected(@PathVariable Long affectedId, Pageable pageable) {
         return service.listByAffected(affectedId, pageable);
     }
 }

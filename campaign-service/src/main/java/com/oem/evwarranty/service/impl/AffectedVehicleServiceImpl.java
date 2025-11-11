@@ -50,7 +50,7 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
-    public AffectedVehicleResponse update(Integer affectedId, AffectedVehicleUpdateRequest req) {
+    public AffectedVehicleResponse update(Long affectedId, AffectedVehicleUpdateRequest req) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
 
@@ -64,20 +64,20 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
-    public void delete(Integer affectedId) {
+    public void delete(Long affectedId) {
         if (!avRepo.existsById(affectedId)) throw new NotFoundException("AffectedVehicle not found");
         avRepo.deleteById(affectedId);
     }
 
     @Override
-    public AffectedVehicleResponse get(Integer affectedId) {
+    public AffectedVehicleResponse get(Long affectedId) {
         return avRepo.findById(affectedId)
                 .map(AffectedVehicleMapper::toResponse)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
     }
 
     @Override
-    public Page<AffectedVehicleResponse> search(Integer campaignId, String vinKeyword,
+    public Page<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
                                                 AffectedStatus status, Pageable pageable) {
         vinKeyword = (vinKeyword == null) ? "" : vinKeyword;
 
@@ -85,13 +85,17 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
             return avRepo.findByCampaignIdAndStatus(campaignId, status, pageable)
                     .map(AffectedVehicleMapper::toResponse);
         }
-        return avRepo.findByCampaignIdAndVehicleVinContainingIgnoreCase(
-                        campaignId, vinKeyword, pageable)
+        if (!vinKeyword.isEmpty()) {
+            return avRepo.findByCampaignIdAndVehicleVinContainingIgnoreCase(campaignId, vinKeyword, pageable)
+                    .map(AffectedVehicleMapper::toResponse);
+        }
+        return avRepo.findByCampaignId(campaignId, pageable)
                 .map(AffectedVehicleMapper::toResponse);
     }
 
+
     @Override
-    public AffectedVehicleResponse markNotified(Integer affectedId) {
+    public AffectedVehicleResponse markNotified(Long affectedId) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
         av.setStatus(AffectedStatus.NOTIFIED);
@@ -99,20 +103,20 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
-    public AffectedVehicleResponse schedule(Integer affectedId, AffectedVehicleScheduleRequest req) {
+    public AffectedVehicleResponse schedule(Long affectedId, AffectedVehicleScheduleRequest req) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
 
         av.setStatus(AffectedStatus.SCHEDULED);
-        av.setAssignedServiceCenterId(
-                req.getServiceCenterId() == null ? av.getAssignedServiceCenterId() : null /* map nếu INT */
-        );
-        // Bản thân lịch hẹn chi tiết nằm ở bảng Appointment, ở đây chỉ đổi trạng thái.
+        if (req.getServiceCenterId() != null) {
+            av.setAssignedServiceCenterId(req.getServiceCenterId());
+        }
         return AffectedVehicleMapper.toResponse(av);
     }
 
+
     @Override
-    public AffectedVehicleResponse markCompleted(Integer affectedId, AffectedVehicleCompleteRequest req) {
+    public AffectedVehicleResponse markCompleted(Long affectedId, AffectedVehicleCompleteRequest req) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
         av.setStatus(AffectedStatus.COMPLETED);
@@ -120,4 +124,19 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
         // nếu muốn lưu note/outcome, thêm field cho entity
         return AffectedVehicleMapper.toResponse(av);
     }
+
+    @Override
+    public AffectedVehicleResponse getByCampaign(Long campaignId, Long affectedId) {
+        AffectedVehicle av = avRepo.findByIdAndCampaignId(affectedId, campaignId)
+                .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
+        return AffectedVehicleMapper.toResponse(av);
+    }
+
+    @Override
+    public void deleteByCampaign(Long campaignId, Long affectedId) {
+        AffectedVehicle av = avRepo.findByIdAndCampaignId(affectedId, campaignId)
+                .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
+        avRepo.delete(av);
+    }
+
 }
