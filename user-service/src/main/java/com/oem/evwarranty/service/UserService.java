@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static com.oem.evwarranty.mapper.UserMapper.mapToUserResponseDto;
+
 @Service
 public class UserService {
 
@@ -114,5 +116,10 @@ public class UserService {
             return true;
         }
         return false;
+    }
+
+    public UserResponseDto getUserInfoById (Long id) {
+        User user = userRepository.findById(id).orElseThrow( () -> new NoSuchElementException("User not found with ID: " + id) );
+        return mapToUserResponseDto(user);
     }
 }
