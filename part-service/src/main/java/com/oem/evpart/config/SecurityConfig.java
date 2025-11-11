@@ -41,6 +41,11 @@ public class SecurityConfig {
 
                 // SỬA LẠI LUẬT:
                 .authorizeHttpRequests(auth -> auth
+                        // 1. Cho phép các đường dẫn public (như Swagger)
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
 
                         // 2. BẮT BUỘC tất cả các request khác phải được xác thực
                         .anyRequest().authenticated()

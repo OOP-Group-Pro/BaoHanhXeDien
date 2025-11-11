@@ -5,7 +5,7 @@ server:
     include-binding-errors: always
 # Cấu hình Feign Clients:
 vehicle-service:
-  url: http://vehicle-service:8080/ # Giả sử Vehicle Service chạy ở port 8081
+  url: http://vehicle-service:8080/vehicle-service/ # Giả sử Vehicle Service chạy ở port 8081
 user-staff-service:
   url: http://user-service:8080/ # Giả sử User Service chạy ở port 8082
 part-service:
@@ -25,7 +25,7 @@ spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: "jdbc:mysql://localhost:3306/warranty_service_db?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
+    url: "jdbc:mysql://mysql-db:3306/warranty_service_db?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver

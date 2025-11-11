@@ -22,5 +22,4 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
-    // ... các handler khác
 }
