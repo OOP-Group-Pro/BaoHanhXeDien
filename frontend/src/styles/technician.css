@@ -1,0 +1,360 @@
+/* ====== CSS CHUNG TỪ TEMPLATE.HTML ====== */
+:root {
+    --primary-blue: #3B82F6;
+    --primary-blue-dark: #2563EB;
+    --sidebar-bg: #1E1E2D;
+    --content-bg: #F3F4F6;
+    --white: #FFFFFF;
+    --text-dark: #1F2937;
+    --text-light: #F9FAFB;
+    --text-secondary: #6B7280;
+    --border-color: #E5E7EB;
+    --success-color: #10B981;
+    --warning-color: #F59E0B;
+    --danger-color: #EF4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    background-color: var(--content-bg);
+    color: var(--text-dark);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ===== Sidebar (Menu trái) - Từ template.html ===== */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    color: var(--text-light);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.sidebar-header .user-info span {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.sidebar-nav {
+    list-style: none;
+    margin-top: 24px;
+}
+
+.sidebar-nav li {
+    margin-bottom: 8px;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-light);
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.sidebar-nav a i {
+    margin-right: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav a.active {
+    background-color: var(--primary-blue);
+    color: var(--white);
+}
+
+/* ===== Main content area - Từ template.html ===== */
+.main-content {
+    flex-grow: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.main-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* ===== NÚT BẤM (Buttons) - CSS TỪ TEMPLATE ===== */
+.btn {
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: var(--white);
+}
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-blue-dark);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+.btn-secondary {
+    background-color: var(--white);
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+}
+.btn-secondary:hover {
+    background-color: var(--content-bg);
+}
+.btn-success {
+    background-color: var(--success-color);
+    color: var(--white);
+}
+.btn-success:hover:not(:disabled) {
+    background-color: #059669;
+}
+.btn:disabled {
+    background-color: #D1D5DB;
+    color: #9CA3AF;
+    cursor: not-allowed;
+}
+
+/* ===== THẺ (Card) - CSS MỚI ĐỂ CHỨA NỘI DUNG ===== */
+.card {
+    background-color: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    margin-bottom: 24px;
+}
+.card-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+.card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.card-body {
+    padding: 24px;
+}
+.card-footer {
+    padding: 16px 24px;
+    background-color: var(--content-bg);
+    border-top: 1px solid var(--border-color);
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ===== QUẢN LÝ ẨN/HIỆN CÁC MÀN HÌNH ===== */
+.screen {
+    display: none;
+}
+.screen.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== CSS CHO BẢNG BIỂU (MÀN HÌNH 1) ===== */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table th, .data-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.875rem;
+}
+.data-table thead th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: #F9FAFB;
+}
+.data-table tbody tr:hover {
+    background-color: #F9FAFB;
+}
+.view-claim {
+    color: var(--primary-blue);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+.view-claim:hover {
+    color: var(--primary-blue-dark);
+    text-decoration: underline;
+}
+.status-tag {
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.status-ready {
+    background-color: #DEF7EC;
+    color: #067647;
+}
+.status-pending {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+/* CSS CHO LOADING VÀ LỖI */
+.loading-placeholder, .error-placeholder {
+    text-align: center;
+    padding: 40px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* ===== CSS CHO CHI TIẾT (MÀN HÌNH 2) ===== */
+.detail-section h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 24px;
+}
+.detail-item p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+.detail-item strong {
+    font-weight: 600;
+    color: var(--text-dark);
+    display: block;
+    margin-bottom: 4px;
+}
+.procedure-list {
+    padding-left: 20px;
+}
+.procedure-list li {
+    font-size: 0.875rem;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+/* ===== CSS CHO FORM (MÀN HÌNH 3) ===== */
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+}
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+.form-confirm {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background-color: #F9FAFB;
+    border-radius: 8px;
+    margin-top: 24px;
+}
+.form-confirm input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-blue);
+    cursor: pointer;
+}
+.form-confirm label {
+    margin-bottom: 0;
+    font-weight: 500;
+    cursor: pointer;
+}
+/* CSS cho thông báo lỗi chung */
+.error-message {
+    display: none; /* Ẩn mặc định */
+    color: var(--danger-color);
+    background-color: #FEF2F2;
+    border: 1px solid #FCA5A5;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    font-size: 0.875rem;
+}
