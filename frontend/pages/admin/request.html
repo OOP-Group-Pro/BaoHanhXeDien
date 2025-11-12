@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Đề xuất | OEM EV Warranty Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
+
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <div class="avatar">T</div>
+        <div class="user-info">
+            <strong>Admin</strong>
+            <span>Admin Thùy</span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i class="fa-solid fa-tachometer-alt"></i>Dashboard</a></li>
+        <li><a href="users.html"><i class="fa-solid fa-file-invoice"></i>Quản lí người dùng</a></li>
+        <li class="active"><a href="#"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+        <li><a href="inventory.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
+        <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+        <li style="font-style:italic; font-size:0.85rem; text-align:center; margin-top:5px;">
+            <a href="#" id="manager-link">Bạn là Manager?</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="main-content" id="main-content">
+
+    <header class="main-header">
+        <h1>Quản lí Phiếu Đề xuất 📝</h1>
+        <div class="header-actions">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Tìm kiếm phiếu đề xuất...">
+            </div>
+            <button class="btn-secondary" id="reload-data-btn"><i class="fa-solid fa-sync"></i> Tải lại Dữ liệu</button>
+        </div>
+    </header>
+
+    <div class="content-area" style="grid-template-columns: 1fr;">
+        <div class="table-container">
+            <h2>Danh sách Phiếu Đề xuất Nhân sự Mới</h2>
+            <table class="table-full-width">
+                <thead>
+                <tr>
+                    <th>Mã Phiếu</th>
+                    <th>Tên đầy đủ</th>
+                    <th>Tên người dùng</th>
+                    <th>Vai trò</th>
+                    <th>Người tạo</th>
+                    <th>Thời gian tạo</th>
+                    <th>Trạng thái</th>
+                    <th style="min-width: 250px;">Hành động</th>
+                </tr>
+                </thead>
+                <tbody id="request-table-body">
+                <tr><td colspan="8" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../../src/js/script-admin.js"></script>
+
+
+
+
+</body>
+</html>

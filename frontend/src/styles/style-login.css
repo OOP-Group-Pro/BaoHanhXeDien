@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* ==== BACKGROUND ==== */
+.background {
+  background-image: url("img/image.png");
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8%;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 15, 25, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 0;
+}
+/* ==== LEFT SIDE BRANDING ==== */
+.branding {
+  position: relative;
+  z-index: 1;
+  max-width: 950px;
+  transform: translateX(30px); /* đẩy cả cụm sang phải nhẹ */
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.brand-logo img {
+  width: 65px;
+  height: 65px;
+  filter: drop-shadow(0 0 10px rgba(0, 195, 255, 0.7));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.brand-logo img:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 16px rgba(0, 200, 255, 1));
+}
+
+.brand-logo h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 64px;
+  font-weight: 900;
+  margin: 0;
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+}
+
+/* ==== SUBTITLE (Internal / System Info) ==== */
+.branding p {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  color: #e5e7eb;
+  margin-top: 10px;
+  margin-left: 84px; /* canh theo tiêu đề */
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+/* ==== LOGIN BOX ==== */
+.login-container {
+  position: relative;
+  z-index: 2;
+}
+
+.login-box {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 45px 40px;
+  width: 350px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.8s ease forwards;
+}
+
+.login-box h2 {
+  text-align: center;
+  color: #111827;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.login-box input[type="text"],
+.login-box input[type="password"] {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.login-box input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(90deg, #007bff, #00b4d8);
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+  background: linear-gradient(90deg, #0064d2, #009ecb);
+  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+}
+
+.note {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 15px;
+}
+
+.error-message {
+  color: #dc2626;
+  text-align: center;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+/* ==== ANIMATIONS ==== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
