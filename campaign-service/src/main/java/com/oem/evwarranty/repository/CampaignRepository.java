@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface CampaignRepository extends JpaRepository<Campaign, Integer> {
+public interface CampaignRepository extends JpaRepository<Campaign, Long> {
 
     // Check code trùng
     boolean existsByCode(String code);

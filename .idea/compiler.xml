@@ -25,6 +25,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="template-service" target="21" />
       <module name="user_service" target="21" />
     </bytecodeTargetLevel>
   </component>

@@ -37,7 +37,7 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
-    public CampaignResponse update(Integer id, CampaignUpdateRequest req) {
+    public CampaignResponse update(Long id, CampaignUpdateRequest req) {
         Campaign c = campaignRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Campaign not found"));
 
@@ -54,14 +54,14 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
-    public CampaignResponse get(Integer id) {
+    public CampaignResponse get(Long id) {
         Campaign c = campaignRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Campaign not found"));
         return CampaignMapper.toResponse(c);
     }
 
     @Override
-    public void delete(Integer id) {
+    public void delete(Long id) {
         if (!campaignRepo.existsById(id)) throw new NotFoundException("Campaign not found");
         campaignRepo.deleteById(id);
     }

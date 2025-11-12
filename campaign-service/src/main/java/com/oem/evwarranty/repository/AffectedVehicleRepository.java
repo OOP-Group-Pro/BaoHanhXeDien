@@ -6,13 +6,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AffectedVehicleRepository extends JpaRepository<AffectedVehicle, Integer> {
+import java.util.Optional;
 
-    boolean existsByCampaignIdAndVehicleVin(Integer campaignId, String vehicleVin);
+public interface AffectedVehicleRepository extends JpaRepository<AffectedVehicle, Long> {
 
-    Page<AffectedVehicle> findByCampaignIdAndVehicleVinContainingIgnoreCase(
-            Integer campaignId, String vinKeyword, Pageable pageable);
+    // kiểm tra VIN đã nằm trong campaign chưa
+    boolean existsByCampaignIdAndVehicleVin(Long campaignId, String vehicleVin);
 
-    Page<AffectedVehicle> findByCampaignIdAndStatus(
-            Integer campaignId, AffectedStatus status, Pageable pageable);
+    // search
+    Page<AffectedVehicle> findByCampaignId(Long campaignId, Pageable pageable);
+    Page<AffectedVehicle> findByCampaignIdAndStatus(Long campaignId, AffectedStatus status, Pageable pageable);
+    Page<AffectedVehicle> findByCampaignIdAndVehicleVinContainingIgnoreCase(Long campaignId, String vin, Pageable pageable);
+
+    // lấy 1 bản ghi theo campaign + id (đảm bảo không lạc campaign)
+    Optional<AffectedVehicle> findByIdAndCampaignId(Long id, Long campaignId);
 }

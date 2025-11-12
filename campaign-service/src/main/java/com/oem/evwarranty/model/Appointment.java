@@ -12,7 +12,7 @@ public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "appointment_id")
-    private Integer id;
+    private Long id;
 
     // FK -> CAMPAIGN
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -37,8 +37,8 @@ public class Appointment {
     public Appointment() {}
 
     // ==== GETTER/SETTER ====
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public Campaign getCampaign() { return campaign; }
     public void setCampaign(Campaign campaign) { this.campaign = campaign; }
