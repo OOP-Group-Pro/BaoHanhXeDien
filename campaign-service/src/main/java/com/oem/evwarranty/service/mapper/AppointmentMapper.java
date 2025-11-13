@@ -13,10 +13,7 @@ public final class AppointmentMapper {
         dto.setAffectedId(a.getAffected().getId());
         dto.setScheduledAt(a.getScheduledAt());
 
-        // entity hiện trả Long, DTO cần Integer -> ép kiểu an toàn
-        dto.setServiceCenterId(
-                a.getServiceCenterId() == null ? null : Math.toIntExact(a.getServiceCenterId())
-        );
+        dto.setServiceCenterId(a.getServiceCenterId());
 
         dto.setStatus(a.getStatus());
         return dto;

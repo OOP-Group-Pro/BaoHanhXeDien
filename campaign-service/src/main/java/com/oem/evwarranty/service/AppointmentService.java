@@ -13,21 +13,21 @@ public interface    AppointmentService {
 
     AppointmentResponse create(AppointmentCreateRequest req);
 
-    AppointmentResponse get(Integer appointmentId);
+    AppointmentResponse get(Long appointmentId);
 
-    AppointmentResponse update(Integer appointmentId, AppointmentUpdateRequest req);
+    AppointmentResponse update(Long appointmentId, AppointmentUpdateRequest req);
 
-    AppointmentResponse reschedule(Integer appointmentId, AppointmentRescheduleRequest req);
+    AppointmentResponse reschedule(Long appointmentId, AppointmentRescheduleRequest req);
 
-    AppointmentResponse complete(Integer appointmentId, AppointmentCompleteRequest req);
+    AppointmentResponse complete(Long appointmentId, AppointmentCompleteRequest req);
 
-    void delete(Integer appointmentId);
+    void delete(Long appointmentId);
 
-    Page<AppointmentResponse> listByAffected(Integer affectedId, Pageable pageable);
+    Page<AppointmentResponse> listByAffected(Long affectedId, Pageable pageable);
 
     /** Tìm kiếm chung */
-    Page<AppointmentResponse> search(Integer campaignId, Integer affectedId, Pageable pageable);
+    Page<AppointmentResponse> search(Long campaignId, Long affectedId, Pageable pageable);
 
     /** Liệt kê theo campaign + (tuỳ chọn) status */
-    Page<AppointmentResponse> listByCampaign(Integer campaignId, AppointmentStatus status, Pageable pageable);
+    Page<AppointmentResponse> listByCampaign(Long campaignId, AppointmentStatus status, Pageable pageable);
 }

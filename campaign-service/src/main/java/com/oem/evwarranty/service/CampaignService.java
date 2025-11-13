@@ -10,8 +10,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface CampaignService {
     CampaignResponse create(CampaignCreateRequest req);
-    CampaignResponse update(Integer id, CampaignUpdateRequest req);
-    CampaignResponse get(Integer id);
-    void delete(Integer id);
+    CampaignResponse update(Long id, CampaignUpdateRequest req);
+    CampaignResponse get(Long id);
+    void delete(Long id);
     Page<CampaignResponse> search(String code, CampaignStatus status, CampaignType type, Pageable pageable);
 }

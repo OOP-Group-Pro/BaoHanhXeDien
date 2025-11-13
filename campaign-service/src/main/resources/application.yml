@@ -4,6 +4,22 @@ server:
     include-message: always
     include-binding-errors: always
 
+vehicle-service:
+  url: http://localhost:8002/
+user-service:
+  url: http://localhost:8001/
+part-service:
+  url: http://localhost:8004/
+warranty-service:
+  url: http://localhost:8005/
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+
 spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM

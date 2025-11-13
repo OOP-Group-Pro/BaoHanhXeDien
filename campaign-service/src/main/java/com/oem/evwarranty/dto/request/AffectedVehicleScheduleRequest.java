@@ -8,7 +8,7 @@ public class AffectedVehicleScheduleRequest {
     @NotNull
     private LocalDateTime scheduledAt;
     @NotNull
-    private Integer serviceCenterId; //
+    private Long serviceCenterId; //
     // getter/setter ...
 
     public LocalDateTime getScheduledAt() {
@@ -19,11 +19,11 @@ public class AffectedVehicleScheduleRequest {
         this.scheduledAt = scheduledAt;
     }
 
-    public Integer getServiceCenterId() {
+    public Long getServiceCenterId() {
         return serviceCenterId;
     }
 
-    public void setServiceCenterId(Integer serviceCenterId) {
+    public void setServiceCenterId(Long serviceCenterId) {
         this.serviceCenterId = serviceCenterId;
     }
 }

@@ -5,7 +5,7 @@ import com.oem.evwarranty.model.enums.CampaignType;
 import java.time.LocalDateTime;
 
 public class CampaignResponse {
-    private Integer id;
+    private Long id;
     private String code;
     private String title;
     private CampaignType type;
@@ -14,8 +14,8 @@ public class CampaignResponse {
     private LocalDateTime endAt;
 
     // getters/setters
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
     public String getTitle() { return title; }

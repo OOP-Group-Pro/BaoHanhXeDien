@@ -7,9 +7,9 @@ import org.springframework.data.domain.Pageable;
 
 public interface NotificationService {
     NotificationResponse create(NotificationCreateRequest req);
-    NotificationResponse get(Integer id);
-    void delete(Integer id);
+    NotificationResponse get(Long id);
+    void delete(Long id);
 
-    Page<NotificationResponse> listByCampaign(Integer campaignId, Pageable pageable);
-    Page<NotificationResponse> listByAffected(Integer affectedId, Pageable pageable);
+    Page<NotificationResponse> listByCampaign(Long campaignId, Pageable pageable);
+    Page<NotificationResponse> listByAffected(Long affectedId, Pageable pageable);
 }

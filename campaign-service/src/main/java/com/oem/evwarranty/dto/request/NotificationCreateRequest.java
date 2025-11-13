@@ -4,18 +4,18 @@ import jakarta.validation.constraints.NotNull;
 
 public class NotificationCreateRequest {
     @NotNull
-    private Integer campaignId;
+    private Long campaignId;
     @NotNull
-    private Integer affectedId;
+    private Long affectedId;
     @NotNull
     private String channel; // EMAIL/SMS/…
     @NotNull
     private String status;  // SENT/FAILED/PENDING…
 
-    public Integer getCampaignId() { return campaignId; }
-    public void setCampaignId(Integer campaignId) { this.campaignId = campaignId; }
-    public Integer getAffectedId() { return affectedId; }
-    public void setAffectedId(Integer affectedId) { this.affectedId = affectedId; }
+    public Long getCampaignId() { return campaignId; }
+    public void setCampaignId(Long campaignId) { this.campaignId = campaignId; }
+    public Long getAffectedId() { return affectedId; }
+    public void setAffectedId(Long affectedId) { this.affectedId = affectedId; }
     public String getChannel() { return channel; }
     public void setChannel(String channel) { this.channel = channel; }
     public String getStatus() { return status; }

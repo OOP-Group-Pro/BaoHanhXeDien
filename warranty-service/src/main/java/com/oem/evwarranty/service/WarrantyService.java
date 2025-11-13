@@ -15,24 +15,16 @@ import com.oem.evwarranty.model.utils.PartAllocationRequest;
 import com.oem.evwarranty.model.utils.SerialUpdateDetail;
 import com.oem.evwarranty.client.warranty.VehicleServiceClient; // Feign Client
 import com.oem.evwarranty.client.warranty.PartServiceClient;    // Feign Client
-
 import com.oem.evwarranty.repository.specification.WarrantyClaimSpecification;
 import com.oem.evwarranty.security.UserDetailsPrincipal;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -288,16 +280,16 @@ public class WarrantyService {
                 .map(ClaimMapper::mapToLogDto)
                 // Dùng user client gửi ProcessorId để lấy tên Processor và lưu vào Dto
                 .map(logDto -> {
-                        if(logDto.getProcessorId() != null) {
-                            try {
-                                UserResponseDto proccessorDetails = userClient.getScStaffById(logDto.getProcessorId());
-                                logDto.setProcessorName(proccessorDetails.getFullName());
-                            }catch (Exception e) {
-                                logDto.setProcessorName("ID: " + logDto.getProcessorId() + " (Không tìm thấy)");
-                            }
-                        }else logDto.setProcessorName("Hệ thống");
+                    if(logDto.getProcessorId() != null) {
+                        try {
+                            UserResponseDto proccessorDetails = userClient.getScStaffById(logDto.getProcessorId());
+                            logDto.setProcessorName(proccessorDetails.getFullName());
+                        }catch (Exception e) {
+                            logDto.setProcessorName("ID: " + logDto.getProcessorId() + " (Không tìm thấy)");
+                        }
+                    }else logDto.setProcessorName("Hệ thống");
 
-                        return logDto;
+                    return logDto;
                 })
                 .toList();
     }
@@ -316,7 +308,7 @@ public class WarrantyService {
 
 
     // =======Ham lay claims duoc loc:========
-        public Page<ClaimDto> getClaims(
+    public Page<ClaimDto> getClaims(
             String claimCode,
             String vin,
             String statusStr,
@@ -347,9 +339,9 @@ public class WarrantyService {
         specification = specification.and(WarrantyClaimSpecification.createdAfter(fromDate))
                 .and(WarrantyClaimSpecification.createdBefore(toDate));
 
-            // Lay Principal tu SecurityContext
+        // Lay Principal tu SecurityContext
         Object principal = authentication.getPrincipal();
-            // Ap dung logic phan quyen theo loai Principal:
+        // Ap dung logic phan quyen theo loai Principal:
         if (principal instanceof UserDetailsPrincipal userDetails) {
 
             Long currentUserId = userDetails.getUserId();

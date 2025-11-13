@@ -9,7 +9,7 @@ public class AppointmentRescheduleRequest {
     private LocalDateTime scheduledAt;
 
     // Cho phép đổi TTTD (optional)
-    private Integer serviceCenterId;
+    private Long serviceCenterId;
 
     public LocalDateTime getScheduledAt() {
         return scheduledAt;
@@ -17,10 +17,10 @@ public class AppointmentRescheduleRequest {
     public void setScheduledAt(LocalDateTime scheduledAt) {
         this.scheduledAt = scheduledAt;
     }
-    public Integer getServiceCenterId() {
+    public Long getServiceCenterId() {
         return serviceCenterId;
     }
-    public void setServiceCenterId(Integer serviceCenterId) {
+    public void setServiceCenterId(Long serviceCenterId) {
         this.serviceCenterId = serviceCenterId;
     }
 }

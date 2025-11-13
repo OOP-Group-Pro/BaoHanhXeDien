@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lí Người dùng | OEM EV Warranty Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <div class="avatar">T</div>
+        <div class="user-info">
+            <strong>Admin</strong>
+            <span>Admin Thùy</span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i class="fa-solid fa-tachometer-alt"></i>Dashboard</a></li>
+        <li><a href="#" class="active"><i class="fa-solid fa-file-invoice"></i>Quản lí người dùng</a></li>
+        <li><a href="request.html"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+        <li><a href="inventory.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
+        <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+        <li style="font-style:italic; font-size:0.85rem; text-align:center; margin-top:5px;">
+            <a href="#" id="manager-link">Bạn là Manager?</a>
+        </li>
+
+    </ul>
+</nav>
+
+<main class="main-content" id="main-content">
+    <header class="main-header">
+        <h1>Quản lí Người dùng 👥</h1>
+        <div class="header-actions">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="search-input" placeholder="Tìm kiếm người dùng...">
+            </div>
+            <button class="btn-primary" id="add-user-btn"><i class="fa-solid fa-user-plus"></i> Thêm Người dùng Mới</button>
+        </div>
+    </header>
+
+    <div class="content-area" style="grid-template-columns: 1fr;">
+        <div class="table-container">
+            <h2>Danh sách Người dùng Hệ thống</h2>
+            <table class="table-full-width">
+                <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>Email</th>
+                    <th>Điện thoại</th>
+                    <th>Vai trò</th>
+                    <th>Mã Trung tâm DV</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody id="user-table-body">
+                <tr><td colspan="9" style="text-align: center;">Đang tải dữ liệu người dùng...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Modal Thêm/Sửa User -->
+<div id="user-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div class="modal-content" style="width:400px; padding:20px; border-radius:8px; background:#fff; position:relative;">
+        <button class="close-btn" id="close-modal-btn" style="position:absolute; top:5px; right:10px; font-size:18px; border:none; background:none; cursor:pointer;">&times;</button>
+        <h3 id="modal-title">Thêm Người dùng</h3>
+        <input type="hidden" id="user-id">
+        <label>Username</label>
+        <input type="text" id="username" style="width:100%; margin:5px 0; padding:6px;">
+        <label>Password</label>
+        <div style="display:flex; align-items:center;">
+            <input type="password" id="password" style="width:100%; margin:5px 0; padding:6px;">
+            <i class="fa-solid fa-eye" id="toggle-password" style="margin-left:5px; cursor:pointer;"></i>
+        </div>
+        <label>Email</label>
+        <input type="email" id="email" style="width:100%; margin:5px 0; padding:6px;">
+        <label>Phone</label>
+        <input type="text" id="phone" style="width:100%; margin:5px 0; padding:6px;">
+        <label>Role</label>
+        <select id="role" style="width:100%; margin:5px 0; padding:6px;">
+            <option value="ROLE_ADMIN">Admin</option>
+            <option value="ROLE_USER">User</option>
+            <option value="ROLE_TECHNICIAN">Technician</option>
+        </select>
+        <label>Status</label>
+        <select id="status" style="width:100%; margin:5px 0; padding:6px;">
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="LOCKED">Blocked</option>
+        </select>
+        <button id="save-user-btn" class="btn-primary" style="margin-top:10px;">Lưu</button>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="../../src/js/script-admin.js"></script>
+
+</body>
+</html>
+</body>
+</html>

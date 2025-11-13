@@ -1,5 +1,6 @@
 package com.oem.evwarranty.controller;
 
+import com.oem.evwarranty.config.ApiConstants;
 import com.oem.evwarranty.dto.request.*;
 import com.oem.evwarranty.dto.response.AffectedVehicleResponse;
 import com.oem.evwarranty.model.enums.AffectedStatus;
@@ -7,10 +8,11 @@ import com.oem.evwarranty.service.AffectedVehicleService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/campaigns/{campaignId}/affected-vehicles")
+@RequestMapping(ApiConstants.API_V1 + "/campaigns/{campaignId}/affected-vehicles")
 public class AffectedVehicleController {
 
     private final AffectedVehicleService service;
@@ -20,14 +22,14 @@ public class AffectedVehicleController {
     }
 
     @PostMapping
-    public AffectedVehicleResponse create(@PathVariable Integer campaignId,
+    public AffectedVehicleResponse create(@PathVariable Long campaignId,
                                           @Valid @RequestBody AffectedVehicleCreateRequest req) {
         req.setCampaignId(campaignId);
         return service.create(req);
     }
 
     @GetMapping
-    public Page<AffectedVehicleResponse> search(@PathVariable Integer campaignId,
+    public Page<AffectedVehicleResponse> search(@PathVariable Long campaignId,
                                                 @RequestParam(required = false) String vin,
                                                 @RequestParam(required = false) AffectedStatus status,
                                                 Pageable pageable) {
@@ -35,35 +37,39 @@ public class AffectedVehicleController {
     }
 
     @GetMapping("/{affectedId}")
-    public AffectedVehicleResponse get(@PathVariable Integer affectedId) {
-        return service.get(affectedId);
-    }
-
-    @PutMapping("/{affectedId}")
-    public AffectedVehicleResponse update(@PathVariable Integer affectedId,
-                                          @RequestBody AffectedVehicleUpdateRequest req) {
-        return service.update(affectedId, req);
+    public AffectedVehicleResponse get(@PathVariable Long campaignId,
+                                       @PathVariable Long affectedId) {
+        return service.getByCampaign(campaignId, affectedId);
     }
 
     @DeleteMapping("/{affectedId}")
-    public void delete(@PathVariable Integer affectedId) {
-        service.delete(affectedId);
+    public ResponseEntity<Void> delete(@PathVariable Long campaignId,
+                                       @PathVariable Long affectedId) {
+        service.deleteByCampaign(campaignId, affectedId);
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{affectedId}/notify")
-    public AffectedVehicleResponse markNotified(@PathVariable Integer affectedId) {
-        return service.markNotified(affectedId);
-    }
-
+    // SCHEDULE
     @PostMapping("/{affectedId}/schedule")
-    public AffectedVehicleResponse schedule(@PathVariable Integer affectedId,
+    public AffectedVehicleResponse schedule(@PathVariable Long campaignId, // giữ để khớp URL
+                                            @PathVariable Long affectedId,
                                             @Valid @RequestBody AffectedVehicleScheduleRequest req) {
-        return service.schedule(affectedId, req);
+        return service.schedule(affectedId, req);     // <— gọi hàm hiện có
     }
 
+    // COMPLETE
     @PostMapping("/{affectedId}/complete")
-    public AffectedVehicleResponse complete(@PathVariable Integer affectedId,
+    public AffectedVehicleResponse complete(@PathVariable Long campaignId,
+                                            @PathVariable Long affectedId,
                                             @Valid @RequestBody AffectedVehicleCompleteRequest req) {
-        return service.markCompleted(affectedId, req);
+        return service.markCompleted(affectedId, req); // <— gọi hàm hiện có
     }
+
+    // NOTIFY
+    @PostMapping("/{affectedId}/notify")
+    public AffectedVehicleResponse notify(@PathVariable Long campaignId,
+                                          @PathVariable Long affectedId) {
+        return service.markNotified(affectedId);       // <— gọi hàm hiện có
+    }
+
 }
