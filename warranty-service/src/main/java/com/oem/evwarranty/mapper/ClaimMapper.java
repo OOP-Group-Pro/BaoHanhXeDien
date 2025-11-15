@@ -21,6 +21,7 @@ public class ClaimMapper {
         if (claim == null) return null;
 
         ClaimDto dto = new ClaimDto();
+        dto.setClaimId(claim.getId());
         dto.setClaimCode(claim.getClaimCode());
         dto.setVin(claim.getVin());
         dto.setCurrentStatus(claim.getCurrentStatus().toString());
