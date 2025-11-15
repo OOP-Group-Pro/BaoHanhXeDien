@@ -10,6 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class ClaimDto {
+    private Long claimId;
     private String claimCode;
     private String vin;
     private String customerName; // Lấy từ Vehicle-Service

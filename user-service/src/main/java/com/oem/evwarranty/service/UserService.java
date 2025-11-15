@@ -3,6 +3,7 @@ package com.oem.evwarranty.service;
 
 import com.oem.evwarranty.entity.Role;
 import com.oem.evwarranty.entity.User;
+import com.oem.evwarranty.mapper.UserMapper;
 import com.oem.evwarranty.repository.RoleRepository;
 import com.oem.evwarranty.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -121,5 +122,19 @@ public class UserService {
     public UserResponseDto getUserInfoById (Long id) {
         User user = userRepository.findById(id).orElseThrow( () -> new NoSuchElementException("User not found with ID: " + id) );
         return mapToUserResponseDto(user);
+    }
+
+    public List<UserResponseDto> findUsersByCriteria (String roleName, Long centerId) {
+
+        // Neu centerId null => admin => chỉ lọc theo vai trò:
+        if (centerId == null) {
+            return userRepository.findByRoles_RoleName(roleName).stream()
+                    .map(UserMapper::mapToUserResponseDto)
+                    .toList();
+        }else {
+            return userRepository.findByRoles_RoleNameAndServiceCenterId(roleName, centerId).stream()
+                    .map(UserMapper::mapToUserResponseDto)
+                    .toList();
+        }
     }
 }
