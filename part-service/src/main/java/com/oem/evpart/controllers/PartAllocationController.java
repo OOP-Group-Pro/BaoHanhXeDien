@@ -3,6 +3,7 @@ package com.oem.evpart.controllers;
 import com.oem.evpart.dto.request.DecrementStockRequest;
 import com.oem.evpart.dto.request.PartAllocationRequest;
 import com.oem.evpart.dto.response.PartAllocationResponse;
+import com.oem.evpart.dto.response.PartAllocationStatusDto;
 import com.oem.evpart.dto.response.PartInventoryResponse;
 import com.oem.evpart.services.PartAllocationService;
 import com.oem.evpart.services.PartInventoryService;
@@ -52,5 +53,20 @@ public class PartAllocationController {
     @GetMapping("/inventory/{inventoryId}")
     public ResponseEntity<List<PartAllocationResponse>> getAllocationsByInventory(@PathVariable Long inventoryId) {
         return ResponseEntity.ok(allocationService.getAllocationsByInventoryId(inventoryId));
+    }
+
+
+    /**
+     * GET /api/v1/allocations/status-by-claim/{claimId}
+     * Chức năng: Lấy trạng thái cấp phát phụ tùng cho một Claim ID cụ thể.
+     * API này được gọi bởi Giao diện Kỹ thuật viên để hiển thị cột trạng thái.
+     */
+    @GetMapping("/status-by-claim/{claimId}")
+    public ResponseEntity<PartAllocationStatusDto> getAllocationStatusForClaim(
+            @PathVariable Long claimId
+    ) {
+        // Service sẽ chứa logic tìm kiếm allocation theo claimId và trả về DTO
+        PartAllocationStatusDto statusDto = allocationService.getStatusByClaimId(claimId);
+        return ResponseEntity.ok(statusDto);
     }
 }

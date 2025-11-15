@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lí Yêu cầu Bảo hành | OEM EV Warranty System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
+    <style>
+        /* Sub-label nhỏ active */
+        .sidebar-nav .sub-label {
+            font-size: 0.85rem;
+            color: #ffffff;
+            margin-left: 24px;
+            margin-top: 4px;
+            display: block;
+            font-weight: 10; /* có thể thêm cho đậm hơn */
+
+        }
+        .sidebar-nav .sub-label.active {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <div class="avatar">T</div>
+        <div class="user-info">
+            <strong>Admin</strong>
+            <span>Admin Thùy</span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li>
+            <a href="index.html" class="active"><i class="fa-solid fa-tachometer-alt"></i>Dashboard</a>
+        </li>
+        <li>
+            <a href="claims.html" class="sub-label" id="claim-sub-label">
+                <i class="fa-solid fa-wrench"></i> Yêu cầu bảo hành
+            </a>
+        </li>
+
+        <li><a href="users.html"><i class="fa-solid fa-file-invoice"></i>Quản lí người dùng</a></li>
+        <li><a href="request.html"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+        <li><a href="inventory.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
+        <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+    <header class="main-header">
+        <h1>Danh sách Yêu cầu Bảo hành</h1>
+        <div class="breadcrumb" style="font-size:0.9rem; color:var(--text-secondary); margin-top:6px;">
+            Dashboard / <span style="font-weight:600; color:var(--text-dark)">Yêu cầu bảo hành</span>
+        </div>
+    </header>
+
+    <div class="table-container">
+        <table class="table-full-width" id="claims-table">
+            <thead>
+            <tr>
+                <th>Mã Yêu cầu</th>
+                <th>VIN</th>
+                <th>Ngày tạo</th>
+                <th>Trạng thái</th>
+                <th>Mô tả</th>
+                <th>Hành động</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../../src/js/script-admin.js"></script>
+
+
+
+</body>
+</html>

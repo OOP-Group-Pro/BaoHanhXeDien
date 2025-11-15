@@ -4,28 +4,28 @@ import com.oem.evwarranty.model.enums.AffectedStatus;
 import java.time.LocalDateTime;
 
 public class AffectedVehicleResponse {
-    private Integer affectedId;
-    private Integer campaignId;
+    private Long affectedId;
+    private Long campaignId;
     private String vehicleVin;
     private AffectedStatus status;
-    private Integer assignedServiceCenterId;
+    private Long assignedServiceCenterId;
     private LocalDateTime completedAt;
     // getter/setter ...
 
 
-    public Integer getAffectedId() {
+    public Long getAffectedId() {
         return affectedId;
     }
 
-    public void setAffectedId(Integer affectedId) {
+    public void setAffectedId(Long affectedId) {
         this.affectedId = affectedId;
     }
 
-    public Integer getCampaignId() {
+    public Long getCampaignId() {
         return campaignId;
     }
 
-    public void setCampaignId(Integer campaignId) {
+    public void setCampaignId(Long campaignId) {
         this.campaignId = campaignId;
     }
 
@@ -45,11 +45,11 @@ public class AffectedVehicleResponse {
         this.status = status;
     }
 
-    public Integer getAssignedServiceCenterId() {
+    public Long getAssignedServiceCenterId() {
         return assignedServiceCenterId;
     }
 
-    public void setAssignedServiceCenterId(Integer assignedServiceCenterId) {
+    public void setAssignedServiceCenterId(Long assignedServiceCenterId) {
         this.assignedServiceCenterId = assignedServiceCenterId;
     }
 

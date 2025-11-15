@@ -3,18 +3,21 @@ package com.oem.evpart.services;
 import com.oem.evpart.dto.request.ClaimAllocationRequest;
 import com.oem.evpart.dto.request.PartAllocationRequest;
 import com.oem.evpart.dto.response.PartAllocationResponse;
+import com.oem.evpart.dto.response.PartAllocationStatusDto;
 import java.util.List;
 
 public interface PartAllocationService {
+
     /**
      * Tạo một yêu cầu phân bổ phụ tùng.
      * Thao tác này sẽ làm giảm số lượng tồn kho tương ứng.
      */
     PartAllocationResponse createAllocation(PartAllocationRequest request);
 
-
+    /**
+     * Phân bổ phụ tùng cho một Claim cụ thể.
+     */
     PartAllocationResponse allocateForClaim(ClaimAllocationRequest request);
-
 
     /**
      * Lấy thông tin một lần phân bổ cụ thể bằng ID.
@@ -30,4 +33,10 @@ public interface PartAllocationService {
      * Lấy lịch sử phân bổ từ một kho hàng cụ thể.
      */
     List<PartAllocationResponse> getAllocationsByInventoryId(Long inventoryId);
+
+    /**
+     * Lấy trạng thái cấp phát phụ tùng cho một Claim cụ thể.
+     * Dùng cho màn hình Kỹ thuật viên để hiển thị tiến độ.
+     */
+    PartAllocationStatusDto getStatusByClaimId(Long claimId);
 }

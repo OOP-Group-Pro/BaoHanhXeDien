@@ -10,18 +10,19 @@ public interface AffectedVehicleService {
 
     AffectedVehicleResponse create(AffectedVehicleCreateRequest req);
 
-    AffectedVehicleResponse update(Integer affectedId, AffectedVehicleUpdateRequest req);
+    AffectedVehicleResponse update(Long affectedId, AffectedVehicleUpdateRequest req);
 
-    void delete(Integer affectedId);
+    void delete(Long affectedId);              // giữ để tương thích cũ (nếu còn dùng)
+    AffectedVehicleResponse get(Long affectedId); // giữ để tương thích cũ
 
-    AffectedVehicleResponse get(Integer affectedId);
+    // ===== mới: ràng buộc theo campaign =====
+    AffectedVehicleResponse getByCampaign(Long campaignId, Long affectedId);
+    void deleteByCampaign(Long campaignId, Long affectedId);
 
-    Page<AffectedVehicleResponse> search(
-            Integer campaignId, String vinKeyword, AffectedStatus status, Pageable pageable);
+    Page<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
+                                         AffectedStatus status, Pageable pageable);
 
-    AffectedVehicleResponse markNotified(Integer affectedId);
-
-    AffectedVehicleResponse schedule(Integer affectedId, AffectedVehicleScheduleRequest req);
-
-    AffectedVehicleResponse markCompleted(Integer affectedId, AffectedVehicleCompleteRequest req);
+    AffectedVehicleResponse markNotified(Long affectedId);
+    AffectedVehicleResponse schedule(Long affectedId, AffectedVehicleScheduleRequest req);
+    AffectedVehicleResponse markCompleted(Long affectedId, AffectedVehicleCompleteRequest req);
 }

@@ -5,20 +5,20 @@ import java.time.LocalDateTime;
 
 public class AppointmentCreateRequest {
     @NotNull
-    private Integer campaignId;
+    private Long campaignId;
     @NotNull
-    private Integer affectedId;
+    private Long affectedId;
     @NotNull
     private LocalDateTime scheduledAt;
     @NotNull
-    private Integer serviceCenterId;
+    private Long serviceCenterId;
 
-    public Integer getCampaignId() { return campaignId; }
-    public void setCampaignId(Integer campaignId) { this.campaignId = campaignId; }
-    public Integer getAffectedId() { return affectedId; }
-    public void setAffectedId(Integer affectedId) { this.affectedId = affectedId; }
+    public Long getCampaignId() { return campaignId; }
+    public void setCampaignId(Long campaignId) { this.campaignId = campaignId; }
+    public Long getAffectedId() { return affectedId; }
+    public void setAffectedId(Long affectedId) { this.affectedId = affectedId; }
     public LocalDateTime getScheduledAt() { return scheduledAt; }
     public void setScheduledAt(LocalDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
-    public Integer getServiceCenterId() { return serviceCenterId; }
-    public void setServiceCenterId(Integer serviceCenterId) { this.serviceCenterId = serviceCenterId; }
+    public Long getServiceCenterId() { return serviceCenterId; }
+    public void setServiceCenterId(Long serviceCenterId) { this.serviceCenterId = serviceCenterId; }
 }

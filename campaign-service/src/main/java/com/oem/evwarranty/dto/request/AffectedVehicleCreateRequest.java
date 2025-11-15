@@ -5,22 +5,22 @@ import jakarta.validation.constraints.NotNull;
 
 public class AffectedVehicleCreateRequest {
     @NotNull
-    private Integer campaignId;
+    private Long campaignId;
 
     @NotBlank
     private String vehicleVin;
 
     // optional: assignedServiceCenterId ngay khi tạo
-    private Integer assignedServiceCenterId;
+    private Long assignedServiceCenterId;
 
     // getter/setter ...
 
 
-    public Integer getCampaignId() {
+    public Long getCampaignId() {
         return campaignId;
     }
 
-    public void setCampaignId(Integer campaignId) {
+    public void setCampaignId(Long campaignId) {
         this.campaignId = campaignId;
     }
 
@@ -32,11 +32,11 @@ public class AffectedVehicleCreateRequest {
         this.vehicleVin = vehicleVin;
     }
 
-    public Integer getAssignedServiceCenterId() {
+    public Long getAssignedServiceCenterId() {
         return assignedServiceCenterId;
     }
 
-    public void setAssignedServiceCenterId(Integer assignedServiceCenterId) {
+    public void setAssignedServiceCenterId(Long assignedServiceCenterId) {
         this.assignedServiceCenterId = assignedServiceCenterId;
     }
 }

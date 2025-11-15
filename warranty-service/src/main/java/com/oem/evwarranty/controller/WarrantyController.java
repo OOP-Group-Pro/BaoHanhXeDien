@@ -4,11 +4,8 @@ package com.oem.evwarranty.controller;
 import com.oem.evwarranty.dto.ClaimDto;
 import com.oem.evwarranty.dto.CreateClaimDto;
 import com.oem.evwarranty.dto.ClaimRepairResultDto;
-import com.oem.evwarranty.enums.ClaimStatus;
 import com.oem.evwarranty.security.UserDetailsPrincipal;
 import com.oem.evwarranty.service.WarrantyService;
-
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Sử dụng để validate DTO
 

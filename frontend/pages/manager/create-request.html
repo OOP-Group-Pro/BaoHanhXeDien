@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Đề Xuất Nhân Sự | OEM EV Warranty Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <div class="avatar">T</div>
+        <div class="user-info">
+            <strong>Manager</strong>
+            <span>Manager Thwi</span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li><a href="#" class="active"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+    </ul>
+</nav>
+
+<main class="main-content" id="main-content">
+    <header class="main-header">
+        <h1>Phiếu Đề Xuất Nhân Sự 📄</h1>
+        <div class="header-actions">
+            <button class="btn-primary" id="create-request-btn"><i class="fa-solid fa-plus"></i> Tạo Phiếu Mới</button>
+        </div>
+    </header>
+
+    <div class="content-area" style="grid-template-columns: 1fr;">
+        <div class="table-container">
+            <h2>Danh sách Phiếu của bạn</h2>
+            <table class="table-full-width">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role đề xuất</th>
+                    <th>Status</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody id="request-table-body">
+                <tr><td colspan="8" style="text-align:center;">Đang tải dữ liệu...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Modal Tạo/Chỉnh sửa Phiếu -->
+<div id="request-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div class="modal-content" style="width:400px; padding:20px; border-radius:8px; background:#fff; position:relative;">
+        <button class="close-btn" id="close-request-modal" style="position:absolute; top:5px; right:10px; font-size:18px; border:none; background:none; cursor:pointer;">&times;</button>
+        <h3 id="modal-title">Tạo Phiếu Mới</h3>
+        <input type="hidden" id="request-id">
+        <label>Full Name</label>
+        <input type="text" id="fullName" style="width:100%; margin:5px 0; padding:6px;">
+        <label>Username</label>
+        <input type="text" id="username" style="width:100%; margin:5px 0; padding:6px;">
+        <label>Email</label>
+        <input type="email" id="email" style="width:100%; margin:5px 0; padding:6px;">
+        <label>Phone</label>
+        <input type="text" id="phone" style="width:100%; margin:5px 0; padding:6px;">
+        <label>Role đề xuất</label>
+        <select id="role" style="width:100%; margin:5px 0; padding:6px;">
+            <option value="ROLE_USER">SC Staff</option>
+            <option value="ROLE_TECHNICIAN">Technician Staff</option>
+            <option value="ROLE_EVM_STAFF">EVM Staff</option>
+        </select>
+        <button id="save-request-btn" class="btn-primary" style="margin-top:10px;">Gửi Phiếu</button>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../../src/js/script-admin.js"></script>
+
+
+</body>
+</html>

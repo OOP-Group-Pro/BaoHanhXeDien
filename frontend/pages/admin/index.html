@@ -1,10 +1,124 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | OEM EV Warranty Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
 </head>
 <body>
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <div class="avatar">T</div>
+        <div class="user-info">
+            <strong>Admin</strong>
+            <span>Admin Thùy</span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i class="fa-solid fa-tachometer-alt"></i>Dashboard</a></li>
+        <li>
+            <a href="claims.html" class="sub-label" id="claim-sub-label">
+                <i class="fa-solid fa-wrench"></i> Yêu cầu bảo hành
+            </a>
+        </li>
+        <li><a href="users.html"><i class="fa-solid fa-file-invoice"></i>Quản lí người dùng</a></li>
+        <li><a href="request.html"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+        <li><a href="inventory.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
+        <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+        <li style="font-style:italic; font-size:0.85rem; text-align:center; margin-top:5px;">
+            <a href="#" id="manager-link">Bạn là Manager?</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="main-content" id="main-content">
+    <header class="main-header">
+        <h1>Dashboard - Hệ thống Bảo hành EV</h1>
+        <div class="header-actions">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Tìm kiếm nhanh...">
+            </div>
+            <button class="btn-secondary"><i class="fa-solid fa-download"></i> Báo cáo</button>
+            <button class="btn-primary"><i class="fa-solid fa-plus"></i> Tạo Yêu cầu Mới</button>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>Tổng số Yêu cầu</h3>
+                <div class="icon bg-blue"><i class="fa-solid fa-file-invoice"></i></div>
+            </div>
+            <div class="value">1,452</div>
+            <div class="value-change change-positive"><i class="fa-solid fa-arrow-up"></i> 12.5% (Tháng trước)</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>Yêu cầu Đang chờ</h3>
+                <div class="icon bg-yellow"><i class="fa-solid fa-hourglass-half"></i></div>
+            </div>
+            <div class="value">87</div>
+            <div class="value-change change-negative"><i class="fa-solid fa-arrow-down"></i> 3.2% (Tuần trước)</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>Chi phí Ước tính</h3>
+                <div class="icon bg-green"><i class="fa-solid fa-dollar-sign"></i></div>
+            </div>
+            <div class="value">1.2 Tr VND</div>
+            <div class="value-change change-positive"><i class="fa-solid fa-arrow-up"></i> 5.8% (Quý trước)</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>Tỷ lệ Từ chối</h3>
+                <div class="icon bg-red"><i class="fa-solid fa-thumbs-down"></i></div>
+            </div>
+            <div class="value">4.1%</div>
+            <div class="value-change change-positive"><i class="fa-solid fa-arrow-up"></i> 0.5% (So với trung bình)</div>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="chart-container">
+            <h2>Xu hướng Yêu cầu Bảo hành (6 tháng)</h2>
+            <div class="chart-placeholder">
+                <p>Nơi đây sẽ hiển thị biểu đồ đường (sử dụng thư viện Chart.js/D3.js)</p>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2>Yêu cầu Gần đây</h2>
+            <table class="table-simple">
+                <thead>
+                <tr>
+                    <th>Mã Yêu cầu</th>
+                    <th>Trạng thái</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr><td>CLAIM-00459</td><td><span class="badge badge-pending">Đang chờ</span></td></tr>
+                <tr><td>CLAIM-00458</td><td><span class="badge badge-approved">Đã duyệt</span></td></tr>
+                <tr><td>CLAIM-00457</td><td><span class="badge badge-approved">Đã duyệt</span></td></tr>
+                <tr><td>CLAIM-00456</td><td><span class="badge badge-rejected">Từ chối</span></td></tr>
+                <tr><td>CLAIM-00455</td><td><span class="badge badge-pending">Đang chờ</span></td></tr>
+                </tbody>
+            </table>
+            <div style="text-align: right; margin-top: 12px;">
+                <a href="claims.html" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 600;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../../src/js/script-admin.js"></script>
 
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.oem.evwarranty.controller;
 
+import com.oem.evwarranty.config.ApiConstants;
 import com.oem.evwarranty.dto.request.CampaignCreateRequest;
 import com.oem.evwarranty.dto.request.CampaignUpdateRequest;
 import com.oem.evwarranty.dto.response.CampaignResponse;
@@ -14,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/campaigns")
+@RequestMapping(ApiConstants.API_V1 + "/campaigns")
 public class CampaignController {
 
     private final CampaignService service;
@@ -29,18 +30,18 @@ public class CampaignController {
     }
 
     @PutMapping("/{id}")
-    public CampaignResponse update(@PathVariable Integer id,
+    public CampaignResponse update(@PathVariable Long id,
                                    @Valid @RequestBody CampaignUpdateRequest req) {
         return service.update(id, req);
     }
 
     @GetMapping("/{id}")
-    public CampaignResponse get(@PathVariable Integer id) {
+    public CampaignResponse get(@PathVariable Long id) {
         return service.get(id);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
