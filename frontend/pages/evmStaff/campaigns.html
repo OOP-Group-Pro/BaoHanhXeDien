@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Quản lý Chiến dịch (EVM Staff)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+    <link rel="stylesheet" href="/src/styles/campaigns.css" />
+</head>
+<body id="evm-campaigns-page">
+<div class="main-content container-fluid p-4">
+    <div class="flex-between mb-3">
+        <h2 class="page-title">Quản lý Chiến dịch</h2>
+        <button id="cpn-new-btn" class="btn primary">Tạo Chiến dịch mới</button>
+    </div>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- KPI (tổng chi phí / số chiến dịch) -->
+        <div class="card lg:col-span-2">
+            <h3 class="card-title">Tổng quan</h3>
+            <div class="kpi-row">
+                <div class="kpi-box">
+                    <div class="kpi-label">Tổng Chi phí</div>
+                    <div id="cpn-total-cost" class="kpi-value">—</div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-label">Số chiến dịch</div>
+                    <div id="cpn-count" class="kpi-value">—</div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-label">Đang hoạt động</div>
+                    <div id="cpn-active" class="kpi-value">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chi tiết chiến dịch đang chọn -->
+        <aside class="card">
+            <h3 class="card-title">Chi tiết Chiến dịch</h3>
+            <div class="muted" id="cpn-selected-empty">Chưa chọn chiến dịch.</div>
+            <div id="cpn-selected" class="d-none">
+                <div><b>Mã:</b> <span id="cpn-code">—</span></div>
+                <div><b>Tiêu đề:</b> <span id="cpn-title">—</span></div>
+                <div><b>Loại:</b> <span id="cpn-type">—</span></div>
+                <div><b>Trạng thái:</b> <span id="cpn-status">—</span></div>
+                <div><b>Thời gian:</b> <span id="cpn-time">—</span></div>
+                <div class="mt-2 flex gap-2">
+                    <button id="cpn-edit-btn" class="btn sm">Sửa</button>
+                    <button id="cpn-del-btn" class="btn sm danger">Xóa</button>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <!-- Danh sách Campaign + affected vehicles -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        <div class="card lg:col-span-1">
+            <div class="flex-between">
+                <h3 class="card-title">Danh sách Chiến dịch</h3>
+                <select id="cpn-filter-status" class="input sm">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="PLANNED">PLANNED</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                </select>
+            </div>
+            <div id="cpn-list" class="list list-hover mt-2"></div>
+            <div id="cpn-empty" class="empty d-none">Chưa có chiến dịch.</div>
+        </div>
+
+        <div class="card lg:col-span-2">
+            <h3 class="card-title">Các xe bị ảnh hưởng</h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th style="width:120px">ID Xe</th>
+                        <th>VIN</th>
+                        <th style="width:140px">Trạng thái</th>
+                        <th style="width:140px">Tác vụ</th>
+                    </tr>
+                    </thead>
+                    <tbody id="av-tbody"></tbody>
+                </table>
+            </div>
+            <div id="av-empty" class="empty d-none">Chưa có xe trong chiến dịch này.</div>
+        </div>
+    </section>
+</div>
+
+<!-- Modal tạo/sửa chiến dịch -->
+<div id="cpn-modal" class="modal d-none">
+    <div class="modal-card w-480">
+        <div class="modal-head">
+            <h3 id="cpn-modal-title">Tạo Chiến dịch</h3>
+            <button class="icon-btn" id="cpn-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <label>Mã chiến dịch</label>
+                <input id="m-code" class="input" maxlength="32" placeholder="VD: RECALL-2025-01" />
+            </div>
+            <div class="form-row">
+                <label>Tiêu đề</label>
+                <input id="m-title" class="input" maxlength="200" />
+            </div>
+            <div class="form-row">
+                <label>Loại</label>
+                <select id="m-type" class="input">
+                    <option value="RECALL">RECALL</option>
+                    <option value="UPGRADE">UPGRADE</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="form-row">
+                    <label>Bắt đầu</label>
+                    <input id="m-start" type="datetime-local" class="input"/>
+                </div>
+                <div class="form-row">
+                    <label>Kết thúc</label>
+                    <input id="m-end" type="datetime-local" class="input"/>
+                </div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button id="cpn-save-btn" class="btn primary">Lưu</button>
+            <button id="cpn-cancel-btn" class="btn">Hủy</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="/src/evmStaff.js"></script>
+
+</body>
+</html>

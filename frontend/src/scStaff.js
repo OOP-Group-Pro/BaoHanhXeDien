@@ -8,9 +8,10 @@ import { getUser } from "./utils/storage.js";
 import { getUsersByRole} from "./services/userService.js";
 import { getClaims, createClaim } from './services/warrantyService.js';
 import { logout } from './services/authService.js'; // (Bạn cần tạo file authService.js)
-
-
-
+import { getVehicleByVin, getVehicleHistory } from './services/vehicleService.js';
+import { initVehicleDetailPage } from './JS/sc-vehicle-detail.js';
+import { initVehicleHistoryPage } from './JS/sc-vehicle-history.js';
+import { initAppointmentsPage } from './JS/sc-appointments.js';
 // --- LOGIC CHO TỪNG TRANG CỤ THỂ ---
 // (Kiểm tra xem file HTML nào đang gọi file JS này)
 
@@ -416,10 +417,25 @@ function main() {
         initClaimListPage(); // Gọi hàm khởi tạo trang mới
     }
 
+    if (bodyId === 'sc-vehicle-detail-page') {
+        initVehicleDetailPage();
+      }
+
+
+
     // (Bạn cũng có thể dùng logic cũ của bạn)
     if (window.location.pathname.endsWith('/scStaff/index.html')) {
         loadDashboardData();
     }
+
+    if (window.location.pathname.endsWith('/scStaff/vehicle-history.html')) {
+      initVehicleHistoryPage();
+    }
+
+    else if (window.location.pathname.endsWith('/scStaff/appointments.html')) {
+      initAppointmentsPage();
+    }
+
 
     // NÓ SẼ GỌI HÀM NÀY KHI Ở TRANG create-claim.html
     if (bodyId === 'sc-create-claim-page') {
@@ -429,3 +445,5 @@ function main() {
 
 // Chạy hàm main khi DOM đã sẵn sàng
 document.addEventListener('DOMContentLoaded', main);
+
+

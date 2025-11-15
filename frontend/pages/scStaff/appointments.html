@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Quản lý Lịch hẹn (SC Staff)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- base style -->
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+    <!-- style riêng cho lịch hẹn -->
+    <link rel="stylesheet" href="/src/styles/appointments.css" />
+</head>
+<body id="sc-appointments-page">
+<div class="main-content container-fluid p-4">
+    <div class="flex-between mb-3">
+        <h2 class="page-title">Quản lý Lịch hẹn (SC Staff)</h2>
+        <button id="ap-new-btn" class="btn primary">Tạo Lịch hẹn mới</button>
+    </div>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- LỊCH THÁNG -->
+        <div class="card lg:col-span-2">
+            <div class="flex-between mb-2">
+                <div class="flex gap-2">
+                    <button id="ap-prev" class="btn sm">◀</button>
+                    <button id="ap-today" class="btn sm">Hôm nay</button>
+                    <button id="ap-next" class="btn sm">▶</button>
+                </div>
+                <h3 id="ap-month-label" class="card-title"></h3>
+            </div>
+
+            <div class="calendar">
+                <div class="cal-head">
+                    <div>Sun</div><div>Mon</div><div>Tue</div>
+                    <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div id="ap-grid" class="cal-grid"></div>
+            </div>
+            <small class="muted mt-2 block">Nhấn vào một ô để xem/sắp lịch trong ngày đó.</small>
+        </div>
+
+        <!-- LỊCH HẸN CHỜ DUYỆT -->
+        <aside class="card">
+            <h3 class="card-title">Lịch hẹn chờ duyệt</h3>
+            <div id="ap-pending"></div>
+            <div class="divider my-2"></div>
+            <h4 class="card-title sm">Upcoming Appointments</h4>
+            <div id="ap-upcoming" class="muted"></div>
+        </aside>
+    </section>
+</div>
+
+<script type="module" src="/src/scStaff.js"></script>
+</body>
+</html>
