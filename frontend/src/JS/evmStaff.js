@@ -1,13 +1,13 @@
-// src/evmStaff.js (File "Não" cho EVM Staff)
+// src/js/evmStaff.js (File "Não" cho EVM Staff)
 
-import { checkAuth } from './utils/auth.js';
+import { checkAuth } from '../utils/auth.js';
 // (Giả sử bạn đã có file Header.js và authService.js)
-import { renderHeader } from './components/Header.js';
+import { renderHeader } from '../components/Header.js';
 import { logout } from './services/authService.js';
-import { renderEvmSidebar } from './components/EvmSidebar.js';
+import { renderEvmSidebar } from '../components/EvmSidebar.js';
 
 // Import các API cần thiết
-import { getClaims, createClaim, rejectClaim, approveClaim, getClaimDetails, getClaimHistory } from './services/warrantyService.js';
+import { getClaims, createClaim, rejectClaim, approveClaim, getClaimDetails, getClaimHistory } from '../services/warrantyService.js';
 // (Import partService nếu cần gọi API Part)
 // import { getPartDetails } from './services/partService.js';
 
@@ -25,16 +25,20 @@ console.log('EVM Staff Authenticated:', userInfo);
 
 
 // --- LOGIC CHO TỪNG TRANG CỤ THỂ ---
+// Bọc logic này trong DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
 
-// 3. Logic cho trang DANH SÁCH CLAIM (Giao diện 1)
-if (window.location.pathname.endsWith('/evmStaff/claims.html')) {
-    initializeClaimsListPage();
-}
+    // 3. Logic cho trang DANH SÁCH CLAIM (Giao diện 1)
+    if (window.location.pathname.endsWith('/evmStaff/claims.html')) {
+        initializeClaimsListPage();
+    }
 
-// 4. Logic cho trang CHI TIẾT CLAIM (Giao diện 2)
-if (window.location.pathname.endsWith('/evmStaff/claim-detail.html')) {
-    initializeClaimDetailPage();
-}
+    // 4. Logic cho trang CHI TIẾT CLAIM (Giao diện 2)
+    if (window.location.pathname.endsWith('/evmStaff/claim-detail.html')) {
+        initializeClaimDetailPage();
+    }
+
+});
 
 
 // --- CÁC HÀM THỰC THI (CHO TRANG DANH SÁCH) ---
@@ -129,7 +133,6 @@ function populateTable(data) {
                 <span class="secondary-text">VIN: ${item.vin}</span>
             </td>
             <td>
-                <!-- (Sửa: Dùng item.model từ API thật) -->
                 <span class="primary-text">${item.model || 'N/A'}</span> 
                 <span class="secondary-text">KH: ${item.customerName || 'N/A'}</span>
             </td>
@@ -223,7 +226,7 @@ function setButtonLoading(button, isLoading, text = "Lưu Claim") {
 
 
 // --- CÁC HÀM THỰC THI (CHO TRANG CHI TIẾT) ---
-
+// (Giữ nguyên logic cho trang detail)
 function initializeClaimDetailPage() {
     // 1. Lấy Claim ID từ URL
     const urlParams = new URLSearchParams(window.location.search);

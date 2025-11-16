@@ -53,32 +53,7 @@
             flex-shrink: 0;
         }
 
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            padding-bottom: 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-header .avatar { /* Giữ nguyên avatar từ template */
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--primary-blue);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            margin-right: 12px;
-        }
-
-        .sidebar-header .user-info span {
-            display: block;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        /* Cập nhật logo/tên theo ảnh (Tùy chọn) */
+        /* (CSS Sidebar .sidebar-logo, .sidebar-nav, .sidebar-user... giữ nguyên như template) */
         .sidebar-logo {
             display: flex;
             align-items: center;
@@ -87,23 +62,19 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .sidebar-logo .logo-icon {
-             font-size: 1.5rem; /* Placeholder cho logo V */
+            font-size: 1.5rem; /* Placeholder cho logo V */
         }
-         .sidebar-logo h2 {
+        .sidebar-logo h2 {
             font-size: 1.25rem;
             color: var(--white);
         }
-
-
         .sidebar-nav {
             list-style: none;
             margin-top: 24px;
         }
-
         .sidebar-nav li {
             margin-bottom: 8px;
         }
-
         .sidebar-nav a {
             display: flex;
             align-items: center;
@@ -114,22 +85,18 @@
             font-weight: 500;
             transition: background-color 0.2s;
         }
-
         .sidebar-nav a i {
             margin-right: 16px;
             width: 20px;
             text-align: center;
         }
-
         .sidebar-nav a:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
-
         .sidebar-nav a.active {
             background-color: var(--primary-blue);
             color: var(--white);
         }
-
         .sidebar-user {
             margin-top: auto;
             display: flex;
@@ -154,6 +121,7 @@
             font-weight: 500;
             color: var(--white);
         }
+
 
         /* ===== Main content area ===== */
         .main-content {
@@ -200,6 +168,7 @@
             color: var(--text-secondary);
         }
 
+        /* (CSS các nút .btn-primary, .btn-secondary giữ nguyên) */
         .btn-primary {
             background-color: var(--primary-blue);
             color: var(--white);
@@ -218,7 +187,11 @@
         .btn-primary:hover {
             background-color: var(--primary-blue-dark);
         }
-
+        .btn-primary:disabled {
+            background-color: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
         .btn-secondary {
             background-color: var(--white);
             color: var(--text-dark);
@@ -233,9 +206,7 @@
             background-color: var(--content-bg);
         }
 
-        /* ====== BỔ SUNG CSS MỚI CHO TRANG NÀY ====== */
-
-        /* --- Thanh Filter (Dưới Header) --- */
+        /* (CSS .filter-bar, .content-card, table, .status-badge... giữ nguyên) */
         .filter-bar {
             display: flex;
             gap: 16px;
@@ -245,19 +216,16 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             margin-bottom: 24px;
         }
-
         .filter-group {
             display: flex;
             flex-direction: column;
         }
-
         .filter-group label {
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-secondary);
             margin-bottom: 8px;
         }
-
         .filter-group select, .filter-group input {
             padding: 10px 12px;
             border-radius: 8px;
@@ -266,49 +234,38 @@
             font-family: 'Inter', sans-serif;
             background-color: var(--white);
         }
-
         .filter-group select {
             min-width: 180px;
         }
-
-        /* --- Bảng Dữ liệu (Content Card) --- */
         .content-card {
             background-color: var(--white);
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             overflow: hidden; /* Quan trọng để giữ bo góc cho bảng */
         }
-
         .content-card-header {
             padding: 24px;
             border-bottom: 1px solid var(--border-color);
         }
-
         .content-card-header h2 {
             font-size: 1.25rem;
             font-weight: 600;
         }
-
-        /* Tùy chỉnh Bảng */
         table {
             width: 100%;
             border-collapse: collapse;
         }
-
         th, td {
             padding: 16px 24px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
-
         tbody tr:last-child td {
             border-bottom: none;
         }
-
         thead {
             background-color: #F9FAFB;
         }
-
         th {
             font-size: 0.75rem;
             font-weight: 600;
@@ -316,14 +273,11 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
         td {
             font-size: 0.875rem;
             font-weight: 500;
             vertical-align: top; /* Căn lề trên cho các ô có nhiều dòng */
         }
-
-        /* Hiển thị nhiều dòng trong 1 ô */
         td .primary-text {
             font-weight: 600;
             color: var(--text-dark);
@@ -334,8 +288,6 @@
             color: var(--text-secondary);
             display: block; /* Hiển thị ở dòng 2 */
         }
-
-        /* CSS cho các trạng thái */
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -343,7 +295,6 @@
             font-weight: 600;
             font-size: 0.75rem;
         }
-
         .status-PENDING {
             background-color: var(--status-pending-bg);
             color: var(--status-pending-text);
@@ -356,8 +307,6 @@
             background-color: var(--status-rejected-bg);
             color: var(--status-rejected-text);
         }
-
-        /* Link hành động */
         .action-link {
             color: var(--primary-blue);
             font-weight: 600;
@@ -371,18 +320,133 @@
             color: var(--danger-red);
         }
 
+
+        /* ====== BỔ SUNG CSS MỚI CHO MODAL TẠO CLAIM ====== */
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            /* Ẩn modal ban đầu */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        /* Lớp .show để hiện modal */
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            padding: 32px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px; /* Giới hạn độ rộng của form */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: flex-end; /* Căn phải cho nút */
+        }
+
+        .error-message {
+            margin-top: 16px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--danger-red);
+            display: none; /* Ẩn ban đầu */
+            padding: 10px;
+            background-color: var(--status-rejected-bg);
+            border-radius: 6px;
+        }
+        .error-message.show {
+            display: block;
+        }
+
     </style>
 </head>
 <body>
 <!-- Sidebar -->
 <nav class="sidebar">
-    <!-- Sửa: Dùng Logo và Tên EVM như trong ảnh -->
     <div class="sidebar-logo">
-        <i class="fa-solid fa-bolt logo-icon"></i> <!-- Placeholder cho logo V -->
+        <i class="fa-solid fa-bolt logo-icon"></i>
         <h2>OEM EV</h2>
     </div>
 
-    <!-- Sửa: Đánh dấu 'Claims' là active -->
     <ul class="sidebar-nav">
         <li><a href="#"><i class="fa-solid fa-tachometer-alt"></i>Dashboard</a></li>
         <li><a href="#" class="active"><i class="fa-solid fa-file-invoice"></i>Claims</a></li>
@@ -393,7 +457,6 @@
         <li><a href="#"><i class="fa-solid fa-chart-line"></i>Reports</a></li>
     </ul>
 
-    <!-- Sửa: Thêm thông tin User ở cuối Sidebar như trong ảnh -->
     <div class="sidebar-user">
         <div class="avatar-sm">A</div>
         <span class="user-name">Admin Thùy</span>
@@ -403,30 +466,28 @@
 <!-- Nội dung chính -->
 <main class="main-content" id="main-content">
 
-    <!-- Sửa: Header cho trang "Danh sách Claim" -->
     <header class="main-header">
         <h1>Danh sách Claim (Approval View)</h1>
         <div class="header-actions">
             <div class="search-bar">
                 <i class="fa-solid fa-search"></i>
-                <!-- Sửa: Placeholder theo ảnh -->
                 <input type="text" placeholder="Search by Claim ID, or Customer...">
             </div>
-            <!-- Sửa: Nút "Tạo Claim Mới" -->
-            <a href="create-claim.html" class="btn-primary">
+            <!-- SỬA: Chuyển <a> thành <button> để mở Modal -->
+            <button class="btn-primary" id="open-create-claim-modal">
                 <i class="fa-solid fa-plus"></i>
                 Tạo Claim Mới
-            </a>
+            </button>
         </div>
     </header>
 
-    <!-- Bổ sung: Thanh Filter -->
+    <!-- Thanh Filter (Giữ nguyên) -->
     <div class="filter-bar">
         <div class="filter-group">
             <label for="status-filter">Status</label>
             <select id="status-filter">
                 <option value="ALL">Status: All</option>
-                <option value="WAITING_APPROVAL" selected>Chờ phê duyệt</option>
+                <option value="PENDING" selected>Chờ phê duyệt</option>
                 <option value="APPROVED">Đã phê duyệt</option>
                 <option value="REJECTED">Đã từ chối</option>
                 <option value="IN_PROGRESS">Đang sửa chữa</option>
@@ -437,7 +498,7 @@
             <label for="date-filter">Date Range</label>
             <input type="text" id="date-filter" value="Date Range: This Month" onfocus="(this.type='date')" onblur="(this.type='text')">
         </div>
-         <div class="filter-group">
+        <div class="filter-group">
             <label for="sc-filter">Service Center</label>
             <select id="sc-filter">
                 <option value="ALL">Service Center: All</option>
@@ -448,118 +509,140 @@
         </div>
     </div>
 
-    <!-- Bổ sung: Bảng dữ liệu -->
+    <!-- Bảng dữ liệu (Giữ nguyên) -->
     <div class="content-card">
         <div class="content-card-header">
             <h2>Danh sách Yêu cầu Bảo hành</h2>
         </div>
         <table>
             <thead>
-                <tr>
-                    <th>Mã Claim / VIN</th>
-                    <th>Model / Khách hàng</th>
-                    <th>Trung tâm Dịch vụ</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
-                    <th>Hành động</th>
-                </tr>
+            <tr>
+                <th>Mã Claim / VIN</th>
+                <th>Model / Khách hàng</th>
+                <th>Trung tâm Dịch vụ</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+            </tr>
             </thead>
             <tbody id="claims-table-body">
-                <!-- Dữ liệu sẽ được chèn vào đây bằng JavaScript -->
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px;">Đang tải dữ liệu...</td>
-                </tr>
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px;">Đang tải dữ liệu...</td>
+            </tr>
             </tbody>
         </table>
     </div>
 </main>
 
+<!-- ======================================== -->
+<!-- ====== BỔ SUNG: MODAL TẠO CLAIM MỚI ====== -->
+<!-- ======================================== -->
+<div class="modal-overlay" id="create-claim-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Tạo Claim Mới</h2>
+            <button class="modal-close-btn" id="close-claim-modal">&times;</button>
+        </div>
+        <form id="create-claim-form">
+            <!-- Form này dựa trên file CreateClaimDto.java -->
+
+            <div class="form-group">
+                <label for="vin-input">VIN</label>
+                <input type="text" id="vin-input" name="vin" placeholder="Nhập 17 ký tự số VIN..." required>
+            </div>
+
+            <div class="form-group">
+                <label for="description-input">Mô tả sự cố</label>
+                <textarea id="description-input" name="description" placeholder="Mô tả chi tiết sự cố..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="parts-input">Phụ tùng yêu cầu (Nhập Mã phụ tùng, cách nhau bằng dấu phẩy)</label>
+                <input type="text" id="parts-input" name="requestedParts" placeholder="Ví dụ: PART-001, PART-002">
+            </div>
+
+            <div class="form-group">
+                <label for="technician-id-input">ID Kỹ thuật viên (Nếu có)</label>
+                <input type="number" id="technician-id-input" name="technicianId" placeholder="Ví dụ: 101">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="is-recall-input" name="isRecall" style="width: auto;">
+                <label for="is-recall-input" style="margin-bottom: 0;">Đây là Claim thuộc Chiến dịch (Recall)?</label>
+            </div>
+
+            <!-- Nơi hiển thị thông báo lỗi/thành công từ API -->
+            <div class="error-message" id="claim-error-message"></div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="cancel-claim-modal">Hủy</button>
+                <button type="submit" class="btn-primary" id="submit-claim-btn">Lưu Claim</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- ======================================== -->
+<!-- ====== KẾT THÚC BỔ SUNG MODAL ====== -->
+<!-- ======================================== -->
+
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-        // Giả sử Warranty-Service chạy ở 8005
-        const API_BASE_URL = 'http://localhost:8005';
+        const API_BASE_URL = 'http://localhost:80';
         const statusFilter = document.getElementById('status-filter');
         const tableBody = document.getElementById('claims-table-body');
 
-        // --- 1. DỮ LIỆU MẪU (MOCK DATA) ---
-        // Dữ liệu này sẽ được dùng vì API GET /claims?status=... chưa tồn tại
-        // trong WarrantyController bạn gửi.
-        const mockData = [
-            {
-                id: 201,
-                claimCode: "CL-2024001",
-                vin: "VF9PLUS_123",
-                model: "VF9 Plus",
-                customerName: "Nguyễn Văn A",
-                scName: "SC Gò Vấp",
-                status: "PENDING",
-                dateCreated: "2024-03-10T10:30:00"
-            },
-            {
-                id: 202,
-                claimCode: "CL-2024002",
-                vin: "VF8ECO_456",
-                model: "VF8 Eco",
-                customerName: "Phạm Thị B",
-                scName: "SC Long Biên",
-                status: "APPROVED",
-                dateCreated: "2024-03-09T14:00:00"
-            },
-            {
-                id: 203,
-                claimCode: "CL-2024003",
-                vin: "VF9PLUS_789",
-                model: "VF9 Plus",
-                customerName: "Trần Thị D",
-                scName: "XC Mỹ Đình",
-                status: "REJECTED",
-                dateCreated: "2024-03-07T09:15:00"
-            }
-        ];
+        const modal = document.getElementById('create-claim-modal');
+        const openModalBtn = document.getElementById('open-create-claim-modal');
+        const closeModalBtn = document.getElementById('close-claim-modal');
+        const cancelModalBtn = document.getElementById('cancel-claim-modal');
+        const createClaimForm = document.getElementById('create-claim-form');
+        const submitClaimBtn = document.getElementById('submit-claim-btn');
+        const claimErrorMessage = document.getElementById('claim-error-message');
+
+        // Lấy token từ localStorage
+        const token = localStorage.getItem('jwtToken'); // giả sử bạn lưu token key là 'jwtToken'
+        // if (!token) {
+        //     alert("Bạn chưa đăng nhập! Vui lòng đăng nhập trước khi truy cập.");
+        //     window.location.href = "login.html"; // chuyển về trang đăng nhập
+        //     return;
+        // }
 
         /**
-         * HÀM 1: Tải dữ liệu Claims từ API (MÔ PHỎNG)
-         * API thật: GET /api/v1/claims?status={status}
+         * Hàm 1: Lấy danh sách Claims từ API (ko dùng mock data nữa)
          */
-        async function fetchClaims(status = 'WAITING_APPROVAL') {
+        async function fetchClaims(status = 'PENDING') {
             tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Đang tải dữ liệu...</td></tr>';
-            console.log(`Đang gọi API (mô phỏng) để lấy Claims với trạng thái: ${status}`);
+            console.log(`Gọi API để lấy Claims với trạng thái: ${status}`);
 
-            // --- PHẦN GỌI API THẬT (ĐANG BỊ COMMENT) ---
-            /*
             try {
-                // API này cần được thêm vào WarrantyController của bạn
-                const response = await fetch(`${API_BASE_URL}/api/v1/claims?status=${status}`);
+                const response = await fetch(`${API_BASE_URL}/api/v1/claims?status=${status}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
                 if (!response.ok) {
-                    throw new Error(`Mạng không ổn định hoặc API lỗi: ${response.statusText}`);
+                    throw new Error(`API lỗi: ${response.statusText}`);
                 }
+
                 const data = await response.json();
                 populateTable(data);
+
             } catch (error) {
                 console.error("Lỗi khi fetch dữ liệu:", error);
                 tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red; padding: 40px;">Lỗi khi tải dữ liệu: ${error.message}</td></tr>`;
             }
-            */
-            // --- Kết thúc phần API thật ---
-
-            // --- PHẦN DÙNG DỮ LIỆU MẪU (ĐỂ TEST GIAO DIỆN) ---
-            // Lọc dữ liệu mẫu dựa trên trạng thái
-            const filteredData = (status === 'ALL')
-                ? mockData
-                : mockData.filter(claim => claim.status === status);
-
-            // Giả lập độ trễ mạng
-            setTimeout(() => {
-                populateTable(filteredData);
-            }, 500);
         }
 
         /**
-         * HÀM 2: Hiển thị dữ liệu lên Bảng
+         * Hàm 2: Hiển thị dữ liệu lên bảng
          */
         function populateTable(data) {
-            tableBody.innerHTML = ''; // Xóa nội dung "Đang tải..."
+            tableBody.innerHTML = '';
 
             if (!data || data.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Không tìm thấy Claim nào.</td></tr>';
@@ -568,79 +651,153 @@
 
             data.forEach(item => {
                 const row = document.createElement('tr');
-
-                // Format ngày tháng
                 const formattedDate = new Date(item.dateCreated).toLocaleDateString('vi-VN');
 
                 row.innerHTML = `
-                    <td>
-                        <span class="primary-text">${item.claimCode}</span>
-                        <span class="secondary-text">VIN: ${item.vin}</span>
-                    </td>
-                    <td>
-                        <span class="primary-text">${item.model}</span>
-                        <span class="secondary-text">KH: ${item.customerName}</span>
-                    </td>
-                    <td>
-                        <span class="primary-text">${item.scName}</span>
-                    </td>
-                    <td>
-                        <span class="status-badge status-${item.status}">${item.status}</span>
-                    </td>
-                    <td>${formattedDate}</td>
-                    <td>
-                        <a href="approve-claim.html?id=${item.id}" class="action-link" data-id="${item.id}">
-                            [Xem chi tiết]
-                        </a>
-                        <a href="#" class="action-link action-link-danger" data-id="${item.id}">
-                            [Từ chối]
-                        </a>
-                    </td>
-                `;
+                <td>
+                    <span class="primary-text">${item.claimCode}</span>
+                    <span class="secondary-text">VIN: ${item.vin}</span>
+                </td>
+                <td>
+                    <span class="primary-text">${item.model}</span>
+                    <span class="secondary-text">KH: ${item.customerName}</span>
+                </td>
+                <td>
+                    <span class="primary-text">${item.scName}</span>
+                </td>
+                <td>
+                    <span class="status-badge status-${item.status}">${item.status}</span>
+                </td>
+                <td>${formattedDate}</td>
+                <td>
+                    <a href="approve-claim-detail.html?id=${item.id}" class="action-link" data-id="${item.id}">
+                        [Xem chi tiết]
+                    </a>
+                    <a href="#" class="action-link action-link-danger" data-id="${item.id}">
+                        [Từ chối]
+                    </a>
+                </td>
+            `;
                 tableBody.appendChild(row);
             });
         }
 
-        /**
-         * HÀM 3: Xử lý sự kiện
-         */
-
-        // 1. Tải dữ liệu khi bộ lọc thay đổi
         statusFilter.addEventListener('change', (e) => {
             fetchClaims(e.target.value);
         });
 
-        // 2. Xử lý click vào các link hành động
         tableBody.addEventListener('click', (e) => {
-            // Ngăn hành động mặc định của thẻ <a>
             e.preventDefault();
-
             const target = e.target;
 
-            // Xử lý nút [Từ chối]
             if (target.classList.contains('action-link-danger')) {
                 const claimId = target.getAttribute('data-id');
                 const reason = prompt(`Nhập lý do từ chối cho Claim ID: ${claimId}`);
-                if (reason) {
-                    // Gọi API Từ chối (PUT /api/v1/claims/{id}/reject)
-                    console.log(`Đang gọi API Từ chối cho ${claimId} với lý do: ${reason}`);
-                    // (Bạn có thể thêm hàm fetch() 'PUT' ở đây)
-                    alert("Đã gửi yêu cầu Từ chối (mô phỏng).");
-                }
+                if (reason) handleRejectClaim(claimId, reason);
             }
 
-            // Xử lý nút [Xem chi tiết]
             if (target.classList.contains('action-link') && !target.classList.contains('action-link-danger')) {
-                 const claimId = target.getAttribute('data-id');
-                 // Chuyển sang trang chi tiết
-                 window.location.href = `approve-claim.html?id=${claimId}`;
+                const claimId = target.getAttribute('data-id');
+                window.location.href = `approve-claim-detail.html?id=${claimId}`;
             }
         });
 
-        // --- KHỞI CHẠY ---
-        // Tải dữ liệu lần đầu tiên (mặc định là "Chờ phê duyệt")
-        fetchClaims('WAITING_APPROVAL');
+        fetchClaims('PENDING');
+
+        // Modal
+        function openModal() {
+            claimErrorMessage.style.display = 'none';
+            createClaimForm.reset();
+            modal.classList.add('show');
+        }
+        function closeModal() {
+            modal.classList.remove('show');
+        }
+        openModalBtn.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Tạo Claim mới
+        async function handleCreateClaim(event) {
+            event.preventDefault();
+            setButtonLoading(true, "Đang lưu...");
+            claimErrorMessage.style.display = 'none';
+
+            const formData = new FormData(createClaimForm);
+            const requestedPartsList = formData.get('requestedParts').split(',')
+                .map(p => p.trim()).filter(p => p).map(p => ({ partNumber: p, quantity: 1 }));
+
+            const claimData = {
+                vin: formData.get('vin'),
+                description: formData.get('description'),
+                technicianId: formData.get('technicianId') ? parseInt(formData.get('technicianId')) : null,
+                isRecall: formData.get('isRecall') === 'on',
+                requestedParts: requestedPartsList,
+                attachedDocuments: []
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/claims`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(claimData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Lỗi khi tạo Claim');
+                }
+
+                const newClaimId = await response.json();
+                alert(`Tạo Claim thành công! Mã Claim ID: ${newClaimId}`);
+                closeModal();
+                fetchClaims(statusFilter.value);
+
+            } catch (error) {
+                console.error("Lỗi khi tạo Claim:", error);
+                claimErrorMessage.textContent = `Lỗi: ${error.message}`;
+                claimErrorMessage.classList.add('show');
+            } finally {
+                setButtonLoading(false, "Lưu Claim");
+            }
+        }
+
+        createClaimForm.addEventListener('submit', handleCreateClaim);
+
+        async function handleRejectClaim(claimId, reason) {
+            try {
+                const url = `${API_BASE_URL}/api/v1/claims/${claimId}/reject?reason=${encodeURIComponent(reason)}`;
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error("Lỗi khi gửi yêu cầu từ chối.");
+
+                alert("Đã từ chối Claim thành công!");
+                fetchClaims(statusFilter.value);
+
+            } catch (error) {
+                alert(`Lỗi: ${error.message}`);
+            }
+        }
+
+        function setButtonLoading(isLoading, text = "Lưu Claim") {
+            submitClaimBtn.disabled = isLoading;
+            submitClaimBtn.textContent = isLoading ? "Đang lưu..." : text;
+        }
+
     });
+
 </script>
 
 </body>
