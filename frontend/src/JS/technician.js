@@ -1,21 +1,59 @@
-import '../styles/technician.css';
-import { api } from '../services/apiClient.js';
+// src/js/technician.js
+
+// Import các "linh kiện" và "tiện ích"
 import { checkAuth } from '../utils/auth.js';
 import { renderHeader } from '../components/Header.js';
 import { renderTechnicianSidebar } from '../components/TechnicianSidebar.js';
-// Yêu cầu người dùng phải có role 'TECHNICIAN'
-const userInfo = checkAuth('TECHNICIAN');
-// Đá user ko phải TECHNICIAN
-if (!userInfo) {
-    throw new Error("Authentication Failed or Access Denied.");
-}
+import { getUser } from "../utils/storage.js";
+import { api } from '../services/apiClient.js';
+import '../styles/technician.css';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // "Tiêm" các component dùng chung vào placeholder
-    renderHeader();
-    renderTechnicianSidebar();
-    // --- Lấy các phần tử DOM ---
-    const screens = document.querySelectorAll('.screen');
+// --- BIẾN TRẠNG THÁI ---
+let currentClaimData = null;
+let currentTechnicianId = null;
+
+// --- HÀM "ROUTER" CHÍNH - CHẠY NGAY KHI LOAD ---
+(function main() {
+    console.log('🚀 Technician.js đã load!');
+
+    // 1. Gác cổng - Yêu cầu role SC_TECHNICIAN
+    const user = checkAuth('ROLE_SC_TECHNICIAN');
+    if (!user) {
+        console.error('❌ Không có quyền truy cập!');
+        return;
+    }
+
+    console.log('✅ User authenticated:', user);
+
+    // Lưu ID của technician hiện tại
+    currentTechnicianId = user.id || user.sub;
+
+    // 2. Render các component chung
+    console.log('📌 Đang render Header và Sidebar...');
+
+    try {
+        renderHeader();
+        renderTechnicianSidebar();
+        console.log('✅ Header và Sidebar đã render!');
+    } catch (e) {
+        console.error('❌ Lỗi render components:', e);
+    }
+
+    // 3. Khởi tạo trang sau khi DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initJobListPage);
+    } else {
+        initJobListPage();
+    }
+})();
+
+/**
+ * Khởi tạo trang Danh sách công việc
+ */
+function initJobListPage() {
+    console.log("📋 Đang khởi tạo trang Danh sách công việc...");
+
+    // Lấy các phần tử DOM
     const jobTableBody = document.getElementById('job-table-body');
     const btnFinishRepair = document.getElementById('btn-finish-repair');
     const reportForm = document.getElementById('report-form');
@@ -24,10 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const backButtons = document.querySelectorAll('.btn-back');
     const navMyJobs = document.getElementById('nav-my-jobs');
     const reloadJobsBtn = document.getElementById('reload-jobs-btn');
+    const screens = document.querySelectorAll('.screen');
 
-    let currentClaimData = null; // Biến lưu trữ ClaimDto đầy đủ khi xem chi tiết
-    const currentTechnicianId = userInfo.id;
-
+    if (!jobTableBody) {
+        console.error('❌ Không tìm thấy job-table-body!');
+        return;
+    }
 
     // --- Hàm thay đổi màn hình ---
     function showScreen(screenId) {
@@ -37,7 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
             activeScreen.classList.add('active');
         }
         // Cuộn lên đầu trang
-        document.getElementById('main-content').scrollTop = 0;
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) mainContent.scrollTop = 0;
     }
 
     // --- Hàm hiển thị lỗi ---
@@ -48,23 +89,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong>Đã xảy ra lỗi:</strong> ${message}
             </td></tr>`;
     }
+
     function showFormError(message) {
         const errorMsg = document.getElementById('form-error-message');
-        errorMsg.textContent = message;
-        errorMsg.style.display = 'block';
+        if (errorMsg) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
     }
 
-    // --- HÀM TÍCH HỢP CHO MÀN HÌNH 1 ---
+    // --- HÀM TÍCH HỢP CHO MÀN HÌNH 1: Danh sách công việc ---
     async function renderJobList() {
+        console.log('🔄 Đang tải danh sách công việc...');
+
         jobTableBody.innerHTML = `
             <tr><td colspan="5" class="loading-placeholder">
                 <i class="fa-solid fa-spinner fa-spin"></i> Đang tải ...
             </td></tr>`;
 
         try {
-            // 1. Gọi API 1 (Lấy Danh sách Claim)
+            // 1. Gọi API lấy Danh sách Claim
             const pageObject = await api.get('/claims?status=APPROVED&page=0&size=50');
             const claimsList = pageObject.content;
+
+            console.log('📦 Nhận được claims:', claimsList);
 
             if (!claimsList || claimsList.length === 0) {
                 jobTableBody.innerHTML = `
@@ -113,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (actionCell) actionCell.innerHTML = actionHtml;
 
                 } catch (partError) {
-                    // Lỗi kiểm tra phụ tùng
+                    console.error('⚠️ Lỗi kiểm tra phụ tùng:', partError);
                     const statusCell = document.querySelector(`[data-status-cell-for="${claim.id}"]`);
                     const actionCell = document.querySelector(`[data-action-cell-for="${claim.id}"]`);
                     if (statusCell) statusCell.innerHTML = `<span style="color: var(--danger-color);">Lỗi</span>`;
@@ -122,11 +170,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } catch (error) {
+            console.error('❌ Lỗi tải danh sách:', error);
             showError(jobTableBody, error.message);
         }
     }
 
-    // --- HÀM TÍCH HỢP CHO MÀN HÌNH 2 ---
+    // --- HÀM TÍCH HỢP CHO MÀN HÌNH 2: Chi tiết sửa chữa ---
     async function loadClaimDetails(claimId) {
         showScreen('screen-repair-details');
         document.getElementById('detail-loading').style.display = 'block';
@@ -134,19 +183,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detail-claim-id').textContent = '...';
 
         try {
-            // API: GET /api/v1/claims/{claimId}
             currentClaimData = await api.get(`/claims/${claimId}`);
 
             if (!currentClaimData) throw new Error("Không tìm thấy dữ liệu claim.");
 
-            // Cập nhật dữ liệu cho Màn hình 2
             document.getElementById('detail-claim-id').textContent = currentClaimData.claimCode;
             document.getElementById('detail-vin').textContent = currentClaimData.vin;
             document.getElementById('detail-customer').textContent = currentClaimData.customerName;
             document.getElementById('detail-date').textContent = new Date(currentClaimData.dateCreated).toLocaleDateString('vi-VN');
             document.getElementById('detail-description').textContent = currentClaimData.description;
 
-            // Cập nhật bảng phụ tùng
             const partsTableBody = document.getElementById('detail-parts-table').querySelector('tbody');
             partsTableBody.innerHTML = '';
             if (currentClaimData.partList && currentClaimData.partList.length > 0) {
@@ -161,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 partsTableBody.innerHTML = `<tr><td colspan="3" class="loading-placeholder">Không yêu cầu phụ tùng.</td></tr>`;
             }
 
-            // Cập nhật hướng dẫn
             const procedureList = document.getElementById('detail-procedure-list');
             if (currentClaimData.prepairProcedure) {
                 procedureList.innerHTML = `<ol>${currentClaimData.prepairProcedure}</ol>`;
@@ -169,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 procedureList.innerHTML = `<p class="text-secondary">Không có hướng dẫn sửa chữa.</p>`;
             }
 
-            // Cập nhật Form Serial (Màn hình 3)
             const serialInputsContainer = document.getElementById('form-serial-inputs');
             serialInputsContainer.innerHTML = '';
             if (currentClaimData.partList && currentClaimData.partList.length > 0) {
@@ -182,13 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 });
             } else {
-                 serialInputsContainer.innerHTML = `<p class="text-secondary">Không có phụ tùng nào cần nhập serial.</p>`;
+                serialInputsContainer.innerHTML = `<p class="text-secondary">Không có phụ tùng nào cần nhập serial.</p>`;
             }
 
-            // Cập nhật ID cho Form
             document.getElementById('form-claim-id').textContent = currentClaimData.claimCode;
 
-            // Hiển thị nội dung
             document.getElementById('detail-loading').style.display = 'none';
             document.getElementById('detail-content').style.display = 'block';
 
@@ -199,14 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- HÀM TÍCH HỢP CHO MÀN HÌNH 3 ---
+    // --- HÀM TÍCH HỢP CHO MÀN HÌNH 3: Báo cáo kết quả ---
     async function submitRepairReport(e) {
         e.preventDefault();
         btnSubmitReport.disabled = true;
         btnSubmitReport.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...`;
         document.getElementById('form-error-message').style.display = 'none';
 
-        // Xây dựng Request Body (ClaimRepairResultDto)
         const serialUpdates = {};
         const serialInputs = document.querySelectorAll('.serial-input');
         serialInputs.forEach(input => {
@@ -228,10 +269,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             alert(`Đã gửi báo cáo thành công cho Claim: ${currentClaimData.claimCode}`);
 
-            // Đặt lại form và quay về màn hình 1
             reportForm.reset();
             btnSubmitReport.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Gửi Báo cáo`;
-            renderJobList(); // Tải lại danh sách
+            renderJobList();
             showScreen('screen-job-list');
 
         } catch (error) {
@@ -241,10 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     // --- XỬ LÝ SỰ KIỆN ---
 
-    // 1. Nhấp vào "Bắt đầu sửa" trong Bảng
     jobTableBody.addEventListener('click', (e) => {
         if (e.target.classList.contains('view-claim')) {
             const claimId = e.target.dataset.claimId;
@@ -252,34 +290,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Nhấp nút "Đã sửa chữa xong"
-    btnFinishRepair.addEventListener('click', () => {
-        showScreen('screen-report-form');
-    });
+    if (btnFinishRepair) {
+        btnFinishRepair.addEventListener('click', () => {
+            showScreen('screen-report-form');
+        });
+    }
 
-    // 3. Nhấp nút "Quay lại danh sách"
     backButtons.forEach(button => {
         button.addEventListener('click', () => {
             showScreen('screen-job-list');
         });
     });
-    navMyJobs.addEventListener('click', (e) => {
-         e.preventDefault();
-         showScreen('screen-job-list');
-    });
-    reloadJobsBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        renderJobList();
-    });
 
-    // 4. Bật/Tắt nút "Gửi" dựa trên checkbox
-    confirmCheckbox.addEventListener('change', () => {
-        btnSubmitReport.disabled = !confirmCheckbox.checked;
-    });
+    if (navMyJobs) {
+        navMyJobs.addEventListener('click', (e) => {
+            e.preventDefault();
+            showScreen('screen-job-list');
+        });
+    }
 
-    // 5. Gửi Form Báo cáo
-    reportForm.addEventListener('submit', submitRepairReport);
+    if (reloadJobsBtn) {
+        reloadJobsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderJobList();
+        });
+    }
+
+    if (confirmCheckbox && btnSubmitReport) {
+        confirmCheckbox.addEventListener('change', () => {
+            btnSubmitReport.disabled = !confirmCheckbox.checked;
+        });
+    }
+
+    if (reportForm) {
+        reportForm.addEventListener('submit', submitRepairReport);
+    }
 
     // --- Khởi chạy lần đầu ---
     renderJobList();
-});
+}

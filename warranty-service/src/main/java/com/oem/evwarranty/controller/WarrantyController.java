@@ -109,7 +109,7 @@ public class WarrantyController {
         return ResponseEntity.ok(warrantyService.getClaimStatusHistory(claimId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SC_STAFF', 'EVM_STAFF', 'TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SC_STAFF', 'EVM_STAFF', 'SC_TECHNICIAN')")
     @GetMapping
     public Page<ClaimDto> getClaims(
             @RequestParam(required = false) String claimCode,
