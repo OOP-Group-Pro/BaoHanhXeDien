@@ -351,10 +351,11 @@ public class WarrantyService {
                     .map(auth -> auth.getAuthority())
                     .toList();
 
-            if (!roles.contains("ROLE_ADMIN")) {
+            if (!roles.contains("ROLE_ADMIN") && ! roles.contains("ROLE_SC_TECHNICIAN") && ! roles.contains(("ROLE_EVM_STAFF")) ) {
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
                 }
+
                 else specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
             }
         } else if (principal instanceof String && principal.equals("internal-service")) {
