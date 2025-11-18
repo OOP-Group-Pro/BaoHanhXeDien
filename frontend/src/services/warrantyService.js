@@ -52,7 +52,7 @@ export const getClaimDetails = (claimId) => {
  */
 export const getClaimHistory = (claimId) => {
     return api.get(`/claims/${claimId}/history`);
-};
+
 
 /**
  * Cập nhật kết quả sửa chữa (dành cho Kỹ thuật viên)
@@ -63,4 +63,5 @@ export const getClaimHistory = (claimId) => {
 export const updateRepairResult = (claimId, repairData) => {
     // API này cần gửi kèm 1 body (khác với approve/reject)
     return api.put(`/claims/${claimId}/repair-result`, repairData);
+
 };

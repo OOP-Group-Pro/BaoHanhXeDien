@@ -87,7 +87,9 @@ public class SecurityConfig {
 
         // FIX: Cho phép cả 2 môi trường Dev và Production
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",  // 1. Cho Vite (Dev)
+                "http://localhost:5173",
+                "http://localhost:63342",
+                "http://localhost:5500",// 1. Cho Vite (Dev)
                 "http://oem.webhop.me"      // 2. Cho Nginx (Production)
         ));
 
