@@ -8,11 +8,14 @@ import { getClaims, createClaim, getClaimDetails, getClaimHistory } from './serv
 import { getCustomerNameByVin } from './services/vehicleService.js';
 import { searchParts } from "./services/partService.js";
 import { getUsersByRole } from "./services/userService.js";
+import { api } from './services/apiClient.js';
+
 
 // --- BIẾN TOÀN CỤC ---
 let selectedParts = [];
 let claimListState = { currentPage: 0, size: 10, vin: '', claimCode: '', status: 'WAITING_APPROVAL' }; // ⬅️ SỬA LẠI THÀNH 'WAITING_APPROVAL'
 let claimModalInstance = null;
+let selectedFiles = []; // ⬅️ THÊM BIẾN NÀY
 
 // --- 2. HÀM GLOBAL (CHO HTML 'onclick') ---
 window.updatePartQuantity = (event) => {
@@ -34,6 +37,70 @@ window.removePart = (event) => {
     }
 };
 
+// ⬇️ THÊM HÀM NÀY
+window.removeFile = (event) => {
+    const index = parseInt(event.target.dataset.index, 10);
+    if (typeof index !== 'undefined' && selectedFiles[index]) {
+        console.log('LOG: Xóa File tại index:', index);
+        // Tạo một mảng mới từ mảng cũ, loại bỏ file tại index
+        const dt = new DataTransfer();
+        const newFiles = selectedFiles.filter((_, i) => i !== index);
+        newFiles.forEach(file => dt.items.add(file));
+
+        // Cập nhật lại <input> và mảng global
+        document.getElementById('attached-files').files = dt.files;
+        selectedFiles = Array.from(dt.files);
+
+        renderSelectedFilesList(); // Vẽ lại danh sách
+    }
+};
+
+// Hàm tải file an toàn (có Token) - Đã sửa lỗi phục hồi nút
+window.downloadFile = async (url, filename) => {
+    // 1. Lấy nút và lưu trạng thái TRƯỚC KHI vào try/catch
+    // (Để đảm bảo biến 'button' có thể dùng được ở mọi nơi)
+    const button = document.activeElement;
+    const originalText = button ? button.innerHTML : 'Tải/Xem';
+
+    try {
+        // 2. Bật hiệu ứng loading
+        if (button) {
+            button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang tải...';
+            button.disabled = true;
+        }
+
+        // 3. Gọi API
+        console.log("LOG: Bắt đầu tải file:", url);
+        const blob = await api.getBlob(url);
+
+        // 4. Tạo link ảo và click
+        const objectUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+
+        // 5. Dọn dẹp
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(objectUrl);
+
+    } catch (error) {
+        console.error("Lỗi tải file:", error);
+        // Hiện thông báo lỗi cụ thể (VD: Not Found, Unauthorized...)
+        alert("Lỗi: " + error.message);
+
+    } finally {
+        // 6. KHỐI FINALLY (QUAN TRỌNG NHẤT)
+        // Code trong này LUÔN LUÔN CHẠY, dù thành công hay thất bại
+        if (button) {
+            button.innerHTML = originalText; // Trả lại chữ "Tải/Xem" cũ
+            button.disabled = false;         // Mở khóa nút
+        }
+    }
+};
+
 
 // --- 3. HÀM MAIN (ROUTER) ---
 // Chạy hàm main khi DOM đã sẵn sàng
@@ -47,7 +114,7 @@ function main() {
         console.log("LOG: Gác cổng thất bại, dừng thực thi.");
         return;
     }
-    console.log("LOG: Gác cổng OK. User:", userInfo.id);
+    console.log("LOG: Gác cổng OK. User:", userInfo.roles);
 
     // 2. Vẽ giao diện chung (Chạy 1 lần)
     try {
@@ -87,12 +154,14 @@ async function setupCreateClaimForm() {
     console.log("LOG: setupCreateClaimForm()"); // ⬅️ SỬA LỖI CÚ PHÁP
 
     selectedParts = []; // ⬅️ Reset mảng khi vào trang
+    selectedFiles = []; // ⬅️ Reset mảng file
 
     // Lấy các element
     const vinInput = document.getElementById('vin');
     const validateBtn = document.getElementById('validate-vin-btn');
     const resultEl = document.getElementById('vin-check-result');
     const fieldset = document.getElementById('claim-details-fieldset');
+    const fileInput = document.getElementById('attached-files'); // ⬅️ THÊM VÀO
     const button = document.getElementById('create-claim-btn');
     const errorEl = document.getElementById('form-error');
 
@@ -172,24 +241,92 @@ async function setupCreateClaimForm() {
         }
     });
 
+    // ⬇️ THÊM LOGIC LẮNG NGHE FILE INPUT
+    fileInput.addEventListener('change', (event) => {
+        // 1. Lấy file MỚI được chọn
+        const newFiles = Array.from(event.target.files);
+
+        // 2. Dùng Map để lọc trùng (dựa trên tên file và kích thước)
+        const existingFilesMap = new Map();
+        selectedFiles.forEach(file => {
+            existingFilesMap.set(file.name + file.size, file);
+        });
+
+        // 3. Thêm các file mới (chưa có) vào Map
+        newFiles.forEach(file => {
+            if (!existingFilesMap.has(file.name + file.size)) {
+                existingFilesMap.set(file.name + file.size, file);
+            }
+        });
+
+        // 4. Chuyển Map trở lại thành mảng 'selectedFiles'
+        selectedFiles = Array.from(existingFilesMap.values());
+
+        // 5. [RẤT QUAN TRỌNG] Đồng bộ hóa mảng 'selectedFiles'
+        //    ngược lại vào <input type="file">
+        //    Nếu không có bước này, FormData sẽ chỉ gửi file cuối cùng.
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+        event.target.files = dataTransfer.files; // Gán lại vào <input>
+
+        console.log("LOG: Đã CỘNG DỒN files. Tổng số:", selectedFiles.length);
+
+        // 6. Vẽ lại danh sách
+        renderSelectedFilesList();
+    });
+
     // Logic "Submit Form"
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // 1. Lấy dữ liệu DTO
         const requestedPartsDTO = selectedParts.map(p => ({ partNumber: p.partNumber, quantity: p.quantity }));
         if (requestedPartsDTO.length === 0) {
             errorEl.textContent = 'Lỗi: Bạn phải thêm ít nhất 1 phụ tùng.';
             return;
         }
+
         button.disabled = true;
         button.textContent = 'Đang gửi...';
         errorEl.textContent = '';
+
         try {
+            // 2. Tạo đối tượng DTO (dưới dạng text)
             const vin = vinInput.value;
             const description = document.getElementById('description').value;
-            const createClaimDto = { vin, description, technicianId: null, isRecall: false, requestedParts: requestedPartsDTO, attachedDocuments: [] };
-            const newClaimId = await createClaim(createClaimDto);
+            const createClaimDto = {
+                vin,
+                description,
+                technicianId: null,
+                isRecall: false,
+                requestedParts: requestedPartsDTO
+                // Không cần 'attachedDocuments' ở đây, backend sẽ xử lý từ 'files'
+            };
+
+            // 3. XÂY DỰNG FORMDATA
+            // Đây là phần thay đổi quan trọng nhất
+            const formData = new FormData();
+
+            // 3a. Thêm DTO (dưới dạng JSON string)
+            // Backend sẽ cần đọc 'dto' và giải mã (deserialize) nó
+            formData.append('dto', JSON.stringify(createClaimDto));
+
+            // 3b. Thêm các file
+            // 'files' phải khớp với @RequestPart("files") ở Backend
+            selectedFiles.forEach((file) => {
+                formData.append('files', file);
+            });
+
+            console.log("LOG: Đang gửi FormData (DTO + Files)...");
+
+            // 4. Gọi hàm createClaim (đã được cập nhật để gửi FormData)
+            const newClaimId = await createClaim(formData); // ⬅️ Gửi FormData
+
             alert('Tạo Claim thành công! ID mới là: ' + newClaimId);
             window.location.href = '/pages/scStaff/index.html';
+
         } catch (error) {
             console.error('Lỗi tạo claim:', error);
             errorEl.textContent = 'Lỗi: ' + error.message;
@@ -259,6 +396,36 @@ function renderSelectedPartsTable() {
 }
 // (Các hàm window.update... và window.remove... đã được chuyển lên top-level)
 
+// ⬇️ THÊM HÀM MỚI (để "vẽ" danh sách file đã chọn)
+function renderSelectedFilesList() {
+    const previewListEl = document.getElementById('file-preview-list');
+    if (!previewListEl) return;
+
+    if (selectedFiles.length === 0) {
+        previewListEl.innerHTML = ''; // Xóa danh sách nếu không có file
+        return;
+    }
+
+    // Vẽ danh sách file
+    previewListEl.innerHTML = `
+        <p class="mb-1"><strong>File đã chọn:</strong></p>
+        <ul class="list-group list-group-flush">
+            ${selectedFiles.map((file, index) => `
+                <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-file-earmark-zip"></i> ${file.name}
+                        <small class="text-muted d-block">${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                            data-index="${index}"
+                            onclick="removeFile(event)">
+                        Xóa
+                    </button>
+                </li>
+            `).join('')}
+        </ul>
+    `;
+}
 
 // -------------------------------------------------------------------
 // 5. LOGIC TRANG "DASHBOARD & LIST" (index.html)
@@ -539,11 +706,46 @@ function renderModalContent(details, history) {
         </li>
     `).join('');
 
+    // 1. Xử lý HTML cho danh sách tài liệu
+    let documentsHtml = '';
+    if (!details.documents || details.documents.length === 0) {
+        documentsHtml = '<li class="list-group-item">Không có tài liệu đính kèm.</li>';
+    } else {
+        documentsHtml = details.documents.map(doc => {
+            // Kiểm tra xem có phải ảnh không để hiện thumbnail
+            const isImage = doc.fileType.startsWith('image/');
+            // Lưu ý: doc.url là đường dẫn API backend trả về (vd: /api/v1/claims/documents/5)
+
+            return `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    ${isImage
+                ? '<i class="bi bi-image fs-3 me-3 text-primary"></i>'
+                : '<i class="bi bi-file-earmark-text fs-3 me-3"></i>'}
+                    
+                    <div>
+                        <strong>${doc.fileName}</strong>
+                        <small class="d-block text-muted">${doc.fileType}</small>
+                    </div>
+                </div>
+                
+                <button class="btn btn-sm btn-outline-primary" 
+                        onclick="downloadFile('${doc.url}', '${doc.fileName}')">
+                    <i class="bi bi-download"></i> Tải/Xem
+                </button>
+            </li>
+            `;
+        }).join('');
+    }
+
+
+
     modalBody.innerHTML = `
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item" role="presentation"><button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-tab-pane" type="button" role="tab">Thông tin chung</button></li>
             <li class="nav-item" role="presentation"><button class="nav-link" id="parts-tab" data-bs-toggle="tab" data-bs-target="#parts-tab-pane" type="button" role="tab">Phụ tùng (${details.partList ? details.partList.length : 0})</button></li>
             <li class="nav-item" role="presentation"><button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-tab-pane" type="button" role="tab">Lịch sử (${history ? history.length : 0})</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs-tab-pane" type="button" role="tab">Tài liệu (${details.documents ? details.documents.length : 0})</button></li>
         </ul>
         <div class="tab-content p-3 border border-top-0" id="myTabContent">
             <div class="tab-pane fade show active" id="info-tab-pane" role="tabpanel">
@@ -569,6 +771,12 @@ function renderModalContent(details, history) {
                 <h5>Lịch sử Trạng thái</h5>
                 <ul class="list-group">${historyHtml || '<li class="list-group-item">Chưa có lịch sử.</li>'}</ul>
             </div>
+            <div class="tab-pane fade" id="docs-tab-pane" role="tabpanel">
+                <h5>Tài liệu đính kèm</h5>
+                <ul class="list-group">${documentsHtml}</ul>
+            </div>
         </div>
     `;
+
+
 }

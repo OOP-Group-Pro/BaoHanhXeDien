@@ -1,7 +1,9 @@
 package com.oem.evwarranty.service;
 
 import com.oem.evwarranty.dto.*;
+import com.oem.evwarranty.mapper.DocumentMapper;
 import com.oem.evwarranty.mapper.PartMapper;
+import com.oem.evwarranty.model.AttachedDocument;
 import com.oem.evwarranty.model.utils.PartResponseDto;
 import com.oem.evwarranty.model.utils.UserResponseDto;
 import com.oem.evwarranty.client.warranty.UserServiceClient;
@@ -14,6 +16,7 @@ import com.oem.evwarranty.model.utils.PartAllocationRequest;
 import com.oem.evwarranty.model.utils.SerialUpdateDetail;
 import com.oem.evwarranty.client.warranty.VehicleServiceClient; // Feign Client
 import com.oem.evwarranty.client.warranty.PartServiceClient;    // Feign Client
+import com.oem.evwarranty.repository.AttachedDocumentRepository;
 import com.oem.evwarranty.repository.specification.WarrantyClaimSpecification;
 import com.oem.evwarranty.security.UserDetailsPrincipal;
 import org.springframework.data.domain.Page;
@@ -36,6 +39,7 @@ import static com.oem.evwarranty.mapper.PartMapper.mapToPartDetail;
 import com.oem.evwarranty.repository.ClaimPartDetailRepository;
 import com.oem.evwarranty.repository.ClaimStatusLogRepository;
 import com.oem.evwarranty.repository.WarrantyClaimRepository;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Service
@@ -45,6 +49,7 @@ public class WarrantyService {
     private final WarrantyClaimRepository claimRepo;
     private final ClaimStatusLogRepository logRepo;
     private final ClaimPartDetailRepository partDetailRepo;
+    private final AttachedDocumentRepository attachedDocRepo;
     // ... (Các Repository khác: ClaimCostRepository, AttachedDocumentRepository)
 
     // 2. Dependencies Liên Service (Feign Clients)
@@ -52,70 +57,104 @@ public class WarrantyService {
     private final PartServiceClient partClient;
     private final UserServiceClient userClient;
 
+    private final FileStorageService fileStorageService;
+
     // Constructor Injection (Spring Boot tự động tiêm các dependency này)
     public WarrantyService(
             WarrantyClaimRepository claimRepo,
             ClaimStatusLogRepository logRepo,
             ClaimPartDetailRepository partDetailRepo,
+            AttachedDocumentRepository attachedDocRepo,
             VehicleServiceClient vehicleClient,
             PartServiceClient partClient,
-            UserServiceClient userClient) {
+            UserServiceClient userClient,
+            FileStorageService fileStorageService) {
 
         this.claimRepo = claimRepo;
         this.logRepo = logRepo;
         this.partDetailRepo = partDetailRepo;
+        this.attachedDocRepo = attachedDocRepo;
         this.vehicleClient = vehicleClient;
         this.partClient = partClient;
         this.userClient = userClient;
+        this.fileStorageService = fileStorageService;
     }
 
     // --- BẮT ĐẦU CÁC PHƯƠNG THỨC NGHIỆP VỤ ---
 
-    // 1. Chức năng: TẠO CLAIM MỚI
+    // ⬇️ BƯỚC 3: HÀM CREATECLAIM (ĐÃ SỬA HOÀN CHỈNH) ⬇️
     @Transactional
-    public Long createClaim(CreateClaimDto dto, Long scStaffId) {
-        // [Logic chính]:
-        // 1. Xác thực VIN (Gọi Vehicle-Service).
-        // 2. Map DTO sang Entity.
-        // 3. Lưu Claim, ClaimPartDetail, ClaimStatusLog.
+    public Long createClaim(CreateClaimDto dto, List<MultipartFile> files, Long scStaffId) {
 
-        // BƯỚC 1: XÁC THỰC - GỌI SERVICE NGOÀI
-        // Giả sử client trả về TRUE nếu VIN hợp lệ
+        // BƯỚC 1: XÁC THỰC
         boolean isVinValid = vehicleClient.validateVin(dto.getVin());
         if (!isVinValid) {
             throw new IllegalArgumentException("VIN không hợp lệ hoặc không tồn tại.");
         }
-
         UserResponseDto userInfo = userClient.getScStaffById(scStaffId);
 
-        // BƯỚC 2: MAP DTO SANG ENTITY VÀ LƯU
-        WarrantyClaim newClaim = // Giả sử đã có Mapper để chuyển DTO sang Entity
-                WarrantyClaim.builder()
-                        .claimCode(generateClaimCode()) // Hàm tự tạo mã claim
-                        .vin(dto.getVin())
-                        .scStaffId(scStaffId) // ID nhân viên tạo
-                        .centerId(userInfo.getServiceCenterId())
-                        .description(dto.getDescription())
-                        .currentStatus(ClaimStatus.WAITING_APPROVAL)
-                        .dateCreated(LocalDateTime.now())
-                        .technicalStaffId(null)
-                        .build();
+        // BƯỚC 2: TẠO MÃ CLAIM
+        String claimCode = generateClaimCode();
 
+        // BƯỚC 3: KHỞI TẠO ENTITY (SỬA LỖI BUILDER Ở ĐÂY)
+        WarrantyClaim newClaim = WarrantyClaim.builder()
+                .claimCode(claimCode)
+                .vin(dto.getVin())
+                .scStaffId(scStaffId)
+                .centerId(userInfo.getServiceCenterId())
+                .description(dto.getDescription())
+                .currentStatus(ClaimStatus.WAITING_APPROVAL)
+                .dateCreated(LocalDateTime.now())
+                .technicalStaffId(null)
+                // ❌ ĐÃ XÓA DÒNG: .documents(files) -> Vì sai kiểu dữ liệu
+                .build();
+
+        // Khởi tạo danh sách documents rỗng để tránh NullPointerException
+        if (newClaim.getDocuments() == null) {
+            newClaim.setDocuments(new ArrayList<>());
+        }
+
+        // BƯỚC 4: XỬ LÝ FILE (SỬA LẠI ĐỂ DÙNG SERVICE THẬT)
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
+
+                // Gọi Service thật để lưu vào ổ cứng
+                // Hàm này sẽ trả về đường dẫn dạng: "claims/CLAIM-001/anh.jpg"
+                String relativePath = fileStorageService.save(file, "claims/" + claimCode);
+
+                // Tạo Entity AttachedDocument
+                AttachedDocument doc = new AttachedDocument();
+                doc.setFileName(file.getOriginalFilename());
+                doc.setFileType(file.getContentType());
+                doc.setStoragePath(relativePath);
+                doc.setUploadDate(LocalDateTime.now());
+                doc.setClaim(newClaim); // Liên kết ngược lại Claim
+
+                // Thêm vào danh sách (sẽ được lưu tự động nhờ Cascade)
+                newClaim.getDocuments().add(doc);
+            }
+        }
+
+        // BƯỚC 5: LƯU CLAIM
+        // JPA sẽ lưu newClaim -> sau đó tự động lưu danh sách documents bên trong
         claimRepo.save(newClaim);
 
-        // BƯỚC 3: LƯU CÁC THỰC THỂ PHỤ
-        // 3a. Lưu Chi tiết Phụ tùng (Part Details)
-        // Truoc het can lay danh sach cac phu tùng bị hư đề xuat bảo hành:
+        // BƯỚC 6: LƯU CÁC THỰC THỂ PHỤ
+        // 6a. Lưu Phụ tùng
+        if (dto.getRequestedParts() != null && !dto.getRequestedParts().isEmpty()) {
+            partDetailRepo.saveAll(dto.getRequestedParts().stream()
+                    .map(d -> mapToPartDetail(d, newClaim))
+                    .toList());
+        }
 
-        partDetailRepo.saveAll(dto.getRequestedParts().stream().map(d -> mapToPartDetail(d, newClaim)).toList());
-
-        // 3b. Ghi lại Log trạng thái đầu tiên
+        // 6b. Lưu Log
         logRepo.save(
                 ClaimStatusLog.builder()
                         .claim(newClaim)
                         .timestamp(LocalDateTime.now())
                         .status(ClaimStatus.WAITING_APPROVAL)
-                        .processorId(scStaffId) // Người tạo chính là người xử lý ban đầu
+                        .processorId(scStaffId)
                         .notes("Yêu cầu bảo hành được khởi tạo.")
                         .build());
 
@@ -326,8 +365,15 @@ public class WarrantyService {
 
         claimDto.setPartList(partDtos);
 
-        // 5. Lấy Lịch sử (Chúng ta sẽ gọi riêng từ frontend)
-        // (Bỏ qua statusHistory ở đây để frontend gọi getClaimHistory)
+        // ⬇️ 5. (BỔ SUNG) MAP DANH SÁCH TÀI LIỆU (Fix lỗi "Không có tài liệu")
+        if (claim.getDocuments() != null && !claim.getDocuments().isEmpty()) {
+            List<AttachedDocumentDto> docDtos = claim.getDocuments().stream()
+                    .map(DocumentMapper::mapToAttachedDocumentDto) // ⬅️ Đã dùng Class 'DocumentMapper'
+                    .toList(); // Hoặc .collect(Collectors.toList()) nếu Java cũ
+            claimDto.setDocuments(docDtos);
+        } else {
+            claimDto.setDocuments(new ArrayList<>()); // Trả về list rỗng thay vì null
+        }
 
         return claimDto;
     }
@@ -468,5 +514,9 @@ public class WarrantyService {
 
         // 4️⃣ Lấy page
         return new PageImpl<>(claimDtos, pageable, claimPage.getTotalElements());
+    }
+
+    public AttachedDocument getDocumentById(Long id) {
+        return attachedDocRepo.findById(id).get();
     }
 }

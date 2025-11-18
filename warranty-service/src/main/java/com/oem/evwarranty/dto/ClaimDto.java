@@ -24,4 +24,5 @@ public class ClaimDto {
     private List<ClaimStatusLogDto> statusHistory;
     private String prepairProcedure;
     private List<ClaimPartDetailDto> partList;
+    private List<AttachedDocumentDto> documents;
 }

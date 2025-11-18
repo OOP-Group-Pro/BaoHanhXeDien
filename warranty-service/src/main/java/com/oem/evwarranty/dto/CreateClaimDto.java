@@ -18,14 +18,10 @@ import java.util.List;
 public class CreateClaimDto {
     private String vin;                     // Số VIN của xe (bắt buộc)
     private String description;             // Mô tả lỗi của xe
-    private Long technicianId;              // ID Kỹ thuật viên được chỉ định ban đầu
     private boolean isRecall;               // Có phải Claim Recall không
 
     // Chi tiết phụ tùng yêu cầu (dùng để tạo ClaimPartDetail)
     private List<PartRequestDto> requestedParts;
-
-    // Metadata tài liệu đính kèm (dùng để tạo AttachedDocument)
-    private List<DocumentMetadataDto> attachedDocuments;
 }
 
 // Class phụ cho metadata tài liệu

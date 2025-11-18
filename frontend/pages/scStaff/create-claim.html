@@ -51,7 +51,14 @@
                             <div class="col-md-12">
                                 <label for="description" class="form-label">Mô tả Lỗi</label>
                                 <textarea class="form-control" id="description" rows="5" placeholder="Mô tả chi tiết triệu chứng lỗi..." required></textarea>
+                                <label for="attached-files" class="form-label">Tài liệu đính kèm (Hình ảnh/Video)</label>
+                                <input class="form-control" type="file" id="attached-files" multiple
+                                       accept="image/*,video/*">
+                                <div class="form-text">Bạn có thể chọn nhiều file.</div>
                             </div>
+                        </div>
+
+                        <div id="file-preview-list" class="mb-3">
                         </div>
 
                         <hr>
@@ -84,6 +91,7 @@
                         <p id="form-error" class="text-danger mt-3 text-end"></p>
                     </div>
                 </div>
+
             </fieldset>
         </form>
     </main>

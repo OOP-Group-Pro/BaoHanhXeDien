@@ -1,6 +1,6 @@
 // src/services/apiClient.js
 import { getToken } from '../utils/storage.js';
-import { logout } from '../utils/auth.js'; // ⬅️ Sửa: import từ auth.js
+import { logout } from '../utils/auth.js';
 
 const API_BASE_URL = '/api/v1';
 
@@ -21,40 +21,66 @@ async function apiClient(endpoint, options = {}) {
         headers: defaultHeaders,
     };
 
+    // Xử lý FormData (xóa Content-Type để browser tự điền boundary)
+    if (options.body && options.body instanceof FormData) {
+        delete config.headers['Content-Type'];
+    } else if (options.body) {
+        config.body = JSON.stringify(options.body);
+    }
+
+    // GỌI API
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    // ⬇️ SỬA LỖI LOGIC NẰM Ở ĐÂY ⬇️
+    // -------------------------------------------------------
+    // ⬇️ BƯỚC 1: KIỂM TRA LỖI TRƯỚC (QUAN TRỌNG NHẤT) ⬇️
+    // -------------------------------------------------------
 
-    // BƯỚC 1: Xử lý lỗi 401 (Unauthorized) NGAY LẬP TỨC
+    // 1a. Xử lý 401 (Hết phiên)
     if (response.status === 401) {
-        alert('Phiên đăng nhập hết hạn hoặc không hợp lệ.');
-        logout(); // Tự động đá ra trang login
-        // Ném ra lỗi để ngăn code chạy tiếp
-        throw new Error('Unauthorized');
+        logout();
+        throw new Error('Phiên đăng nhập hết hạn.');
     }
 
-    // BƯỚC 2: Xử lý các lỗi khác (400, 403, 500...)
+    // 1b. Xử lý các lỗi khác (400, 403, 404, 500...)
     if (!response.ok) {
-        const errorData = await response.json(); // Lỗi 403, 500 thường có body JSON
-        const message = errorData.message || 'Lỗi API';
-        console.error('API Error:', message, 'Path:', errorData.path);
-        throw new Error(message);
+        // Cố gắng đọc lỗi từ JSON server trả về
+        let errorMessage = 'Lỗi API';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+            // Nếu server không trả JSON mà trả text (hoặc HTML lỗi)
+            errorMessage = await response.text();
+        }
+
+        console.error('API Error:', errorMessage);
+        throw new Error(errorMessage);
     }
 
-    // BƯỚC 3: Xử lý 200 OK
+    // -------------------------------------------------------
+    // ⬇️ BƯỚC 2: XỬ LÝ DỮ LIỆU THÀNH CÔNG (200 OK) ⬇️
+    // -------------------------------------------------------
+
+    // Nếu client yêu cầu Blob (File/Ảnh)
+    if (options.responseType === 'blob') {
+        return response.blob();
+    }
+
+    // Nếu server trả về JSON
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
         return response.json();
     }
 
-    // (Xử lý POST /claims trả về ID dạng text)
+    // Mặc định trả về Text
     return response.text();
 }
 
-// ⬇️ Mọi người sẽ dùng cái này
+// Export giữ nguyên
 export const api = {
     get: (endpoint) => apiClient(endpoint),
-    post: (endpoint, body) => apiClient(endpoint, { method: 'POST', body: JSON.stringify(body) }),
-    put: (endpoint, body) => apiClient(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
+    getBlob: (endpoint) => apiClient(endpoint, { method: 'GET', responseType: 'blob' }),
+    post: (endpoint, body) => apiClient(endpoint, { method: 'POST', body: body }),
+    put: (endpoint, body) => apiClient(endpoint, { method: 'PUT', body: body }),
     delete: (endpoint) => apiClient(endpoint, { method: 'DELETE' }),
 };

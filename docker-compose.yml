@@ -102,6 +102,8 @@ services:
       - "8005:8080"
     networks:
       - oem-network
+    volumes:
+      - ./uploads:/app/uploads
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
     # Khai báo phụ thuộc cho WARRANTY-SERVICE
     environment:
