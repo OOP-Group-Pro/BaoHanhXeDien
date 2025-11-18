@@ -14,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/parts")
 @RequiredArgsConstructor
@@ -60,5 +63,15 @@ public class PartController {
 
         PartAllocationResponse response = allocationService.allocateForClaim(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/by-numbers")
+    public ResponseEntity<Map<String, PartResponse>> getPartsByNumbers(
+            @RequestBody List<String> partNumbers
+    ) {
+        // Bạn sẽ cần implement hàm 'getPartDetailsByNumbers' trong PartService
+        // Nó nhận 1 List<String> và trả về Map<String (partNumber), PartResponse (chi tiết)>
+        Map<String, PartResponse> partMap = partService.getPartDetailsByNumbers(partNumbers);
+        return ResponseEntity.ok(partMap);
     }
 }

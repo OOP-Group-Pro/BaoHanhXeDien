@@ -48,5 +48,4 @@ public class WarrantyClaim {
     @JsonManagedReference
     @OneToMany(mappedBy = "claim",  cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClaimPartDetail> partDetails;
-
 }

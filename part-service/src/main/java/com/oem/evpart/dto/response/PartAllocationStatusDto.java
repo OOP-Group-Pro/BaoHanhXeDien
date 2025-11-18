@@ -1,11 +1,17 @@
 package com.oem.evpart.dto.response;
 
-import com.oem.evpart.models.PartAllocation;
+// SỬA: Import Enum từ Entity (PartAllocation) thay vì định nghĩa lại
+import com.oem.evpart.models.PartAllocation.AllocationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * DTO này được trả về cho Giao diện Kỹ thuật viên
+ * để hiển thị trạng thái cấp phát phụ tùng cho một Claim.
+ * (Dựa trên image_99162a.jpg)
+ */
 @Getter
 @Setter
 @AllArgsConstructor
@@ -16,7 +22,8 @@ public class PartAllocationStatusDto {
     private Long claimId;
 
     // Trạng thái cấp phát
-    private PartAllocation.AllocationStatus status;
+    private AllocationStatus status;
 
-
+    // SỬA: Đã xóa định nghĩa Enum trùng lặp ở đây.
+    // DTO sẽ dùng chung Enum từ PartAllocation.java (file bạn đã cung cấp)
 }

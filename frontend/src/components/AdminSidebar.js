@@ -1,5 +1,5 @@
 // src/components/EvmSidebar.js
-import { logout } from '../services/authService.js'; // (Giả sử bạn có file authService.js)
+import { logout } from '../services/authService.js';
 import { getUser } from '../utils/storage.js'; // Lấy thông tin user đã đăng nhập
 
 export function renderEvmSidebar() {
@@ -59,7 +59,7 @@ export function renderEvmSidebar() {
         <div class="sidebar-user">
             <div class="avatar-sm">${user ? user.username.charAt(0).toUpperCase() : 'E'}</div>
             <span class="user-name">${user ? user.username : 'EVM Staff'}</span>
-            <button id="logout-btn-sidebar" title="Đăng xuất" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-left:auto;">
+            <button id="logout-btn-sidebar" title="Đăng xuất">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         </div>

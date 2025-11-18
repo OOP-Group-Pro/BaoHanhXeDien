@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -130,6 +132,16 @@ public class VehicleService {
 
         // 4. Trả về tên khách hàng
         return customer.getCustomerName();
+    }
+
+    public Map<String, String> getCustomerNamesByVins (List<String> vins) {
+        List<Vehicle> vehicles = vehicleRepository.findAllByVehicleVinIn(vins);
+
+        Map<String, String> customerNames = new HashMap<>();
+        vehicles.forEach(vehicle -> {
+            customerNames.put(vehicle.getVehicleVin(), vehicle.getCustomer().getCustomerName());
+        });
+        return customerNames;
     }
 
 }

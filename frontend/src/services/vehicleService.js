@@ -1,28 +1,28 @@
-// Base URL của vehicle-service & warranty/appointment nếu cần
-const VEHICLE_BASE = "http://localhost:8002/api/v1";        // vehicle-service
-const WARRANTY_BASE = "http://localhost:8005/api/v1";       // warranty-service (nếu bạn serve lịch sử tại đây)
-const CAMPAIGN_BASE = "http://localhost:8003/api/v1";       // campaign-service (nếu lịch sử có liên quan)
-
-export async function getVehicleByVin(vin) {
-  const res = await fetch(`${VEHICLE_BASE}/vehicles/${encodeURIComponent(vin)}`);
-  if (!res.ok) throw new Error(`Không tìm thấy xe với VIN ${vin}`);
-  return res.json();
-}
+// src/services/vehicleService.js
+import { api } from './apiClient.js';
 
 /**
- * Tuỳ backend, bạn có thể:
- *  - gom lịch sử ở warranty-service: /vehicles/{vin}/history
- *  - hoặc tách 2 nguồn (appointment + claim), rồi merge phía FE.
- * Dưới đây là một phương án đơn giản (1 endpoint gộp).
+ * Gọi API (của VehicleController) để lấy Tên Khách hàng bằng VIN
+ * API: GET /api/v1/vehicles/{vin}/customer-name
+ * (Lưu ý: API này trả về Text (String), không phải JSON)
  */
+export const getCustomerNameByVin = (vin) => {
+    // apiClient của chúng ta đã được sửa để xử lý text/plain
+    return api.get(`/vehicles/${vin}/customer-name`);
+};
+
 /**
- * filters: { type?, center?, from?, to? }
- * Backend (gợi ý): GET /api/v1/vehicles/{vin}/history?type=&center=&from=&to=
+ * Gọi API (của VehicleController) để xác thực VIN
+ * API: GET /api/v1/vehicles/validate/{vin}
  */
-export async function getVehicleHistory(vin, filters = {}) {
-  const q = new URLSearchParams(filters).toString();
-  const url = `${BASE}/vehicles/${encodeURIComponent(vin)}/history${q ? `?${q}` : ''}`;
-  const res = await fetch(url);
-  if (!res.ok) return [];
-  return res.json();
-}
+export const validateVin = (vin) => {
+    return api.get(`/vehicles/validate/${vin}`); // API này trả về boolean
+};
+
+/**
+ * Lấy chi tiết xe bằng VIN (Dùng cho bước nâng cao sau)
+ * API: GET /api/v1/vehicles/vin/{vin}
+ */
+export const getVehicleByVin = (vin) => {
+    return api.get(`/vehicles/vin/${vin}`); // API này trả về VehicleResponseDTO
+};

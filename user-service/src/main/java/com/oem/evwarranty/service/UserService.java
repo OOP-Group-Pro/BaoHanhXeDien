@@ -14,10 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.access.AccessDeniedException;
 import com.oem.evwarranty.dto.response.UserResponseDto;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 import static com.oem.evwarranty.mapper.UserMapper.mapToUserResponseDto;
 
@@ -136,5 +133,15 @@ public class UserService {
                     .map(UserMapper::mapToUserResponseDto)
                     .toList();
         }
+    }
+
+    public Map<Long, UserResponseDto> findUsersByIds (List<Long> ids) {
+        List<User> users = userRepository.findAllById(ids);
+
+        Map<Long, UserResponseDto> map = new HashMap<>();
+        for (User user : users) {
+            map.put(user.getUserId(), mapToUserResponseDto(user));
+        }
+        return map;
     }
 }

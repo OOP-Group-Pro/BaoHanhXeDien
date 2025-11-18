@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -82,5 +83,12 @@ public class UserController {
 
         return ResponseEntity.ok().body(userService.findUsersByCriteria(roleName, centerId));
 
+    }
+
+    // For Warranty service:
+    @PostMapping("/details-map")
+    public ResponseEntity<Map<Long, UserResponseDto>> getUsersDetailsByIds(@RequestBody List<Long> userIds) {
+        Map<Long, UserResponseDto> userMap = userService.findUsersByIds(userIds);
+        return ResponseEntity.ok(userMap);
     }
 }

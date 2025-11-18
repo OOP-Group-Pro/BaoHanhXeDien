@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -109,6 +110,12 @@ public class VehicleController {
     public ResponseEntity<String> getCustomerNameByVin(@PathVariable("vin") String vin) {
         String customerName = vehicleService.getCustomerNameByVin(vin);
         return ResponseEntity.ok(customerName);
+    }
+
+    @PostMapping("/vins/customer-names")
+    public ResponseEntity<Map<String, String>> getCustomerNamesByVins(@RequestBody List<String> vins) {
+        Map<String, String> nameMap = vehicleService.getCustomerNamesByVins(vins);
+        return ResponseEntity.ok(nameMap);
     }
 
 }

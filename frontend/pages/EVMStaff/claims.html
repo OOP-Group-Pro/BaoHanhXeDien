@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách Claim (Approval) - EVM Staff</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <link rel="stylesheet" href="../../src/styles/approve-claim.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<main class="main-content" id="main-content">
+
+    <div id="header-placeholder"></div>
+
+    <header class="main-header">
+        <h1>Danh sách Claim (Approval View)</h1>
+        <div class="header-actions">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search by Claim ID, or Customer...">
+            </div>
+            <button class="btn-primary" id="open-create-claim-modal">
+                <i class="fa-solid fa-plus"></i>
+                Tạo Claim Mới
+            </button>
+        </div>
+    </header>
+
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label for="status-filter">Status</label>
+            <select id="status-filter">
+                <option value="ALL">Status: All</option>
+                <option value="WAITING_APPROVAL" selected>Chờ phê duyệt</option>
+                <option value="APPROVED">Đã phê duyệt</option>
+                <option value="REJECTED">Đã từ chối</option>
+                <option value="IN_PROGRESS">Đang sửa chữa</option>
+                <option value="COMPLETED">Đã hoàn thành</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="sc-filter">Service Center</label>
+            <select id="sc-filter">
+                <option value="ALL">Service Center: All</option>
+                <option value="1">SC Gò Vấp</option>
+                <option value="2">SC Long Biên</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2>Danh sách Yêu cầu Bảo hành</h2>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>Mã Claim / VIN</th>
+                <th>Model / Khách hàng</th>
+                <th>Trung tâm Dịch vụ</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+            </tr>
+            </thead>
+            <tbody id="claims-table-body">
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px;">Đang tải dữ liệu...</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<div class="modal-overlay" id="create-claim-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Tạo Claim Mới</h2>
+            <button class="modal-close-btn" id="close-claim-modal">&times;</button>
+        </div>
+        <form id="create-claim-form">
+            <div class="form-group">
+                <label for="vin-input">VIN</label>
+                <input type="text" id="vin-input" name="vin" placeholder="Nhập 17 ký tự số VIN..." required>
+            </div>
+            <div class="form-group">
+                <label for="description-input">Mô tả sự cố</label>
+                <textarea id="description-input" name="description" placeholder="Mô tả chi tiết sự cố..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="parts-input">Phụ tùng yêu cầu (Mã phụ tùng, cách nhau bằng dấu phẩy)</label>
+                <input type="text" id="parts-input" name="requestedParts" placeholder="Ví dụ: PART-001, PART-002">
+            </div>
+            <div class="form-group">
+                <label for="technician-id-input">ID Kỹ thuật viên (Nếu có)</label>
+                <input type="number" id="technician-id-input" name="technicianId" placeholder="Ví dụ: 101">
+            </div>
+            <div class="form-group form-group-checkbox">
+                <input type="checkbox" id="is-recall-input" name="isRecall">
+                <label for="is-recall-input">Đây là yêu cầu Triệu hồi (Recall)?</label>
+            </div>
+            <div class="error-message" id="claim-error-message"></div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="cancel-claim-modal">Hủy</button>
+                <button type="submit" class="btn-primary" id="submit-claim-btn">Lưu Claim</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="../../src/evmStaff.js"></script>
+</body>
+</html>
