@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EV WarrantyPro | Internal Login</title>
+    <link rel="stylesheet" href="../frontend/src/styles/style-login.css" />
+</head>
+<body>
+<div class="background">
+    <div class="overlay"></div>
+
+    <!-- LEFT SIDE TEXT -->
+    <div class="branding">
+        <div class="brand-logo">
+            <img src="../frontend/src/styles/img/logo.png" alt="Black Car Icon" />
+            <h1>EV WarrantyPro</h1>
+        </div>
+        <p>Internal EV Management System</p>
+    </div>
+
+
+    <!-- LOGIN BOX -->
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Internal Login</h2>
+            <form id="login-form">
+                <input type="text" id="username" placeholder="Username" required />
+                <input type="password" id="password" placeholder="Password" required />
+                <div class="remember">
+                    <input type="checkbox" id="remember" />
+                    <label for="remember">Remember me</label>
+                </div>
+                <button type="submit" class="login-btn">LOGIN</button>
+            </form>
+            <p id="login-message" class="error-message"></p>
+            <p class="note">For authorized personnel only</p>
+        </div>
+    </div>
+</div>
+
+<script src="../frontend/src/JS/script-login.js"></script>
+</body>
+</html>

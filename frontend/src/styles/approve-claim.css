@@ -1,0 +1,452 @@
+/* ====== CSS CHUNG CHO TOÀN BỘ HỆ THỐNG (TỪ TEMPLATE) ====== */
+:root {
+    --primary-blue: #3B82F6;
+    --primary-blue-dark: #2563EB;
+    --sidebar-bg: #1E1E2D;
+    --content-bg: #F3F4F6;
+    --white: #FFFFFF;
+    --text-dark: #1F2937;
+    --text-light: #F9FAFB;
+    --text-secondary: #9CA3AF;
+    --border-color: #E5E7EB;
+    /* Bổ sung màu trạng thái */
+    --status-pending-bg: #FEF3C7;  /* Vàng nhạt */
+    --status-pending-text: #D97706; /* Vàng đậm */
+    --status-approved-bg: #D1FAE5; /* Xanh lá nhạt */
+    --status-approved-text: #059669; /* Xanh lá đậm */
+    --status-rejected-bg: #FEE2E2;  /* Đỏ nhạt */
+    --status-rejected-text: #DC2626;  /* Đỏ đậm */
+    --danger-red: #EF4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    background-color: var(--content-bg);
+    color: var(--text-dark);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ===== Sidebar (Menu trái) ===== */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    color: var(--text-light);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-logo .logo-icon {
+    font-size: 1.5rem; /* Placeholder cho logo V */
+}
+.sidebar-logo h2 {
+    font-size: 1.25rem;
+    color: var(--white);
+}
+
+.sidebar-nav {
+    list-style: none;
+    margin-top: 24px;
+}
+.sidebar-nav li {
+    margin-bottom: 8px;
+}
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-light);
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.sidebar-nav a i {
+    margin-right: 16px;
+    width: 20px;
+    text-align: center;
+}
+.sidebar-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.sidebar-nav a.active {
+    background-color: var(--primary-blue);
+    color: var(--white);
+}
+.sidebar-user {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-user .avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--content-bg);
+    color: var(--text-dark);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+.sidebar-user .user-name {
+    font-weight: 500;
+    color: var(--white);
+}
+.sidebar-user #logout-btn-sidebar {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    margin-left: auto;
+    font-size: 1rem;
+}
+.sidebar-user #logout-btn-sidebar:hover {
+    color: var(--white);
+}
+
+
+/* ===== Main content area ===== */
+.main-content {
+    flex-grow: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+/* CSS cho Header (do JS render) */
+.main-navbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+}
+.main-navbar .user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.main-navbar .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+.main-navbar .user-info span {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.main-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.search-bar {
+    position: relative;
+}
+.search-bar input {
+    padding: 10px 16px 10px 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 0.875rem;
+    width: 300px;
+}
+.search-bar .fa-search {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: var(--white);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-primary:hover {
+    background-color: var(--primary-blue-dark);
+}
+.btn-primary:disabled {
+    background-color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.btn-secondary {
+    background-color: var(--white);
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+.btn-secondary:hover {
+    background-color: var(--content-bg);
+}
+
+/* --- Thanh Filter (Dùng cho claims, users, v.v.) --- */
+.filter-bar {
+    display: flex;
+    gap: 16px;
+    padding: 24px;
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+.filter-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.filter-group select, .filter-group input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 0.875rem;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--white);
+}
+.filter-group select {
+    min-width: 180px;
+}
+
+/* --- Bảng Dữ liệu (Content Card) --- */
+.content-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+.content-card-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+.content-card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 16px 24px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+tbody tr:last-child td {
+    border-bottom: none;
+}
+thead {
+    background-color: #F9FAFB;
+}
+th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+td {
+    font-size: 0.875rem;
+    font-weight: 500;
+    vertical-align: top;
+}
+td .primary-text {
+    font-weight: 600;
+    color: var(--text-dark);
+    display: block;
+}
+td .secondary-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: block;
+}
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+.status-pending {
+    background-color: var(--status-pending-bg);
+    color: var(--status-pending-text);
+}
+.status-approved {
+    background-color: var(--status-approved-bg);
+    color: var(--status-approved-text);
+}
+.status-rejected {
+    background-color: var(--status-rejected-bg);
+    color: var(--status-rejected-text);
+}
+.action-link {
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-decoration: none;
+    margin-right: 12px;
+}
+.action-link:hover {
+    text-decoration: underline;
+}
+.action-link-danger {
+    color: var(--danger-red);
+}
+
+/* --- Modal (Pop-up) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+.modal-content {
+    background-color: var(--white);
+    padding: 32px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transform: scale(0.95);
+    transition: transform 0.3s;
+}
+.modal-overlay.show .modal-content {
+    transform: scale(1);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+}
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-family: 'Inter', sans-serif;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: flex-end;
+}
+.error-message {
+    margin-top: 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--danger-red);
+    display: none;
+    padding: 10px;
+    background-color: var(--status-rejected-bg);
+    border-radius: 6px;
+}
+.error-message.show {
+    display: block;
+}

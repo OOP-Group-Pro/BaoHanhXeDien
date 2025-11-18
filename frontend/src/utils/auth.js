@@ -37,7 +37,7 @@ export function decodeToken() {
 /**
  * HÀM GÁC CỔNG CHÍNH
  * (Dùng ở đầu mỗi file JS của các trang được bảo vệ, VÍ DỤ: scStaff.js)
- * @param {string} requiredRole - (Tùy chọn) Tên vai trò yêu cầu, ví dụ: "ROLE_ADMIN"
+ * @param {string[]} requiredRole - (Tùy chọn) Tên vai trò yêu cầu, ví dụ: "ROLE_ADMIN"
  */
 export function checkAuth (requiredRole = null) {
     const userInfo = decodeToken(); // (Đã bao gồm kiểm tra token, hết hạn)
