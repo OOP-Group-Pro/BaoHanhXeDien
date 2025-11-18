@@ -50,6 +50,17 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
+        <!-- 1. THÊM REDIS STARTER -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- 2. THÊM CACHE STARTER (Để dùng @Cacheable) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
         <!-- Các dependency riêng của Part-Service (không cần version) -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

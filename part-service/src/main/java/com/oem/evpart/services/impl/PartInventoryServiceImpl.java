@@ -11,6 +11,8 @@ import com.oem.evpart.repositories.PartInventoryRepository;
 import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartInventoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -52,6 +54,8 @@ public class PartInventoryServiceImpl implements PartInventoryService {
 
     @Override
     @Transactional
+    // Cập nhật lại cache inventory sau khi trừ kho
+    @CachePut(value = "inventory_location", key = "#request.partId + '-' + #request.location")
     public PartInventoryResponse decrementStock(DecrementStockRequest request) {
         // 1. Tìm bản ghi tồn kho tương ứng với partId và location
         PartInventory inventory = inventoryRepository
@@ -77,6 +81,8 @@ public class PartInventoryServiceImpl implements PartInventoryService {
 
     @Override
     @Transactional(readOnly = true)
+    // Cache tồn kho theo Part ID
+    @Cacheable(value = "inventory_part", key = "#partId")
     public List<PartInventoryResponse> getInventoryByPartId(Long partId) {
         return inventoryRepository.findByPart_PartId(partId).stream()
                 .map(inventoryMapper::toPartInventoryResponse)

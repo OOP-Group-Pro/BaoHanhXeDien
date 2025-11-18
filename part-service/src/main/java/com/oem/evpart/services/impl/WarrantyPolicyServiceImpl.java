@@ -10,6 +10,8 @@ import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.repositories.WarrantyPolicyRepository;
 import com.oem.evpart.services.WarrantyPolicyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -26,6 +28,7 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "warranty_policies", key = "#request.partId")
     public WarrantyPolicyResponse createPolicy(WarrantyPolicyRequest request) {
         Part part = partRepository.findById(request.getPartId())
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + request.getPartId()));
@@ -47,6 +50,9 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     @Override
     @Transactional(readOnly = true)
+    // 🚀 CACHE QUAN TRỌNG: Cache danh sách chính sách theo Part ID
+    // Key: warranty_policies::<partId>
+    @Cacheable(value = "warranty_policies", key = "#partId")
     public List<WarrantyPolicyResponse> getPoliciesByPartId(Long partId) {
         if (!partRepository.existsById(partId)) {
             throw new ResourceNotFoundException("Part not found with id: " + partId);
@@ -59,6 +65,8 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     @Override
     @Transactional
+    // Xóa cache khi update
+    @CacheEvict(value = "warranty_policies", allEntries = true)
     public WarrantyPolicyResponse updatePolicy(Long policyId, WarrantyPolicyRequest request) {
         WarrantyPolicy existingPolicy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Policy not found with id: " + policyId));

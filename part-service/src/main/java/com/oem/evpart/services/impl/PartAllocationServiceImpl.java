@@ -15,6 +15,8 @@ import com.oem.evpart.repositories.PartInventoryRepository;
 import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartAllocationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,9 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- CREATE ALLOCATION ----------------
     @Override
     @Transactional
+    @CacheEvict(value = "allocation_status", key = "#request.claimId")
+    // (Lưu ý: request của createAllocation có thể không có claimId trực tiếp nếu gọi nội bộ,
+    // cần kiểm tra lại DTO. Nếu khó lấy key, dùng allEntries = true cho an toàn nhưng kém hiệu năng hơn)
     public PartAllocationResponse createAllocation(PartAllocationRequest request) {
         // 1. Tìm kho chứa phụ tùng
         PartInventory inventory = inventoryRepository.findById(request.getInventoryId())
@@ -60,6 +65,7 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- ALLOCATE FOR CLAIM ----------------
     @Override
     @Transactional
+    @CacheEvict(value = "allocation_status", key = "#request.claimId") // request này có claimId (nếu DTO có)
     public PartAllocationResponse allocateForClaim(ClaimAllocationRequest request) {
         Long partId;
         try {
@@ -121,6 +127,8 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- NEW: GET STATUS BY CLAIM ID ----------------
     @Override
     @Transactional(readOnly = true)
+    // 🚀 CACHE: Cache trạng thái cho Frontend đỡ query nhiều lần
+    @Cacheable(value = "allocation_status", key = "#claimId")
     public PartAllocationStatusDto getStatusByClaimId(Long claimId) {
         // 1. Tìm allocation theo claimId (giả định bạn có field claimId trong entity)
         List<PartAllocation> allocations = allocationRepository.findByClaimId(claimId);

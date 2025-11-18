@@ -1,5 +1,4 @@
-// src/services/warrantyService.js
-import { api } from './apiClient.js'; // Import hàm fetch đã có auth
+import { api } from './apiClient.js';
 
 /**
  * Lấy danh sách claims
@@ -18,8 +17,6 @@ export const createClaim = (claimData) => {
     // API này (POST /claims) trả về ID (dạng text), apiClient.js đã xử lý
     return api.post('/claims', claimData);
 };
-
-// --- BỔ SUNG HÀM MỚI ---
 
 /**
  * Từ chối một Claim
@@ -52,16 +49,14 @@ export const getClaimDetails = (claimId) => {
  */
 export const getClaimHistory = (claimId) => {
     return api.get(`/claims/${claimId}/history`);
-
+};
 
 /**
- * Cập nhật kết quả sửa chữa (dành cho Kỹ thuật viên)
- * API: PUT /api/v1/claims/{claimId}/repair-result
- * @param {string} claimId - ID của claim
- * @param {object} repairData - Dữ liệu DTO (ClaimRepairResultDto)
+ * SC Staff nhập kết quả sửa chữa (Giai đoạn 3)
+ * API: PUT /api/v1/claims/{id}/repair-result
+ * @param {string} claimId ID của Claim
+ * @param {object} repairData Dữ liệu form (notes, partRemovedSerial, partInstalledSerial)
  */
 export const updateRepairResult = (claimId, repairData) => {
-    // API này cần gửi kèm 1 body (khác với approve/reject)
     return api.put(`/claims/${claimId}/repair-result`, repairData);
-
 };

@@ -8,6 +8,10 @@ import com.oem.evpart.models.Part;
 import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +30,7 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "parts_list", allEntries = true)
     public PartResponse createPart(PartRequest partRequest) {
         // Có thể thêm logic kiểm tra serial number đã tồn tại chưa
          if(partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
@@ -38,7 +43,11 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
+    // 🚀 CACHE: Lưu kết quả vào "parts" với key là partId.
+    // Lần sau gọi ID này sẽ không query DB nữa.
+    @Cacheable(value = "parts", key = "#partId")
     public PartResponse getPartById(Long partId) {
+        System.out.println(">>> Getting Part from Database for ID: " + partId);
         Part part = partRepository.findById(partId)
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + partId));
         return partMapper.toPartResponse(part);
@@ -46,12 +55,19 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
+    // 🚀 CACHE: Cache danh sách trang. Key tự động sinh theo pageable (page, size, sort)
+    @Cacheable(value = "parts_list", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<PartResponse> getAllParts(Pageable pageable) {
         return partRepository.findAll(pageable).map(partMapper::toPartResponse);
     }
 
     @Override
     @Transactional
+    // 🚀 UPDATE CACHE: Cập nhật lại giá trị trong cache "parts" sau khi update DB
+    @Caching(
+            put = { @CachePut(value = "parts", key = "#partId") },
+            evict = { @CacheEvict(value = "parts_list", allEntries = true) } // Xóa cache list vì dữ liệu đã đổi
+    )
     public PartResponse updatePart(Long partId, PartRequest partRequest) {
         Part existingPart = partRepository.findById(partId)
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + partId));
@@ -63,6 +79,13 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional
+    // 🚀 DELETE CACHE: Xóa data khỏi cache khi xóa trong DB
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "parts", key = "#partId"),
+                    @CacheEvict(value = "parts_list", allEntries = true)
+            }
+    )
     public void deletePart(Long partId) {
         if (!partRepository.existsById(partId)) {
             throw new ResourceNotFoundException("Part not found with id: " + partId);

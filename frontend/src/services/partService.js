@@ -77,3 +77,14 @@ export const requestAllocationForClaim = (allocationData) =>
 export const decrementStock = (decrementData) =>
     api.post('/inventory/decrement', decrementData);
 
+/**
+ * Lấy trạng thái cấp phát phụ tùng cho một Claim
+ * API: GET /api/v1/allocations/status-by-claim/{claimId}
+ * (Frontend SC Staff gọi API này)
+ */
+export const getPartAllocationStatus = (claimId) => {
+    // API này thuộc về Part-Service (8004)
+    // Giả định Vite proxy /api/v1/ đến Gateway (80)
+    return api.get(`/allocations/status-by-claim/${claimId}`);
+};
+

@@ -7,7 +7,7 @@ logging:
 
 spring:
   application:
-    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
+    name: part-service
   datasource:
     url: jdbc:mysql://mysql-db:3306/part_service?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
     username: root
@@ -23,6 +23,16 @@ spring:
       name: admin
       password: 1234
       roles: ADMIN
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost} # Mặc định localhost nếu chạy ngoài docker
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 60000
+  cache:
+    type: redis
+    redis:
+      time-to-live: 60000
+      cache-null-values: false
   main:
     allow-bean-definition-overriding: true
 
