@@ -514,3 +514,40 @@
  #header-placeholder {
      border: 3px solid blue !important;
  }
+ profile-container {
+     display: grid;
+     grid-template-columns: 1fr 2fr; /* Chia cột: 1 phần trái, 2 phần phải */
+     gap: 24px;
+     max-width: 1000px;
+     margin: 0 auto;
+ }
+
+ .profile-avatar-large {
+     width: 100px;
+     height: 100px;
+     background-color: var(--primary-color);
+     color: white;
+     font-size: 48px;
+     font-weight: bold;
+     border-radius: 50%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     margin: 0 auto;
+     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+
+ .detail-grid-profile {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 20px;
+ }
+
+ @media (max-width: 768px) {
+     .profile-container {
+         grid-template-columns: 1fr; /* Mobile thì xếp chồng lên nhau */
+     }
+     .detail-grid-profile {
+         grid-template-columns: 1fr;
+     }
+ }

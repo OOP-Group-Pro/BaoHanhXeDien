@@ -262,7 +262,13 @@ function initJobListPage() {
             serialUpdates: serialUpdates
         };
 
-        const claimId = currentClaimData.id;
+        const claimId = currentClaimData.claimId || currentClaimData.id;
+        if (!claimId) {
+                alert("Lỗi hệ thống: Không tìm thấy ID của yêu cầu bảo hành này.");
+                btnSubmitReport.disabled = false;
+                btnSubmitReport.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Gửi Báo cáo`;
+                return;
+            }
 
         try {
             await api.put(`/claims/${claimId}/repair-result`, claimRepairResultDto);
@@ -280,6 +286,156 @@ function initJobListPage() {
             btnSubmitReport.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Gửi Báo cáo`;
         }
     }
+    // --- HÀM CHO MÀN HÌNH 4: LỊCH SỬ ---
+async function loadHistory() {
+    const tableBody = document.getElementById('history-table-body');
+    const loading = document.getElementById('history-loading');
+    const empty = document.getElementById('history-empty');
+
+    // Lấy giá trị bộ lọc
+    const fromDate = document.getElementById('history-from-date').value;
+    const toDate = document.getElementById('history-to-date').value;
+    const status = document.getElementById('history-status').value;
+
+    showScreen('screen-history');
+    tableBody.innerHTML = '';
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+
+    try {
+        let url = '/claims?page=0&size=20&sort=dateCreated,desc';
+
+        if (status) url += `&status=${status}`;
+        if (fromDate) url += `&fromDate=${fromDate}T00:00:00`;
+        if (toDate) url += `&toDate=${toDate}T23:59:59`;
+
+        const response = await api.get(url);
+        const claims = response.content || [];
+
+        loading.style.display = 'none';
+
+        if (claims.length === 0) {
+            empty.style.display = 'block';
+            return;
+        }
+
+        // Render dữ liệu ra bảng
+        claims.forEach(claim => {
+            // 🛠️ SỬA QUAN TRỌNG: Lấy status đúng tên biến
+            // Backend có thể trả về 'status' hoặc 'currentStatus' tùy DTO
+            const rawStatus = claim.status || claim.currentStatus;
+
+            // Log để kiểm tra (bạn có thể xóa sau này)
+            console.log(`Claim: ${claim.claimCode}, Status lấy được: ${rawStatus}`);
+
+            // LỌC: Chỉ ẩn những xe đang chờ/mới/đang sửa
+            // Lưu ý: Phải dùng biến 'rawStatus' vừa lấy được để so sánh
+            if (rawStatus === 'WAITING_APPROVAL' || rawStatus === 'APPROVED' || rawStatus === 'IS_PROCESSING' || rawStatus === 'NEW') return;
+
+            const row = document.createElement('tr');
+
+            // Xử lý Badge (dùng rawStatus)
+            let statusBadge = '';
+            if (rawStatus === 'COMPLETED') {
+                 statusBadge = '<span class="status-badge status-done">Hoàn tất</span>';
+            } else if (rawStatus === 'REJECTED') {
+                 statusBadge = '<span class="status-badge status-cancel">Từ chối</span>';
+            } else {
+                 statusBadge = `<span class="status-badge">${rawStatus}</span>`;
+            }
+
+            const createdDateStr = claim.dateCreated ? new Date(claim.dateCreated).toLocaleDateString('vi-VN') : '-';
+            const modDateStr = '-';
+
+            row.innerHTML = `
+                <td><strong>${claim.claimCode}</strong></td>
+                <td>
+                    <div>${claim.vin}</div>
+                    <div class="text-secondary" style="font-size: 12px;">${claim.vehicleModel || 'VF8'}</div>
+                </td>
+                <td>${createdDateStr}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <button class="btn-icon view-history-detail" data-claim-id="${claim.id || claim.claimCode}">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        if (tableBody.children.length === 0) {
+            empty.style.display = 'block';
+            empty.textContent = "Không có dữ liệu lịch sử phù hợp.";
+        }
+
+    } catch (error) {
+        console.error(error);
+        loading.innerHTML = `<span class="text-danger">Lỗi tải dữ liệu: ${error.message}</span>`;
+    }
+}
+async function loadProfile() {
+    showScreen('screen-profile');
+
+    // Hiển thị loading
+    document.getElementById('profile-name').textContent = "Đang tải...";
+
+    try {
+        // Gọi API: GET /api/v1/technicians/{id}
+        const response = await api.get(`/technicians/${currentTechnicianId}`);
+
+        console.log("📦 [PROFILE] API Response:", response);
+
+        // 🛠️ XỬ LÝ DỮ LIỆU (Quan trọng):
+        // Controller trả về ApiResponse, nên dữ liệu thật thường nằm trong .result hoặc .data
+        // Dòng này sẽ tự động tìm đúng chỗ chứa dữ liệu
+        const techData = response.result || response.data || response;
+
+        if (!techData) {
+            throw new Error("Không tìm thấy dữ liệu Technician trong phản hồi API");
+        }
+
+        // 1. Avatar & Tên hiển thị
+        // Lưu ý: Kiểm tra kỹ xem DTO Java trả về 'technicianName' hay 'fullName'
+        const name = techData.technicianName || techData.fullName || "Không có tên";
+        document.getElementById('profile-name').textContent = name;
+        document.getElementById('profile-avatar-text').textContent = name.charAt(0).toUpperCase();
+
+        // 2. Badge Trạng thái
+        const statusDiv = document.getElementById('profile-status-badge');
+        // Giả sử DTO trả về status là 'ACTIVE', 'BUSY'...
+        const status = techData.status || 'UNKNOWN';
+
+        if (status === 'ACTIVE' || status === 'AVAILABLE') {
+            statusDiv.innerHTML = '<span class="status-badge status-done">Đang hoạt động</span>';
+        } else if (status === 'BUSY') {
+            statusDiv.innerHTML = '<span class="status-badge status-processing">Đang bận</span>';
+        } else {
+            statusDiv.innerHTML = `<span class="status-badge status-cancel">${status}</span>`;
+        }
+
+        // 3. Điền vào các ô input
+        document.getElementById('profile-id').value = techData.technicianId || currentTechnicianId;
+        document.getElementById('profile-fullname').value = name;
+        document.getElementById('profile-phone').value = techData.phoneNum || techData.phoneNumber || "Chưa cập nhật";
+        document.getElementById('profile-level').value = techData.technicianLevel || techData.level || "KTV Cơ bản";
+
+    } catch (error) {
+        console.error("❌ Lỗi tải profile:", error);
+        document.getElementById('profile-name').textContent = "Lỗi tải dữ liệu";
+
+        // Fallback: Nếu API lỗi, hiện thông tin tạm từ token đăng nhập
+        const user = getUser();
+        if(user) {
+             document.getElementById('profile-id').value = user.id || user.sub;
+             document.getElementById('profile-fullname').value = user.username || "User";
+        }
+
+        // Hiển thị lỗi lên màn hình (tùy chọn)
+        // alert("Không thể tải thông tin chi tiết: " + error.message);
+    }
+}
+
 
     // --- XỬ LÝ SỰ KIỆN ---
 
@@ -325,7 +481,83 @@ function initJobListPage() {
     if (reportForm) {
         reportForm.addEventListener('submit', submitRepairReport);
     }
+// Sự kiện click vào sidebar "Lịch sử" (Cần dùng setTimeout hoặc gọi sau khi renderSidebar xong)
+    setTimeout(() => {
+        const navHistory = document.getElementById('nav-history');
+        const navMyJobs = document.getElementById('nav-my-jobs');
+        const btnFilterHistory = document.getElementById('btn-filter-history');
 
+        if (navHistory) {
+            navHistory.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Active class cho sidebar
+                document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+                navHistory.classList.add('active');
+
+                // Load màn hình lịch sử
+                loadHistory();
+            });
+        }
+
+        if (navMyJobs) {
+            navMyJobs.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+                navMyJobs.classList.add('active');
+                showScreen('screen-job-list');
+            });
+        }
+
+        if (btnFilterHistory) {
+            btnFilterHistory.addEventListener('click', () => {
+                loadHistory();
+            });
+        }
+
+        // Sự kiện xem chi tiết trong bảng Lịch sử
+        const historyTableBody = document.getElementById('history-table-body');
+        if(historyTableBody) {
+            historyTableBody.addEventListener('click', (e) => {
+                // Tìm nút bấm (hoặc icon bên trong nút)
+                const btn = e.target.closest('.view-history-detail');
+                if (btn) {
+                    const claimId = btn.dataset.claimId;
+                    // Tái sử dụng hàm loadClaimDetails cũ nhưng cần ẩn nút "Báo cáo" đi
+                    loadClaimDetails(claimId);
+
+                    // Ẩn nút chuyển sang màn hình báo cáo vì đây là xem lịch sử
+                    setTimeout(() => {
+                        const btnFinish = document.getElementById('btn-finish-repair');
+                        if(btnFinish) btnFinish.style.display = 'none';
+                    }, 100);
+                }
+            });
+        }
+
+    }, 500);
+    const navProfile = document.getElementById('nav-profile');
+        if (navProfile) {
+            navProfile.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Active menu
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                navProfile.classList.add('active');
+
+                loadProfile();
+            });
+        }
+
+        // Sự kiện Đăng xuất
+        const btnLogout = document.getElementById('btn-logout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                if(confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+                    localStorage.clear(); // Xóa token
+                    window.location.href = '/index.html'; // Quay về trang login
+                }
+            });
+        }
     // --- Khởi chạy lần đầu ---
     renderJobList();
 }

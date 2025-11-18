@@ -17,7 +17,108 @@
 
 
 <main class="main-content" id="main-content">
+    <div id="screen-history" class="screen">
+        <header class="main-header">
+            <h1>Lịch sử sửa chữa</h1>
+        </header>
 
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-body" style="display: flex; gap: 15px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Từ ngày</label>
+                    <input type="date" id="history-from-date" class="form-control">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Đến ngày</label>
+                    <input type="date" id="history-to-date" class="form-control">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Trạng thái</label>
+                    <select id="history-status" class="form-control">
+                        <option value="">Tất cả</option>
+                        <option value="REPAIRED">Đã sửa xong (Chờ trả)</option>
+                        <option value="COMPLETED">Hoàn tất (Đã giao khách)</option>
+                    </select>
+                </div>
+                <button id="btn-filter-history" class="btn btn-primary" style="height: 42px;">
+                    <i class="fa-solid fa-filter"></i> Lọc
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body" style="padding: 0;">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Mã Claim</th>
+                        <th>Số VIN / Model</th>
+                        <th>Ngày tạo</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                    </tbody>
+                </table>
+                <div id="history-loading" style="text-align: center; padding: 20px; display: none;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu...
+                </div>
+                <div id="history-empty" style="text-align: center; padding: 20px; color: #666; display: none;">
+                    Không tìm thấy dữ liệu lịch sử nào.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="screen-profile" class="screen">
+        <header class="main-header">
+            <h1>Hồ sơ cá nhân</h1>
+        </header>
+
+        <div class="profile-container">
+            <div class="card profile-card">
+                <div class="card-body" style="text-align: center;">
+                    <div class="profile-avatar-large" id="profile-avatar-text">T</div>
+                    <h2 id="profile-name" style="margin-top: 15px; margin-bottom: 5px;">Đang tải...</h2>
+                    <p id="profile-role" class="text-secondary">Kỹ thuật viên</p>
+
+                    <div id="profile-status-badge" style="margin-top: 10px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card profile-details-card">
+                <div class="card-header">
+                    <h3>Thông tin chi tiết</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid-profile">
+                        <div class="form-group">
+                            <label>Mã Kỹ thuật viên (ID)</label>
+                            <input type="text" id="profile-id" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Họ và tên</label>
+                            <input type="text" id="profile-fullname" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Số điện thoại</label>
+                            <input type="text" id="profile-phone" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Trình độ / Cấp bậc</label>
+                            <input type="text" id="profile-level" class="form-control" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer" style="text-align: right;">
+                    <button id="btn-logout" class="btn btn-danger">
+                        <i class="fa-solid fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="screen-job-list" class="screen active">
         <header class="main-header">
             <h1>Công việc của tôi</h1>
