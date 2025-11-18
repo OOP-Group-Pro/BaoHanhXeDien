@@ -1,0 +1,158 @@
+/* ============================
+   VEHICLE HISTORY PAGE STYLES
+   Áp dụng cho trang: Chi tiết xe / Lịch sử
+   Nếu có thể, hãy đặt id="sc-vehicle-history-page" lên <body>
+   ============================ */
+
+/* Base */
+#sc-vehicle-history-page, body {
+  background: #f6f8fb;
+  color: #212529;
+  line-height: 1.5;
+}
+
+/* Container chính trong phần nội dung (bên phải sidebar) */
+.main-content {
+  padding: 24px;
+}
+
+/* Tiêu đề trang */
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* Card chung */
+.card {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+  padding: 16px;
+}
+
+.card + .card {
+  margin-top: 16px;
+}
+
+.card-header {
+  font-weight: 600;
+  color: #344054;
+  margin-bottom: 12px;
+}
+
+/* Khối thông tin xe (grid 2 cột) */
+.vehicle-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+  padding: 8px 0;
+}
+
+.vehicle-info .label {
+  color: #667085;
+  font-size: 0.875rem;
+}
+
+.vehicle-info .value {
+  font-weight: 600;
+  color: #101828;
+}
+
+/* Thanh tìm VIN */
+.vin-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.vin-search .form-select,
+.vin-search .form-control {
+  max-width: 260px;
+}
+
+/* Panel lọc lịch sử */
+.filters-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr)) 120px;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.filters-panel .form-label {
+  font-size: 0.85rem;
+  color: #475467;
+  margin-bottom: 6px;
+}
+
+/* Bảng lịch sử */
+.table-wrap {
+  overflow: auto;
+}
+
+.table-history {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-history thead th {
+  background: #f8f9fb;
+  color: #475467;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef2f7;
+  white-space: nowrap;
+}
+
+.table-history tbody td {
+  padding: 12px 14px;
+  border-top: 1px solid #f1f3f7;
+  vertical-align: middle;
+}
+
+/* trạng thái (badge) */
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+.badge-success { color:#0f5132; background:#d1e7dd; }
+.badge-info    { color:#055160; background:#cff4fc; }
+.badge-danger  { color:#842029; background:#f8d7da; }
+.badge-sec     { color:#41464b; background:#e2e3e5; }
+
+/* Hàng trống */
+.table-empty {
+  padding: 18px;
+  text-align: center;
+  color: #667085;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .filters-panel {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+}
+@media (max-width: 992px) {
+  .vehicle-info { grid-template-columns: 1fr; }
+  .filters-panel { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+}
+@media (max-width: 576px) {
+  .filters-panel { grid-template-columns: 1fr; }
+  .vin-search { flex-wrap: wrap; }
+}
