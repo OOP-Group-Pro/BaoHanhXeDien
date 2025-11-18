@@ -1,14 +1,10 @@
-import { getToken} from "../utils/storage.js";
-import { logout } from "../utils/auth.js";
+// src/services/apiClient.js
+import { getToken } from '../utils/storage.js';
+import { logout } from '../utils/auth.js';
 
-// Chi dinh base URL 1 lan duy nhat:
-const API_BASE_URL = '/api/v1';  // Vite se proxy cai nay
+const API_BASE_URL = '/api/v1';
 
-/**
- * Ham fetch tuy chinh, tu dong them Token va xu ly loi 401
- */
-
-async function apiClient (endpoint, options = {}) {
+async function apiClient(endpoint, options = {}) {
     const token = getToken();
 
     const defaultHeaders = {
@@ -16,7 +12,6 @@ async function apiClient (endpoint, options = {}) {
         ...options.headers,
     };
 
-    // Tu dong them token vao header:
     if (token) {
         defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
@@ -26,33 +21,66 @@ async function apiClient (endpoint, options = {}) {
         headers: defaultHeaders,
     };
 
-    // Goi API:
+    // Xử lý FormData (xóa Content-Type để browser tự điền boundary)
+    if (options.body && options.body instanceof FormData) {
+        delete config.headers['Content-Type'];
+    } else if (options.body) {
+        config.body = JSON.stringify(options.body);
+    }
+
+    // GỌI API
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    // Xu li loi:
+    // -------------------------------------------------------
+    // ⬇️ BƯỚC 1: KIỂM TRA LỖI TRƯỚC (QUAN TRỌNG NHẤT) ⬇️
+    // -------------------------------------------------------
+
+    // 1a. Xử lý 401 (Hết phiên)
+    if (response.status === 401) {
+        logout();
+        throw new Error('Phiên đăng nhập hết hạn.');
+    }
+
+    // 1b. Xử lý các lỗi khác (400, 403, 404, 500...)
     if (!response.ok) {
-        if (response.status === 401) {
-            alert('Phiên đăng nhập hết hạn hoặc không hợp lệ');
-            logout(); // Tu dong da ra trang login
+        // Cố gắng đọc lỗi từ JSON server trả về
+        let errorMessage = 'Lỗi API';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+            // Nếu server không trả JSON mà trả text (hoặc HTML lỗi)
+            errorMessage = await response.text();
         }
 
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Lỗi API');
+        console.error('API Error:', errorMessage);
+        throw new Error(errorMessage);
     }
 
-    // Neu method la DELETE hoac 204 No Content, khong can parse JSON
-    if (response.status === 204) {
-        return null;
+    // -------------------------------------------------------
+    // ⬇️ BƯỚC 2: XỬ LÝ DỮ LIỆU THÀNH CÔNG (200 OK) ⬇️
+    // -------------------------------------------------------
+
+    // Nếu client yêu cầu Blob (File/Ảnh)
+    if (options.responseType === 'blob') {
+        return response.blob();
     }
 
-    return response.json();
+    // Nếu server trả về JSON
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        return response.json();
+    }
+
+    // Mặc định trả về Text
+    return response.text();
 }
 
-
-// Tao cac ham tien ich cho team (GET, POST, PUT, DELETE)
+// Export giữ nguyên
 export const api = {
     get: (endpoint) => apiClient(endpoint),
-    post: (endpoint, body) => apiClient(endpoint, { method: 'POST', body: JSON.stringify(body) }),
-    put: (endpoint, body) => apiClient(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
-    delete: (endpoint) => apiClient(endpoint, {method: 'DELETE'}),
+    getBlob: (endpoint) => apiClient(endpoint, { method: 'GET', responseType: 'blob' }),
+    post: (endpoint, body) => apiClient(endpoint, { method: 'POST', body: body }),
+    put: (endpoint, body) => apiClient(endpoint, { method: 'PUT', body: body }),
+    delete: (endpoint) => apiClient(endpoint, { method: 'DELETE' }),
 };

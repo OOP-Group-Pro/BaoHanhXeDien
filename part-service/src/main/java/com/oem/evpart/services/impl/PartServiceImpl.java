@@ -2,7 +2,6 @@ package com.oem.evpart.services.impl;
 
 import com.oem.evpart.dto.request.PartRequest;
 import com.oem.evpart.dto.response.PartResponse;
-import com.oem.evpart.exceptions.AppException;
 import com.oem.evpart.exceptions.ResourceNotFoundException;
 import com.oem.evpart.mappers.PartMapper;
 import com.oem.evpart.models.Part;
@@ -13,6 +12,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor // Sử dụng Lombok để tự động inject dependencies
@@ -68,5 +71,17 @@ public class PartServiceImpl implements PartService {
         // nếu Part này đang được tham chiếu ở bảng khác, câu lệnh này sẽ lỗi.
         // Cần xử lý logic phức tạp hơn nếu muốn xóa (ví dụ: chỉ cho xóa khi không còn liên kết)
         partRepository.deleteById(partId);
+    }
+
+    @Override
+    public Map<String, PartResponse> getPartDetailsByNumbers (List<String> partNumbers) {
+        List<Part> parts = partRepository.findAllByPartTypeIn(partNumbers);
+
+        Map<String, PartResponse> partDetails = new HashMap<>();
+        for (Part part : parts) {
+            partDetails.put(part.getSerialNumber(), partMapper.toPartResponse(part));
+        }
+
+        return partDetails;
     }
 }

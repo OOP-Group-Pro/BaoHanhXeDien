@@ -1,0 +1,73 @@
+<!--pages/scStaff/dashboard.html-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - SC Staff</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
+
+    <link rel="stylesheet" href="/src/styles/dashboard.css">
+</head>
+<body id="sc-dashboard-page">
+
+<div class="d-flex">
+    <div id="sidebar-placeholder"></div>
+
+    <div class="main-content flex-grow-1">
+        <div id="header-placeholder"></div>
+
+        <main class="container-fluid p-4">
+            <h1 class="h3 mb-3">SC Staff Dashboard</h1>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Yêu cầu đang chờ Phê duyệt (WAITING_APPROVAL)</h5>
+                </div>
+                <div class="card-body">
+
+                    <div id="claims-loading" class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Đang tải dữ liệu...</p>
+                    </div>
+
+                    <div id="claims-error" class="alert alert-danger d-none"></div>
+
+                    <div class="table-responsive d-none" id="claims-table-container">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Mã Claim</th>
+                                <th>Số VIN</th>
+                                <th>Khách hàng</th>
+                                <th>Ngày tạo</th>
+                                <th style="min-width: 200px;">Mô tả</th>
+                                <th>Hành động</th>
+                            </tr>
+                            </thead>
+                            <tbody id="claims-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p id="no-claims-message" class="text-muted text-center d-none p-3">
+                        Không có yêu cầu nào đang chờ phê duyệt.
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script type="module" src="/src/scStaff.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+</html>

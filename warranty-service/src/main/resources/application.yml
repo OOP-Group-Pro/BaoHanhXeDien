@@ -47,5 +47,9 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+
+storage:
+  location: uploads
+
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}

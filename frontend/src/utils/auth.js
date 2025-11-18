@@ -1,5 +1,5 @@
 // src/utils/auth.js
-import { getToken, clearToken, clearUser, saveUser, getUser } from "./storage.js"; // ⬅️ Thêm save/getUser
+import { getToken, clearToken, clearUser, saveUser, getUser } from "./storage.js";
 import { jwtDecode } from 'jwt-decode';
 
 /**
@@ -15,7 +15,7 @@ export function decodeToken() {
 
         // Kiểm tra xem token hết hạn chưa
         if (decoded.exp * 1000 < Date.now()) {
-            // Hết hạn -> Dọn dẹp storage và trả về null
+            // Hết hạn -> Dọn dẹp storage và trả về null (KHÔNG GỌI LOGOUT)
             console.warn("Token đã hết hạn, đang dọn dẹp storage.");
             clearToken();
             clearUser();
@@ -26,7 +26,7 @@ export function decodeToken() {
         return decoded;
 
     } catch (error) {
-        // Token hỏng (không giải mã được) -> Dọn dẹp storage và trả về null
+        // Token hỏng (không giải mã được) -> Dọn dẹp storage và trả về null (KHÔNG GỌI LOGOUT)
         console.error("Token hỏng, đang dọn dẹp storage:", error);
         clearToken();
         clearUser();
@@ -52,8 +52,7 @@ export function checkAuth (requiredRole = null) {
     if (requiredRole && !userInfo.roles.includes(requiredRole)) {
         // 2. Nếu có yêu cầu vai trò, nhưng user không có vai trò đó
         alert('Bạn không có quyền truy cập trang này!');
-        // ⬅️ Sửa: Chuyển về trang an toàn (ví dụ: login)
-        window.location.href = '/index.html';
+        window.location.href = '/index.html'; // ⬅️ Chuyển về trang login (an toàn)
         return null; // ⬅️ Trả về null
     }
 

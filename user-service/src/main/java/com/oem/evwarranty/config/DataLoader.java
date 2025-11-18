@@ -34,15 +34,15 @@ public class DataLoader {
 
             // Tạo user mặc định nếu chưa tồn tại
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
-                    "Admin", "admin123", "ADMIN");
+                    "Admin", "admin123", "ADMIN", null);
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
-                    "SCStaff", "staff123", "SC_STAFF");
+                    "SCStaff", "staff123", "SC_STAFF", 1L);
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
-                    "SCTechnician", "tech123", "SC_TECHNICIAN");
+                    "SCTechnician", "tech123", "SC_TECHNICIAN", 2L);
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
-                    "EVMStaff", "evm123", "EVM_STAFF");
+                    "EVMStaff", "evm123", "EVM_STAFF", 1L);
             createUserIfNotExist(userRepository, roleRepository, passwordEncoder,
-                    "Manager", "manager123", "MANAGER");
+                    "Manager", "manager123", "MANAGER", 2L);
         };
     }
 
@@ -51,7 +51,8 @@ public class DataLoader {
                                       PasswordEncoder passwordEncoder,
                                       String username,
                                       String rawPassword,
-                                      String roleName) {
+                                      String roleName,
+                                      Long centerId) {
 
         if (userRepository.findByUsername(username).isEmpty()) {
             // Lấy role từ DB, nếu chưa có thì tạo
@@ -66,6 +67,8 @@ public class DataLoader {
             user.setPassword(passwordEncoder.encode(rawPassword));
             user.setStatus(UserStatus.ACTIVE);
             user.setRoles(roles);
+            if (centerId != null)
+                user.setServiceCenterId(centerId);
 
             userRepository.save(user);
         }

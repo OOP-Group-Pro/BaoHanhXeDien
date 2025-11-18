@@ -94,3 +94,67 @@ body {
     color: #dc3545; /* Đỏ */
     font-weight: 500;
 }
+
+
+/*============== Them code khi lam trang claim-list ===============*/ /*23:16, 13/11/25*/
+
+/* src/styles/dashboard.css */
+/* --- Dành cho Thanh Filter (Task 3) --- */
+.filters-bar .form-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.filters-bar .btn {
+    /* Đảm bảo các nút cao bằng ô input */
+    height: 38px;
+}
+
+
+/* --- Dành cho Phân trang (Task 3) --- */
+#pagination-container {
+    margin-top: 1.5rem;
+}
+.pagination .page-link {
+    cursor: pointer;
+}
+.pagination .page-item.disabled .page-link {
+    cursor: not-allowed;
+    background-color: #e9ecef;
+}
+
+/* --- Dành cho Badge Trạng thái (Task 3) --- */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4em 0.7em;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+.status-waiting_approval {
+    color: #856404;
+    background-color: #fff3cd;
+}
+.status-approved {
+    color: #155724;
+    background-color: #d4edda;
+}
+.status-rejected {
+    color: #721c24;
+    background-color: #f8d7da;
+}
+.status-completed, .status-in_progress {
+    color: #0c5460;
+    background-color: #d1ecf1;
+}
+.status-default {
+    color: #383d41;
+    background-color: #e2e3e5;
+}
+/* Thêm style cho IS_PROCESSING, dùng chung màu với 'in_progress' */
+.status-is_processing,
+.status-in_progress {
+    color: #0c5460;
+    background-color: #d1ecf1;
+}
