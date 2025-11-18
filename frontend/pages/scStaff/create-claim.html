@@ -23,38 +23,90 @@
     <main class="container-fluid p-4">
         <h1 class="h3 mb-3">Tạo Yêu cầu Bảo hành Mới</h1>
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form id="claim-form">
-                    <div class="row mb-3">
+        <form id="claim-form">
+            <fieldset class="card shadow-sm mb-4">
+                <div class="card-header"><legend class="h5 mb-0">1. Thông tin Xe</legend></div>
+                <div class="card-body">
+                    <div class="row">
                         <div class="col-md-6">
                             <label for="vin" class="form-label">Số VIN (17 ký tự)</label>
-                            <input type="text" class="form-control" id="vin" placeholder="Nhập số VIN của xe" required minlength="17" maxlength="17">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="vin" placeholder="Nhập số VIN của xe" required minlength="17" maxlength="17">
+                                <button class="btn btn-outline-secondary" type="button" id="validate-vin-btn">
+                                    <i class="bi bi-search"></i> Kiểm tra
+                                </button>
+                            </div>
+                            <div id="vin-check-result" class="mt-2"></div>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="description" class="form-label">Mô tả Lỗi</label>
-                            <textarea class="form-control" id="description" rows="5" placeholder="Mô tả chi tiết triệu chứng lỗi..." required></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="technicianId" class="form-label">Chỉ định Kỹ thuật viên</label>
-                                <select class="form-select" id="technicianId" required>
-                                    <option value="" disabled selected>Đang tải danh sách KTV...</option>
-                                </select>
+                </div>
+            </fieldset>
+
+            <fieldset id="claim-details-fieldset" disabled>
+
+                <div class="card shadow-sm">
+                    <div class="card-header"><legend class="h5 mb-0">2. Thông tin Sự cố & Phụ tùng</legend></div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="description" class="form-label">Mô tả Lỗi</label>
+                                <textarea class="form-control" id="description" rows="5" placeholder="Mô tả chi tiết triệu chứng lỗi..." required></textarea>
                             </div>
                         </div>
+
+                        <hr>
+                        <label class="form-label">Phụ tùng Yêu cầu</label>
+                        <table class="table" id="requested-parts-table">
+                            <thead>
+                            <tr>
+                                <th>Mã Phụ tùng</th>
+                                <th>Tên Phụ tùng</th>
+                                <th style="width: 100px;">Số lượng</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="requested-parts-tbody">
+                            <tr id="no-parts-row">
+                                <td colspan="4" class="text-center text-muted">Chưa chọn phụ tùng nào.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#partSearchModal">
+                            <i class="bi bi-plus-circle"></i> Thêm Phụ tùng...
+                        </button>
+
+                        <hr class="my-4">
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" id="create-claim-btn" class="btn btn-primary btn-lg">
+                                Gửi Yêu cầu
+                            </button>
+                        </div>
+                        <p id="form-error" class="text-danger mt-3 text-end"></p>
                     </div>
-                    <hr class="my-4">
-                    <div class="d-flex justify-content-end">
-                        <button type="submit" id="create-claim-btn" class="btn btn-primary btn-lg">Gửi Yêu cầu</button>
-                    </div>
-                    <p id="form-error" class="text-danger mt-3 text-end"></p>
-                </form>
+                </div>
+            </fieldset>
+        </form>
+    </main>
+</div>
+<div class="modal fade" id="partSearchModal" tabindex="-1" aria-labelledby="partSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="partSearchModalLabel">Tìm kiếm Phụ tùng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="part-search-input" placeholder="Nhập tên hoặc mã phụ tùng...">
+                    <button class="btn btn-outline-primary" type="button" id="part-search-btn">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+                <div id="part-search-results">
+                </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

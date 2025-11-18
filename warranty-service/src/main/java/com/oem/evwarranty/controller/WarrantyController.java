@@ -1,6 +1,7 @@
 package com.oem.evwarranty.controller;
 
 
+import com.oem.evwarranty.dto.ApproveRequestDto;
 import com.oem.evwarranty.dto.ClaimDto;
 import com.oem.evwarranty.dto.CreateClaimDto;
 import com.oem.evwarranty.dto.ClaimRepairResultDto;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Sử dụng để validate DTO
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/claims")
@@ -49,9 +49,9 @@ public class WarrantyController {
      * GET /api/v1/claims/{claimId}
      * Chức năng: Xem chi tiết một yêu cầu bảo hành
      */
-    @GetMapping("/{claimId}")
-    public ResponseEntity<ClaimDto> getClaimDetails(@PathVariable Long claimId) {
-        ClaimDto claimDto = warrantyService.getClaimDetails(claimId);
+    @GetMapping("/{claimCode}")
+    public ResponseEntity<ClaimDto> getClaimDetails(@PathVariable String claimCode) {
+        ClaimDto claimDto = warrantyService.getClaimDetails(claimCode);
         return ResponseEntity.ok(claimDto);
     }
 
@@ -64,10 +64,13 @@ public class WarrantyController {
     @PutMapping("/{claimId}/approve")
     // @PreAuthorize("hasRole('EVM_STAFF')")
     public ResponseEntity<Void> approveClaim(@PathVariable Long claimId,
-                                             @RequestParam(required = false) String approvalNotes) {
+                                             @RequestBody ApproveRequestDto requestDto,
+                                             Authentication authentication) {
         // Giả định lấy ID nhân viên EVM từ token
-        Long evmStaffId = 202L;
-        warrantyService.approveClaim(claimId, evmStaffId, approvalNotes);
+        UserDetailsPrincipal userPrincipal = (UserDetailsPrincipal) authentication.getPrincipal();
+        Long evmStaffId = userPrincipal.getUserId();
+        Long technicianId = requestDto.getTechnicianId();
+        warrantyService.approveClaim(claimId, evmStaffId, requestDto.getApprovalNotes(), technicianId);
         return ResponseEntity.ok().build();
     }
 
@@ -103,13 +106,13 @@ public class WarrantyController {
      * GET /api/v1/claims/{claimId}/history
      * Chức năng: Xem lịch sử trạng thái của Claim
      */
-    @GetMapping("/{claimId}/history")
-    public ResponseEntity<?> getClaimStatusHistory(@PathVariable Long claimId) {
+    @GetMapping("/{claimCode}/history")
+    public ResponseEntity<?> getClaimStatusHistory(@PathVariable String claimCode) {
         // Thay vì trả về List<ClaimStatusLogDto>, bạn có thể trả về một đối tượng Response có List bên trong
-        return ResponseEntity.ok(warrantyService.getClaimStatusHistory(claimId));
+        return ResponseEntity.ok(warrantyService.getClaimStatusHistory(claimCode));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SC_STAFF', 'EVM_STAFF', 'TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SC_STAFF', 'EVM_STAFF', 'SC_TECHNICIAN')")
     @GetMapping
     public Page<ClaimDto> getClaims(
             @RequestParam(required = false) String claimCode,

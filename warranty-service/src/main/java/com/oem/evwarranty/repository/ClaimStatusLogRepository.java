@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ClaimStatusLogRepository extends JpaRepository<ClaimStatusLog,Long> {
-    List<ClaimStatusLog> findByClaim_IdOrderByTimestampAsc(Long claimId);
+    List<ClaimStatusLog> findByClaim_ClaimCodeOrderByTimestampAsc(String claimCode);
 }

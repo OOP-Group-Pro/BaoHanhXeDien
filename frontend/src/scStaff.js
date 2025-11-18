@@ -1,173 +1,195 @@
 // src/scStaff.js
 
-// Import các "linh kiện" và "tiện ích"
+// 1. IMPORT (Đầy đủ)
 import { checkAuth } from './utils/auth.js';
 import { renderHeader } from './components/Header.js';
 import { renderStaffSidebar } from './components/StaffSidebar.js';
-import { getUser } from "./utils/storage.js";
-import { getUsersByRole} from "./services/userService.js";
-import { getClaims, createClaim } from './services/warrantyService.js';
-import { logout } from './services/authService.js'; // (Bạn cần tạo file authService.js)
+import { getClaims, createClaim, getClaimDetails, getClaimHistory } from './services/warrantyService.js';
+import { getCustomerNameByVin } from './services/vehicleService.js';
+import { searchParts } from "./services/partService.js";
+import { getUsersByRole } from "./services/userService.js";
+
+// --- BIẾN TOÀN CỤC ---
+let selectedParts = [];
+let claimListState = { currentPage: 0, size: 10, vin: '', claimCode: '', status: 'WAITING_APPROVAL' }; // ⬅️ SỬA LẠI THÀNH 'WAITING_APPROVAL'
+let claimModalInstance = null;
+
+// --- 2. HÀM GLOBAL (CHO HTML 'onclick') ---
+window.updatePartQuantity = (event) => {
+    const index = parseInt(event.target.dataset.index, 10);
+    const newQuantity = parseInt(event.target.value, 10);
+
+    if (selectedParts[index] && newQuantity > 0) {
+        selectedParts[index].quantity = newQuantity;
+        console.log('LOG: Cập nhật SL:', selectedParts);
+    }
+};
+window.removePart = (event) => {
+    const index = parseInt(event.target.dataset.index, 10);
+
+    if (typeof index !== 'undefined' && selectedParts[index]) {
+        console.log('LOG: Xóa Part tại index:', index);
+        selectedParts.splice(index, 1);
+        renderSelectedPartsTable();
+    }
+};
 
 
+// --- 3. HÀM MAIN (ROUTER) ---
+// Chạy hàm main khi DOM đã sẵn sàng
+document.addEventListener('DOMContentLoaded', main);
 
-// --- LOGIC CHO TỪNG TRANG CỤ THỂ ---
-// (Kiểm tra xem file HTML nào đang gọi file JS này)
+function main() {
+    console.log("LOG: main()"); // ⬅️ SỬA LỖI CÚ PHÁP
+    // 1. Gác cổng (Luôn chạy đầu tiên)
+    const userInfo = checkAuth('ROLE_SC_STAFF');
+    if (!userInfo) {
+        console.log("LOG: Gác cổng thất bại, dừng thực thi.");
+        return;
+    }
+    console.log("LOG: Gác cổng OK. User:", userInfo.id);
 
-// 3. Logic cho trang Dashboard (index.html)
-if (window.location.pathname.endsWith('/scStaff/index.html')) {
-    loadDashboardData();
-}
-
-// 4. Logic cho trang "Tạo Claim"
-if (window.location.pathname.endsWith('/scStaff/create-claim.html')) {
-    setupCreateClaimForm();
-}
-
-
-// --- Các hàm thực thi ---
-
-/**
- * Tải dữ liệu cho Dashboard và Bảng (Trang index.html)
- */
-async function loadDashboardData() {
+    // 2. Vẽ giao diện chung (Chạy 1 lần)
     try {
-        const params = {
-            page: 0,
-            size: 10,
-            status: 'WAITING_APPROVAL' // Chỉ lấy claim đang chờ
-        };
-        const data = await getClaims(params); // Gọi API
+        renderHeader();
+        renderStaffSidebar();
+    } catch (e) {
+        console.warn("Lỗi render Header/Sidebar:", e);
+    }
 
-        // 1. Cập nhật ô tóm tắt
-        document.getElementById('claims-pending-count').textContent = data.totalElements;
+    // 3. Chạy logic cho trang cụ thể (Router)
+    const path = window.location.pathname;
+    console.log("LOG: Đang ở path:", path);
 
-        // 2. Vẽ lại bảng
-        const tbody = document.getElementById("claims-table-body");
-        tbody.innerHTML = ''; // Xóa dữ liệu cũ
+    // NẾU LÀ TRANG DASHBOARD / LIST
+    if (path.endsWith('/scStaff/') || path.endsWith('/scStaff/index.html')) {
+        console.log("LOG: Chạy logic trang Dashboard/List.");
+        initClaimListPage();
+        initClaimDetailsModal();
+        loadSummaryCards();
+    }
 
-        if (data.empty) {
-            tbody.innerHTML = '<tr><td colspan="4">Không có claim nào.</td></tr>';
-            return;
-        }
-
-        data.content.forEach(claim => {
-            // Định dạng ngày cho dễ đọc
-            const dateCreated = new Date(claim.dateCreated).toLocaleString('vi-VN');
-
-            // Cắt ngắn mô tả (nếu có)
-            const shortDescription = claim.description && claim.description.length > 50
-                ? claim.description.substring(0, 50) + '...'
-                : (claim.description || '(Không có mô tả)');
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>
-                        <a href="/pages/scStaff/claim-details.html?id=${claim.id}" 
-                           title="Xem chi tiết ${claim.claimCode}">
-                           <strong>${claim.claimCode}</strong>
-                        </a>
-                    </td>
-                    <td>${claim.vin}</td>
-                    <td>${dateCreated}</td>
-                    <td>${shortDescription}</td>
-                    <td><span className="status-${claim.currentStatus.toLowerCase()}">${claim.currentStatus}</span></td>
-                    <td>
-                        <a href="/pages/scStaff/claim-details.html?id=${claim.id}" 
-                           class="btn btn-sm btn-outline-primary">
-                           Xem
-                        </a>
-                    </td>
-                </tr>
-            `;
-        });
-
-
-
-    } catch (error) {
-        alert('Lỗi tải dashboard: ' + error.message);
+    // NẾU LÀ TRANG TẠO CLAIM
+    if (path.endsWith('/scStaff/create-claim.html')) {
+        console.log("LOG: Chạy logic trang Tạo Claim.");
+        setupCreateClaimForm();
     }
 }
 
-/**
- * Gắn sự kiện cho Form (Trang create-claim.html)
- */
-// Cap nhat sua doi khi tao trang create-claim  23:57, 13/11/25
-/**
- * Gắn sự kiện VÀ Tải dữ liệu cho Form (Trang create-claim.html)
- * (Đây là phiên bản NÂNG CẤP)
- */
+
+// -------------------------------------------------------------------
+// 4. LOGIC TRANG "TẠO CLAIM" (create-claim.html)
+// -------------------------------------------------------------------
+
 async function setupCreateClaimForm() {
     const form = document.getElementById('claim-form');
-    // Kiểm tra an toàn, nếu không phải trang create-claim thì dừng
     if (!form) return;
+    console.log("LOG: setupCreateClaimForm()"); // ⬅️ SỬA LỖI CÚ PHÁP
 
-    console.log("Đang khởi tạo trang Tạo Claim...");
+    selectedParts = []; // ⬅️ Reset mảng khi vào trang
 
-    const technicianSelect = document.getElementById('technicianId');
+    // Lấy các element
+    const vinInput = document.getElementById('vin');
+    const validateBtn = document.getElementById('validate-vin-btn');
+    const resultEl = document.getElementById('vin-check-result');
+    const fieldset = document.getElementById('claim-details-fieldset');
     const button = document.getElementById('create-claim-btn');
     const errorEl = document.getElementById('form-error');
 
-    // --- 1. Tải danh sách Kỹ thuật viên (MỚI) ---
-    try {
-        const technicians = await getUsersByRole('SC_TECHNICIAN');
-
-        technicianSelect.innerHTML = ''; // Xóa chữ "Đang tải..."
-
-        if (!technicians || technicians.length === 0) {
-            technicianSelect.add(new Option('Không tìm thấy Kỹ thuật viên nào', ''));
-            technicianSelect.disabled = true;
-        } else {
-            technicianSelect.add(new Option('-- Chọn Kỹ thuật viên --', ''));
-            technicians.forEach(tech => {
-                // (API trả về fullName và userId)
-                technicianSelect.add(new Option(tech.fullName, tech.userId));
-            });
+    // Logic "Kiểm tra VIN"
+    validateBtn.addEventListener('click', async () => {
+        const vin = vinInput.value;
+        if (vin.length !== 17) {
+            resultEl.innerHTML = `<div class="alert alert-danger p-2">VIN phải đủ 17 ký tự.</div>`;
+            return;
         }
-    } catch (error) {
-        console.error("Lỗi tải danh sách KTV:", error);
-        technicianSelect.innerHTML = `<option value="">Lỗi tải danh sách KTV</option>`;
-        technicianSelect.disabled = true;
-    }
+        resultEl.innerHTML = `<div class="text-muted">Đang kiểm tra VIN...</div>`;
+        validateBtn.disabled = true;
+        try {
+            const customerName = await getCustomerNameByVin(vin);
+            resultEl.innerHTML = `<div class="alert alert-success p-2"><strong><i class="bi bi-check-circle-fill"></i> Xe hợp lệ!</strong><br>Thuộc về KH: <strong>${customerName}</strong></div>`;
+            vinInput.disabled = true;
+            validateBtn.innerHTML = "Đã Khóa";
+            fieldset.disabled = false;
+        } catch (error) {
+            resultEl.innerHTML = `<div class="alert alert-danger p-2"><strong><i class="bi bi-x-circle-fill"></i> Lỗi:</strong> ${error.message} (VIN không tồn tại).</div>`;
+            validateBtn.disabled = false;
+        }
+    });
 
-    // --- 2. Gắn sự kiện Submit ---
+    // Logic Modal "Thêm Phụ tùng"
+    const partModalEl = document.getElementById('partSearchModal');
+    if (!partModalEl) return;
+
+    const partModalInstance = bootstrap.Modal.getOrCreateInstance(partModalEl);
+    const searchInput = document.getElementById('part-search-input');
+    const searchBtn = document.getElementById('part-search-btn');
+    const searchResultsEl = document.getElementById('part-search-results');
+
+    searchBtn.addEventListener('click', async () => {
+        const searchTerm = searchInput.value;
+        if (searchTerm.length < 2) {
+            searchResultsEl.innerHTML = '<p class="text-danger">Phải nhập ít nhất 2 ký tự.</p>';
+            return;
+        }
+        searchResultsEl.innerHTML = '<p class="text-muted">Đang tìm...</p>';
+        try {
+            const data = await searchParts({ name: searchTerm, page: 0, size: 10 });
+            if (data.empty) {
+                searchResultsEl.innerHTML = '<p class="text-muted">Không tìm thấy phụ tùng nào.</p>';
+                return;
+            }
+            searchResultsEl.innerHTML = `
+                <ul class="list-group">
+                    ${data.content.map(part => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${part.name}</strong>
+                                <small class="d-block text-muted">Mã: ${part.partType} | Hãng: ${part.manufacturer}</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-success btn-add-part" 
+                                    data-part-number="${part.partType}" 
+                                    data-part-name="${part.name}">
+                                Thêm
+                            </button>
+                        </li>
+                    `).join('')}
+                </ul>`;
+        } catch (error) {
+            searchResultsEl.innerHTML = `<p class="text-danger">Lỗi: ${error.message}</p>`;
+        }
+    });
+
+    searchResultsEl.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-add-part')) {
+            const partNumber = e.target.dataset.partNumber;
+            const partName = e.target.dataset.partName;
+            if (!selectedParts.find(p => p.partNumber === partNumber)) {
+                selectedParts.push({ partNumber: partNumber, partName: partName, quantity: 1 });
+            }
+            renderSelectedPartsTable();
+            partModalInstance.hide();
+        }
+    });
+
+    // Logic "Submit Form"
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const requestedPartsDTO = selectedParts.map(p => ({ partNumber: p.partNumber, quantity: p.quantity }));
+        if (requestedPartsDTO.length === 0) {
+            errorEl.textContent = 'Lỗi: Bạn phải thêm ít nhất 1 phụ tùng.';
+            return;
+        }
         button.disabled = true;
         button.textContent = 'Đang gửi...';
         errorEl.textContent = '';
-
         try {
-            // 1. Lấy giá trị từ form
-            const vin = document.getElementById('vin').value;
+            const vin = vinInput.value;
             const description = document.getElementById('description').value;
-            const technicianId = document.getElementById('technicianId').value;
-
-            if (!technicianId) {
-                throw new Error("Bạn chưa chọn Kỹ thuật viên");
-            }
-
-            // 2. (Tạm thời hard-code, chúng ta sẽ nâng cấp phần này sau)
-            const requestedParts = [{ partNumber: "PN-DEMO", quantity: 1 }];
-            const attachedDocuments = [];
-            const isRecall = false;
-
-            // 3. Tạo đối tượng DTO hoàn chỉnh
-            const createClaimDto = {
-                vin,
-                description,
-                technicianId: parseInt(technicianId), // Chuyển sang Long/Number
-                isRecall,
-                requestedParts,
-                attachedDocuments
-            };
-
-            // 4. Gọi API
+            const createClaimDto = { vin, description, technicianId: null, isRecall: false, requestedParts: requestedPartsDTO, attachedDocuments: [] };
             const newClaimId = await createClaim(createClaimDto);
-
             alert('Tạo Claim thành công! ID mới là: ' + newClaimId);
-            window.location.href = '/pages/scStaff/index.html'; // Chuyển về trang dashboard
-
+            window.location.href = '/pages/scStaff/index.html';
         } catch (error) {
             console.error('Lỗi tạo claim:', error);
             errorEl.textContent = 'Lỗi: ' + error.message;
@@ -175,257 +197,378 @@ async function setupCreateClaimForm() {
             button.textContent = 'Gửi Yêu cầu';
         }
     });
+
+    // (Vẽ bảng lần đầu khi tải trang)
+    renderSelectedPartsTable();
 }
 
-// ================== Cap nhat file scStaff.js khi lam trang claim-list.html =================== 23:14, 13/11/25
+// Hàm "vẽ" bảng phụ tùng đã chọn (PHIÊN BẢN SỬA LỖI)
+function renderSelectedPartsTable() {
+    const tbody = document.getElementById('requested-parts-tbody');
+    if (!tbody) {
+        console.error("LỖI: Không tìm thấy #requested-parts-tbody");
+        return;
+    }
 
-// --- BIẾN TRẠNG THÁI CHO TRANG CLAIM LIST ---
-// (Lưu trữ bộ lọc và trang hiện tại)
-let claimListState = {
-    currentPage: 0,
-    size: 10,
-    vin: '',
-    claimCode: '',
-    status: ''
-};
+    // 1. Tìm 'no-parts-row' GỐC trong HTML
+    let noPartsRowEl = document.getElementById('no-parts-row');
+    let noPartsRowHtml = ''; // ⬅️ Chúng ta sẽ lưu HTML của nó ở đây
 
-// --- HÀM LOGIC CHO TRANG DANH SÁCH CLAIM (MỚI) ---
+    if (noPartsRowEl) {
+        // 2. Nếu tìm thấy (như lúc tải trang), lưu lại HTML của nó
+        noPartsRowHtml = noPartsRowEl.outerHTML;
+    } else {
+        // 3. Nếu không tìm thấy (vì đã bị xóa ở lần render trước),
+        //    chúng ta tự tạo lại HTML dự phòng
+        console.log("LOG: renderTable: Không tìm thấy #no-parts-row, dùng dự phòng.");
+        noPartsRowHtml = '<tr id="no-parts-row"><td colspan="4" class="text-center text-muted">Chưa chọn phụ tùng nào.</td></tr>';
+    }
 
-/**
- * Hàm chính để khởi tạo trang Danh sách Claim
- */
+    // 4. Bây giờ mới xóa sạch tbody
+    tbody.innerHTML = '';
+
+    // 5. Kiểm tra mảng
+    if (selectedParts.length === 0) {
+        // 6. Nếu mảng rỗng, trả lại cái HTML 'no-parts-row' đã lưu
+        tbody.innerHTML = noPartsRowHtml;
+        return;
+    }
+
+    // 7. Nếu mảng có dữ liệu, vẽ các dòng mới
+    selectedParts.forEach((part, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${part.partNumber}</td>
+            <td>${part.partName}</td>
+            <td>
+                <input type="number" class="form-control form-control-sm" 
+                       min="1" value="${part.quantity}" 
+                       data-index="${index}" 
+                       onchange="updatePartQuantity(event)">
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" 
+                        data-index="${index}"
+                        onclick="removePart(event)">
+                    Xóa
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+// (Các hàm window.update... và window.remove... đã được chuyển lên top-level)
+
+
+// -------------------------------------------------------------------
+// 5. LOGIC TRANG "DASHBOARD & LIST" (index.html)
+// -------------------------------------------------------------------
+
+async function loadSummaryCards() {
+    console.log("LOG: loadSummaryCards()"); // ⬅️ SỬA LỖI CÚ PHÁP
+    try {
+        const [pendingData, approvedData] = await Promise.all([
+            getClaims({ status: 'WAITING_APPROVAL', size: 1, page: 0 }),
+            getClaims({ status: 'APPROVED', size: 1, page: 0 })
+        ]);
+
+        console.log("LOG: Thẻ Tóm tắt: Chờ xử lý:", pendingData.totalElements, "| Đã duyệt:", approvedData.totalElements);
+        const pendingEl = document.getElementById('claims-pending-count');
+        const approvedEl = document.getElementById('claims-approved-count');
+
+        if (pendingEl) pendingEl.textContent = pendingData.totalElements;
+        if (approvedEl) approvedEl.textContent = approvedData.totalElements;
+
+    } catch (error) {
+        console.error("LỖI (loadSummaryCards):", error);
+    }
+}
+
 function initClaimListPage() {
-    console.log("Đang khởi tạo trang Danh sách Claim...");
+    console.log("LOG: initClaimListPage()"); // ⬅️ SỬA LỖI CÚ PHÁP
 
-    // Gắn sự kiện cho các nút lọc
-    document.getElementById('filter-apply-btn').addEventListener('click', applyFilters);
-    document.getElementById('filter-clear-btn').addEventListener('click', clearFilters);
+    // ⬇️ THÊM DÒNG NÀY NGAY ĐÂY ⬇️
+    // Tự động chọn giá trị 'WAITING_APPROVAL' cho ô dropdown khi tải trang
+    document.getElementById('filter-status').value = claimListState.status;
+
+    const filterBtn = document.getElementById('filter-apply-btn');
+    const clearBtn = document.getElementById('filter-clear-btn');
+
+    // (Kiểm tra an toàn: Đảm bảo các nút này tồn tại)
+    if (filterBtn) {
+        console.log("LOG: Đã tìm thấy nút Lọc, gán sự kiện.");
+        filterBtn.addEventListener('click', applyFilters);
+    } else {
+        console.error("LỖI (initClaimListPage): Không tìm thấy nút #filter-apply-btn. HTML của bạn bị thiếu.");
+    }
+
+    if (clearBtn) {
+        console.log("LOG: Đã tìm thấy nút Xóa Lọc, gán sự kiện.");
+        clearBtn.addEventListener('click', clearFilters);
+    } else {
+        console.error("LỖI (initClaimListPage): Không tìm thấy nút #filter-clear-btn. HTML của bạn bị thiếu.");
+    }
 
     // Tải dữ liệu lần đầu
+    console.log("LOG: Bắt đầu gọi fetchAndRenderClaims() lần đầu.");
     fetchAndRenderClaims();
 }
 
-/**
- * (Hàm chính) Gọi API và vẽ lại Bảng + Phân trang
- */
 async function fetchAndRenderClaims() {
+    console.log("LOG: fetchAndRenderClaims()"); // ⬅️ SỬA LỖI CÚ PHÁP
     const loadingEl = document.getElementById('claims-loading');
     const errorEl = document.getElementById('claims-error');
     const tableContainerEl = document.getElementById('claims-table-container');
     const noClaimsEl = document.getElementById('no-claims-message');
     const paginationEl = document.getElementById('pagination-container');
 
+    if (!loadingEl || !errorEl || !tableContainerEl || !noClaimsEl || !paginationEl) {
+        console.error("LỖI (fetchAndRenderClaims): Thiếu 1 trong các DIV (loading, error, table, noClaims, pagination).");
+        return;
+    }
+
     try {
-        // 1. Hiển thị loading, ẩn mọi thứ
+        console.log("LOG: 1. Hiển thị Loading, ẩn Bảng...");
         loadingEl.classList.remove('d-none');
         errorEl.classList.add('d-none');
         tableContainerEl.classList.add('d-none');
         noClaimsEl.classList.add('d-none');
         paginationEl.classList.add('d-none');
 
-        // 2. Lấy tham số lọc từ state
+        // 2. Lấy tham số (SỬA LẠI THÔNG MINH HƠN)
         const params = {
             page: claimListState.currentPage,
             size: claimListState.size,
-            vin: claimListState.vin,
-            claimCode: claimListState.claimCode,
             status: claimListState.status
+            // ⬅️ Khởi tạo với các giá trị luôn cần
         };
+
+        // Chỉ thêm các key lọc NẾU chúng có giá trị (không phải rỗng)
+        if (claimListState.vin) {
+            params.vin = claimListState.vin;
+        }
+        if (claimListState.claimCode) {
+            params.claimCode = claimListState.claimCode;
+        }
+        // (Chúng ta vẫn muốn gửi status ngay cả khi nó rỗng, nếu người dùng "Xóa lọc")
+
+        console.log("LOG: 2. Gọi API getClaims với params:", params); // ⬅️ Dòng log này giờ sẽ khác
 
         // 3. Gọi API
         const claimsPage = await getClaims(params);
+        console.log("LOG: 3. Gọi API thành công, trả về Page:", claimsPage);
 
         // 4. Ẩn loading
         loadingEl.classList.add('d-none');
 
-        // 5. Render Bảng
+        // 5. Render Bảng & Phân trang
         renderClaimsTable(claimsPage.content);
+        renderPagination(claimsPage);
 
-        // 6. Render Phân trang
-        renderPagination(claimsPage); // Gửi toàn bộ đối tượng Page
-
-        // 7. Xử lý trường hợp không có dữ liệu
+        // 6. Xử lý UI (Hiển thị bảng hoặc thông báo rỗng)
         if (claimsPage.empty) {
+            console.log("LOG: 4. API trả về RỖNG ('empty: true'). Hiển thị 'Không tìm thấy'.");
             noClaimsEl.classList.remove('d-none');
         } else {
+            console.log("LOG: 4. API trả về DỮ LIỆU. Hiển thị Bảng.");
             tableContainerEl.classList.remove('d-none');
             paginationEl.classList.remove('d-none');
         }
-
     } catch (error) {
-        console.error('Lỗi khi tải danh sách claims:', error);
+        console.error('LỖI (fetchAndRenderClaims):', error);
         loadingEl.classList.add('d-none');
         errorEl.textContent = `Không thể tải dữ liệu. Lỗi: ${error.message}`;
         errorEl.classList.remove('d-none');
     }
 }
 
-/**
- * Vẽ Bảng
- */
 function renderClaimsTable(claims = []) {
     const tbodyEl = document.getElementById('claims-tbody');
-    tbodyEl.innerHTML = ''; // Xóa dữ liệu cũ
-
-    if (claims.length === 0) return;
-
+    if (!tbodyEl) return;
+    tbodyEl.innerHTML = '';
+    if (claims.length === 0) {
+        tbodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Không tìm thấy claim nào.</td></tr>';
+        return;
+    }
     claims.forEach(claim => {
         const tr = document.createElement('tr');
         const dateCreated = new Date(claim.dateCreated).toLocaleString('vi-VN');
-
-        // (Đây là CSS tùy chỉnh, bạn có thể thêm vào dashboard.css)
-        const statusClass = `status-${(claim.currentStatus || 'default').toLowerCase()}`;
-
+        const statusClass = `badge status-${(claim.currentStatus || 'default').toLowerCase()}`;
         tr.innerHTML = `
             <td>
-                <a href="/pages/scStaff/claim-details.html?id=${claim.id}" title="Xem chi tiết">
-                    <strong>${claim.claimCode}</strong>
+                <a href="#" class="btn-view-details fw-bold" data-id="${claim.claimCode}" title="Xem chi tiết">
+                    ${claim.claimCode}
                 </a>
             </td>
             <td>${claim.vin}</td>
             <td>${claim.customerName || '(Chưa có)'}</td>
             <td>${dateCreated}</td>
-            <td><span class="badge ${statusClass}">${claim.currentStatus}</span></td>
+            <td><span class="${statusClass}">${claim.currentStatus}</span></td>
             <td>
-                <a href="/pages/scStaff/claim-details.html?id=${claim.id}" 
-                   class="btn btn-sm btn-outline-primary">
-                   Xem
-                </a>
-            </td>
-        `;
+                <button class="btn btn-sm btn-outline-primary btn-view-details" data-id="${claim.claimCode}">
+                   <i class="bi bi-eye"></i> Xem
+                </button>
+            </td>`;
         tbodyEl.appendChild(tr);
     });
 }
-
-/**
- * Vẽ Phân trang (Pagination)
- */
 function renderPagination(pageData) {
     const paginationControls = document.getElementById('pagination-controls');
-    paginationControls.innerHTML = ''; // Xóa các nút cũ
-
+    if (!paginationControls) return;
+    paginationControls.innerHTML = '';
     const { totalPages, number: currentPage, first, last } = pageData;
-
-    if (totalPages <= 1) return; // Không cần phân trang nếu chỉ có 1 trang
-
-    // Nút "Trang trước"
-    paginationControls.innerHTML += `
-        <li class="page-item ${first ? 'disabled' : ''}">
-            <a class="page-link" href="#" data-page="${currentPage - 1}">Trang trước</a>
-        </li>
-    `;
-
-    // Hiển thị các nút số trang
-    // (Đây là logic cơ bản, có thể làm phức tạp hơn với dấu "...")
+    if (totalPages <= 1) return;
+    paginationControls.innerHTML += `<li class="page-item ${first ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage - 1}">Trang trước</a></li>`;
     for (let i = 0; i < totalPages; i++) {
-        paginationControls.innerHTML += `
-            <li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
-            </li>
-        `;
+        paginationControls.innerHTML += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" data-page="${i}">${i + 1}</a></li>`;
     }
-
-    // Nút "Trang sau"
-    paginationControls.innerHTML += `
-        <li class="page-item ${last ? 'disabled' : ''}">
-            <a class="page-link" href="#" data-page="${currentPage + 1}">Trang sau</a>
-        </li>
-    `;
-
-    // Gắn sự kiện click cho các nút phân trang MỚI
+    paginationControls.innerHTML += `<li class="page-item ${last ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage + 1}">Trang sau</a></li>`;
     paginationControls.querySelectorAll('a.page-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             if (link.parentElement.classList.contains('disabled')) return;
-
             const newPage = parseInt(link.getAttribute('data-page'));
-            claimListState.currentPage = newPage; // Cập nhật state
-            fetchAndRenderClaims(); // Gọi lại API với trang mới
+            claimListState.currentPage = newPage;
+            fetchAndRenderClaims();
         });
     });
 }
 
-/**
- * Xử lý sự kiện khi bấm nút "Lọc"
- */
 function applyFilters() {
-    // 1. Cập nhật state từ các ô input
+    console.log("LOG: applyFilters()"); // ⬅️ SỬA LỖI CÚ PHÁP
+
+    // 1. Đọc giá trị từ HTML
+    const statusValue = document.getElementById('filter-status').value;
+    console.log("LOG: Giá trị 'Trạng thái' (Tiếng Anh) đọc từ <select> là:", statusValue);
+
     claimListState.vin = document.getElementById('filter-vin').value.trim();
     claimListState.claimCode = document.getElementById('filter-claim-code').value.trim();
-    claimListState.status = document.getElementById('filter-status').value;
-    claimListState.currentPage = 0; // Luôn reset về trang đầu tiên khi lọc
+    claimListState.status = statusValue;
+    claimListState.currentPage = 0;
 
-    // 2. Gọi lại API
+    console.log("LOG: State lọc đã cập nhật. Gọi lại fetchAndRenderClaims...");
     fetchAndRenderClaims();
 }
-
-/**
- * Xử lý sự kiện khi bấm nút "Xóa lọc"
- */
 function clearFilters() {
-    // 1. Reset state
+    console.log("LOG: clearFilters()"); // ⬅️ SỬA LỖI CÚ PHÁP
+
     claimListState.vin = '';
     claimListState.claimCode = '';
     claimListState.status = '';
     claimListState.currentPage = 0;
-
-    // 2. Reset giá trị trên UI
     document.getElementById('filter-vin').value = '';
     document.getElementById('filter-claim-code').value = '';
     document.getElementById('filter-status').value = '';
-
-    // 3. Gọi lại API
     fetchAndRenderClaims();
 }
 
+/**
+ * 5. LOGIC MODAL "CHI TIẾT CLAIM"
+ */
+function initClaimDetailsModal() {
+    const tableBody = document.getElementById('claims-tbody');
+    const modalEl = document.getElementById('claimDetailsModal');
+    if (!tableBody || !modalEl) return;
 
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap JS chưa được tải!');
+        return;
+    }
 
-// ================= Ham main su dung chung ================== 23:15, 13/11/25
+    claimModalInstance = new bootstrap.Modal(modalEl);
 
-// --- HÀM "ROUTER" CHÍNH ---
-// (Bạn cần CẬP NHẬT hàm main() của bạn để bao gồm logic mới)
+    tableBody.addEventListener('click', async (e) => {
+        const viewButton = e.target.closest('.btn-view-details');
+        if (viewButton) {
+            e.preventDefault();
+            const claimCode = viewButton.dataset.id;
+            await openClaimModal(claimCode);
+        }
+    });
+}
 
-function main() {
-    // 1. Gác cổng (Bạn đã có)
-    const user = checkAuth('ROLE_SC_STAFF');
-    if (!user) return;
+async function openClaimModal(claimId) {
+    const modalTitle = document.getElementById('claimModalTitle');
+    const modalBody = document.getElementById('claimModalBody');
+    if (!modalTitle || !modalBody) return;
 
-    // 2. Render các component chung (Bạn đã có)
+    modalTitle.textContent = `Chi tiết Claim (ID: ${claimId})`;
+    modalBody.innerHTML = '<div class="text-center p-4"><div class="spinner-border" role="status"></div><p class="mt-2">Đang tải dữ liệu...</p></div>';
+
+    claimModalInstance.show();
+
     try {
-        renderHeader('header-placeholder');
-        renderStaffSidebar('sidebar-placeholder');
-    } catch (e) {
-        console.warn("Chưa có hàm renderHeader/renderStaffSidebar. Bỏ qua...", e);
-        // Fallback đơn giản
-        document.getElementById('header-placeholder').innerHTML =
-            `<nav class="navbar navbar-light bg-white p-3 shadow-sm">
-                <span class="navbar-brand mb-0 h1">EV Warranty</span>
-                <span class="text-dark">Chào, ${user.username}!</span>
-             </nav>`;
-    }
-
-    // 3. Chạy logic cho trang cụ thể dựa trên ID của body
-    const bodyId = document.body.id;
-
-    if (bodyId === 'sc-dashboard-page') {
-        // (Đây là code từ Task 1, bạn đã có)
-        // initDashboardPage();
-    }
-    // === PHẦN MỚI ===
-    else if (bodyId === 'sc-claim-list-page') {
-        initClaimListPage(); // Gọi hàm khởi tạo trang mới
-    }
-
-    // (Bạn cũng có thể dùng logic cũ của bạn)
-    if (window.location.pathname.endsWith('/scStaff/index.html')) {
-        loadDashboardData();
-    }
-
-    // NÓ SẼ GỌI HÀM NÀY KHI Ở TRANG create-claim.html
-    if (bodyId === 'sc-create-claim-page') {
-        setupCreateClaimForm(); // <== GỌI HÀM MỚI
+        const [details, history] = await Promise.all([
+            getClaimDetails(claimId),
+            getClaimHistory(claimId)
+        ]);
+        renderModalContent(details, history);
+    } catch (error) {
+        console.error("Lỗi tải chi tiết claim:", error);
+        modalBody.innerHTML = `<div class="alert alert-danger">Lỗi tải dữ liệu: ${error.message}</div>`;
     }
 }
 
-// Chạy hàm main khi DOM đã sẵn sàng
-document.addEventListener('DOMContentLoaded', main);
+function renderModalContent(details, history) {
+    const modalBody = document.getElementById('claimModalBody');
+    const statusClass = `badge status-${(details.currentStatus || 'default').toLowerCase()}`;
+
+    let partsHtml = '';
+    if (!details.partList || details.partList.length === 0) {
+        partsHtml = '<li class="list-group-item">Không có phụ tùng nào được yêu cầu.</li>';
+    } else {
+        partsHtml = details.partList.map(part => `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${part.partName || part.partNumber}</strong>
+                    <small class="d-block text-muted">Số lượng: ${part.quantityRequired}</small>
+                </div>
+                <span class="badge ${part.isApproved ? 'bg-success' : 'bg-secondary'}">
+                    ${part.isApproved ? 'Đã duyệt' : 'Chờ duyệt'}
+                </span>
+            </li>
+        `).join('');
+    }
+
+    const historyHtml = history.map(log => `
+        <li class="list-group-item">
+            <strong>${log.status}</strong> 
+            <small class="text-muted d-block">${new Date(log.timestamp).toLocaleString('vi-VN')}</small>
+            <p class="mb-0">${log.notes || '(Không có ghi chú)'}</p>
+            <small class="text-muted">Xử lý bởi: ${log.processorName || 'N/A'}</small>
+        </li>
+    `).join('');
+
+    modalBody.innerHTML = `
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-tab-pane" type="button" role="tab">Thông tin chung</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="parts-tab" data-bs-toggle="tab" data-bs-target="#parts-tab-pane" type="button" role="tab">Phụ tùng (${details.partList ? details.partList.length : 0})</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-tab-pane" type="button" role="tab">Lịch sử (${history ? history.length : 0})</button></li>
+        </ul>
+        <div class="tab-content p-3 border border-top-0" id="myTabContent">
+            <div class="tab-pane fade show active" id="info-tab-pane" role="tabpanel">
+                <h5>Thông tin Claim: ${details.claimCode}</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Trạng thái:</strong> <span class="${statusClass}">${details.currentStatus}</span></p>
+                        <p><strong>Số VIN:</strong> ${details.vin}</p>
+                        <p><strong>Khách hàng:</strong> ${details.customerName || '(Chưa có)'}</p>
+                        <p><strong>Kỹ thuật viên:</strong> ${details.technicalName || '(Chưa gán)'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Mô tả lỗi:</strong></p>
+                        <p class="bg-light p-2 rounded">${details.description}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="parts-tab-pane" role="tabpanel">
+                <h5>Phụ tùng Yêu cầu</h5>
+                <ul class="list-group">${partsHtml}</ul>
+            </div>
+            <div class="tab-pane fade" id="history-tab-pane" role="tabpanel">
+                <h5>Lịch sử Trạng thái</h5>
+                <ul class="list-group">${historyHtml || '<li class="list-group-item">Chưa có lịch sử.</li>'}</ul>
+            </div>
+        </div>
+    `;
+}
