@@ -1,5 +1,6 @@
 package com.oem.evpart.config;
 
+import org.springframework.beans.factory.annotation.Value; // Import thêm cái này
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,17 +14,18 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 
 @Configuration
-@EnableCaching // Kích hoạt tính năng Caching
+@EnableCaching
 public class RedisConfig {
 
-    /**
-     * Cấu hình Cache Manager để lưu dữ liệu dưới dạng JSON thay vì Byte Stream mặc định.
-     */
+    // Lấy giá trị từ application.yml, nếu không có thì mặc định 10 phút (600000ms)
+    @Value("${spring.cache.redis.time-to-live:600000}")
+    private long timeToLive;
+
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10)) // Mặc định cache tồn tại 10 phút
-                .disableCachingNullValues()       // Không cache dữ liệu null
+                .entryTtl(Duration.ofMillis(timeToLive)) // SỬA: Dùng biến timeToLive thay vì hardcode
+                .disableCachingNullValues()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
 
