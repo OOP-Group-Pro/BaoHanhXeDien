@@ -13,6 +13,7 @@ import { setupVehicleLookup } from './JS/vehicle-lookup.js';
 import { setupAppointmentsPage } from './JS/sc-appointments.js';
 
 
+
 // --- BIẾN TOÀN CỤC ---
 let selectedParts = [];
 let claimListState = { currentPage: 0, size: 10, vin: '', claimCode: '', status: 'WAITING_APPROVAL' }; // ⬅️ SỬA LẠI THÀNH 'WAITING_APPROVAL'
