@@ -52,7 +52,11 @@ services:
     environment:
       JWT_SECRET: "we_dont_talk_anymore_like_we_used_to_do"
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
@@ -68,8 +72,12 @@ services:
     networks:
       - oem-network
     environment:
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
@@ -89,6 +97,7 @@ services:
       SPRING_DATA_REDIS_HOST: redis-cache
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+
       redis-cache:
         condition: service_healthy
       mysql-db:
@@ -107,7 +116,11 @@ services:
       - oem-network
     environment:
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
@@ -128,7 +141,11 @@ services:
     # Khai báo phụ thuộc cho WARRANTY-SERVICE
     environment:
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
       user-service:

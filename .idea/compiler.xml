@@ -20,8 +20,8 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
         </processorPath>
         <module name="user-service" />
-        <module name="part-service" />
         <module name="vehicle-service" />
+        <module name="part-service" />
         <module name="warranty-service" />
         <module name="campaign-service" />
       </profile>
