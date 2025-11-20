@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -63,7 +64,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_EVM_STAFF', 'ROLE_SC_STAFF')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_EVM_STAFF', 'ROLE_SC_STAFF', 'ROLE_SC_TECHNICIAN')")
     public ResponseEntity<List<UserResponseDto>> findUsersByCriteria (
             @RequestParam String roleName,
             Authentication authentication
@@ -71,8 +72,12 @@ public class UserController {
         UserDetailsPrincipal principal = (UserDetailsPrincipal) authentication.getPrincipal();
         Long centerId = null;
 
-        // Kiem tra neula admin thi khong co centerId
-        if (!authentication.getAuthorities().stream().map(auth -> auth.getAuthority().toString()).toList().contains("ROLE_ADMIN")) {
+        // ⬇️ SỬA: Cho phép cả ADMIN và EVM_STAFF xem toàn cục ⬇️
+        boolean isGlobalUser = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_EVM_STAFF"));
+
+        if (!isGlobalUser) {
             // Neu khong phai Admin ma khong co centerId la loi du lieu nen thoat
             if (principal.getCenterId() == null ) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

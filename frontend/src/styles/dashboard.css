@@ -237,3 +237,25 @@ body {
     border-bottom: 1px solid #E5E7EB;
     border-radius: 16px 16px 0 0;
 }
+
+/* src/styles/dashboard.css */
+
+/* ... (Các code cũ giữ nguyên) ... */
+
+/* =========================================
+   8. TÙY CHỈNH KHOẢNG CÁCH (PADDING)
+   ========================================= */
+
+/* 1. Đẩy nội dung Header xa ra một chút */
+.header {
+    /* Tăng padding trái/phải lên 3rem (khoảng 48px) thay vì mặc định */
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+}
+
+/* 2. Đẩy nội dung Chính (Main) xa ra tương ứng */
+.main-content > main {
+    /* Ghi đè class 'p-4' của Bootstrap */
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+}
