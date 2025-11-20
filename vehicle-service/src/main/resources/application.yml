@@ -1,7 +1,7 @@
 server:
   port: 8080
   servlet:
-    context-path: /vehicle-service
+    context-path: /vehicle-service # Chú ý: context-path này quan trọng cho Feign Client
   error:
     include-message: always
     include-binding-errors: always
@@ -31,6 +31,20 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+  # --- CẤU HÌNH REDIS (MỚI) ---
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis-cache}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 60000
+
+  # --- CẤU HÌNH CACHE (MỚI - MỨC ĐỘ B) ---
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # 10 phút
+      cache-null-values: false
+
 feign:
   circuitbreaker:
     enabled: true
@@ -52,3 +66,10 @@ feign:
 
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+
+# --- LOGGING (MỚI) ---
+logging:
+  level:
+    root: INFO
+    org.springframework.cache: DEBUG
+    com.oem.evwarranty: DEBUG

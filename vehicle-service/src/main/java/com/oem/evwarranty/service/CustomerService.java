@@ -6,6 +6,8 @@ import com.oem.evwarranty.entity.Customer;
 import com.oem.evwarranty.exception.ResourceNotFoundException;
 import com.oem.evwarranty.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ public class CustomerService {
     private CustomerRepository customerRepository;
 
     // SỬA 1: Nhận RequestDTO, trả về ResponseDTO
+    @CacheEvict(value = "customers_list", allEntries = true)
     public CustomerResponseDTO createCustomer(CustomerRequestDTO requestDTO) {
         // Kiểm tra email trùng lặp
         if (customerRepository.findByEmail(requestDTO.getEmail()).isPresent()) {
@@ -36,6 +39,7 @@ public class CustomerService {
     }
 
     // SỬA 2: Trả về List<ResponseDTO>
+    @Cacheable(value = "customers_list")
     public List<CustomerResponseDTO> getAllCustomers() {
         return customerRepository.findAll()
                 .stream()
@@ -44,6 +48,7 @@ public class CustomerService {
     }
 
     // SỬA 3: Trả về ResponseDTO
+    @Cacheable(value = "customers", key = "#id")
     public CustomerResponseDTO getCustomerById(Long id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
@@ -51,6 +56,7 @@ public class CustomerService {
     }
 
     // SỬA 4: Nhận RequestDTO, trả về ResponseDTO
+    @CacheEvict(value = "customers", key = "#id")
     public CustomerResponseDTO updateCustomer(Long id, CustomerRequestDTO requestDTO) {
         Customer customerToUpdate = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
@@ -73,6 +79,7 @@ public class CustomerService {
         return convertToDTO(updatedCustomer);
     }
 
+    @CacheEvict(value = "customers", key = "#id")
     public void deleteCustomer(Long id) {
         if(!customerRepository.existsById(id)){
             throw new ResourceNotFoundException("Customer not found with id: " + id);
@@ -80,6 +87,7 @@ public class CustomerService {
         customerRepository.deleteById(id);
     }
 
+    @Cacheable(value = "customers_email", key = "#email")
     public CustomerResponseDTO getCustomerByEmail(String email) {
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with email: " + email));

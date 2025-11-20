@@ -12,7 +12,7 @@ import java.util.Map;
 public interface PartService {
     PartResponse createPart(PartRequest partRequest);
     PartResponse getPartById(Long partId);
-    PageCacheDto<PartResponse> getAllParts(Pageable pageable)
+    PageCacheDto<PartResponse> getAllParts(Pageable pageable);
     PartResponse updatePart(Long partId, PartRequest partRequest);
     void deletePart(Long partId);
     Map<String, PartResponse> getPartDetailsByNumbers(List<String> partNumbers);
