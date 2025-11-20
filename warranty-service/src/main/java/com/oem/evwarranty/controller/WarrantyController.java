@@ -11,6 +11,7 @@ import com.oem.evwarranty.model.AttachedDocument;
 import com.oem.evwarranty.security.UserDetailsPrincipal;
 import com.oem.evwarranty.service.FileStorageService;
 import com.oem.evwarranty.service.WarrantyService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/claims")
 public class WarrantyController {
@@ -157,9 +159,10 @@ public class WarrantyController {
 
     @GetMapping("/download-file/{id}")
     public ResponseEntity<Resource> downloadDocument(@PathVariable Long id) {
+        log.info("Downloading file {}", id);
         // 1. Tìm thông tin file trong DB (Bạn cần thêm hàm này vào Service/Repo)
         AttachedDocument doc = warrantyService.getDocumentById(id);
-
+        log.info("Downloaded document {}", doc);
         // 2. Load file từ ổ cứng
         Resource file = fileStorageService.load(doc.getStoragePath());
 

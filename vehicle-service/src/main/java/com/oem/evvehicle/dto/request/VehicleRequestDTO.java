@@ -3,6 +3,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -18,4 +19,6 @@ public class VehicleRequestDTO {
     private String status;
     private String licensePlate;
     private Long customerId; // Chỉ cần ID của customer
+    private LocalDate warrantyStartDate; // Ngày kích hoạt bảo hành
+    private Long currentOdometer;
 }

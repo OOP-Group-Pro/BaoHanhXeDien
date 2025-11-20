@@ -1,160 +1,239 @@
-/* src/styles/dashboard.css */
+/* src/styles/dashboard.css - BẢN FINAL */
 
-body {
-    background-color: #f8f9fa; /* Màu nền xám nhạt */
+/* 1. CẤU HÌNH MÀU SẮC CHUNG (THEO THIẾT KẾ MỚI) */
+:root {
+    --primary-blue: #3B82F6;
+    --sidebar-bg: #1E1E2D; /* Màu tối xịn */
+    --text-light: #F9FAFB;
+    --text-secondary: #9CA3AF;
+    --bg-light: #F3F4F6;
+    --white: #FFFFFF;
+    --border-color: #E5E7EB;
 }
 
-/* Layout 2 Cột (Sidebar + Main) */
+/* 2. LAYOUT CHÍNH (GIỮ LẠI & CẬP NHẬT) */
 body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: #1F2937;
     display: grid;
-    grid-template-columns: 280px 1fr; /* Sidebar 280px, còn lại là main */
+    /* Sửa lại chiều rộng sidebar cho khớp với thiết kế mới (260px) */
+    grid-template-columns: 260px 1fr;
     height: 100vh;
+    overflow: hidden;
 }
 
-/* --- 1. Sidebar --- */
+/* =========================================
+   3. SIDEBAR (THAY THẾ HOÀN TOÀN BẰNG CODE MỚI)
+   ========================================= */
 .sidebar {
-    background-color: #212529; /* Màu tối giống mockup */
-    color: white;
-    padding: 1.5rem;
-    height: 100vh; /* Cao 100% */
-    overflow-y: auto; /* Tự cuộn nếu dài */
+    background-color: var(--sidebar-bg);
+    color: var(--text-light);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.sidebar h5 {
-    color: #adb5bd;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 1px;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sidebar .nav-link {
-    color: #ced4da;
-    padding: 0.75rem 1rem;
-    display: block;
-    border-radius: 0.375rem;
+.sidebar-nav {
+    list-style: none;
+    margin-top: 24px;
+    padding-left: 0;
+}
+
+.sidebar-nav li {
+    margin-bottom: 8px;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
     text-decoration: none;
-}
-.sidebar .nav-link i {
-    margin-right: 10px; /* Khoảng cách icon */
-}
-
-.sidebar .nav-link:hover {
-    background-color: #343a40;
-    color: white;
-}
-.sidebar .nav-link.active {
-    background-color: #0d6efd; /* Màu xanh khi active */
-    color: white;
+    color: var(--text-secondary);
     font-weight: 500;
+    transition: all 0.2s ease;
 }
 
+.sidebar-nav a i {
+    margin-right: 12px;
+    width: 20px;
+    text-align: center;
+}
 
-/* --- 2. Main Content --- */
+.sidebar-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+}
+
+.sidebar-nav a.active {
+    background-color: var(--primary-blue);
+    color: var(--white);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+}
+
+.sidebar-user {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* =========================================
+   4. MAIN CONTENT & HEADER (GIỮ LẠI & TINH CHỈNH)
+   ========================================= */
 .main-content {
+    display: flex;
+    flex-direction: column;
     height: 100vh;
     overflow-y: auto; /* Chỉ cuộn nội dung chính */
 }
 
-/* --- 3. Header (bên trong Main) --- */
 .header {
-    background-color: #ffffff;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #dee2e6;
+    background-color: var(--white);
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky; /* Giữ header khi cuộn */
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .user-menu {
     display: flex;
     align-items: center;
+    gap: 1rem;
 }
 .user-menu span {
-    margin-right: 1rem;
-    font-weight: 500;
+    font-weight: 600;
+    color: #374151;
 }
 
-/* --- 4. Status (Trạng thái trong bảng) --- */
-/* (Bạn có thể thêm màu cho giống mockup) */
-.status-waiting_approval {
-    color: #fd7e14; /* Cam */
-    font-weight: 500;
-}
-.status-approved {
-    color: #198754; /* Xanh lá */
-    font-weight: 500;
-}
-.status-completed {
-    color: #0d6efd; /* Xanh dương */
-    font-weight: 500;
-}
-.status-rejected {
-    color: #dc3545; /* Đỏ */
-    font-weight: 500;
-}
-
-
-/*============== Them code khi lam trang claim-list ===============*/ /*23:16, 13/11/25*/
-
-/* src/styles/dashboard.css */
-/* --- Dành cho Thanh Filter (Task 3) --- */
-.filters-bar .form-label {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #495057;
-}
-
-.filters-bar .btn {
-    /* Đảm bảo các nút cao bằng ô input */
-    height: 38px;
-}
-
-
-/* --- Dành cho Phân trang (Task 3) --- */
-#pagination-container {
-    margin-top: 1.5rem;
-}
-.pagination .page-link {
+.button-logout {
+    padding: 6px 12px;
+    border: 1px solid #FCA5A5;
+    background: #FEF2F2;
+    color: #EF4444;
+    border-radius: 6px;
     cursor: pointer;
+    transition: all 0.2s;
 }
-.pagination .page-item.disabled .page-link {
-    cursor: not-allowed;
-    background-color: #e9ecef;
+.button-logout:hover {
+    background: #FEE2E2;
 }
 
-/* --- Dành cho Badge Trạng thái (Task 3) --- */
+/* =========================================
+   5. BẢNG, THẺ & BADGE (DỌN DẸP LẠI)
+   ========================================= */
+/* Thẻ tóm tắt */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Trạng thái (Badge) - Đã gộp làm 1, dùng biến màu chuẩn */
 .badge {
     font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.4em 0.7em;
-    border-radius: 6px;
+    padding: 0.4em 0.8em;
+    border-radius: 9999px; /* Bo tròn kiểu viên thuốc */
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
+
 .status-waiting_approval {
-    color: #856404;
-    background-color: #fff3cd;
+    background-color: #FEF3C7;
+    color: #D97706;
+    border: 1px solid #FCD34D;
 }
 .status-approved {
-    color: #155724;
-    background-color: #d4edda;
+    background-color: #D1FAE5;
+    color: #059669;
+    border: 1px solid #6EE7B7;
+}
+.status-completed {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+    border: 1px solid #93C5FD;
 }
 .status-rejected {
-    color: #721c24;
-    background-color: #f8d7da;
+    background-color: #FEE2E2;
+    color: #DC2626;
+    border: 1px solid #FCA5A5;
 }
-.status-completed, .status-in_progress {
-    color: #0c5460;
-    background-color: #d1ecf1;
+/* Xử lý các trạng thái khác hoặc mặc định */
+.status-in_progress, .status-default {
+    background-color: #E5E7EB;
+    color: #374151;
 }
-.status-default {
-    color: #383d41;
-    background-color: #e2e3e5;
+
+/* =========================================
+   6. BỘ LỌC & PHÂN TRANG (GIỮ NGUYÊN TỪ FILE CŨ)
+   ========================================= */
+.filters-bar {
+    background-color: #F9FAFB;
 }
-/* Thêm style cho IS_PROCESSING, dùng chung màu với 'in_progress' */
-.status-is_processing,
-.status-in_progress {
-    color: #0c5460;
-    background-color: #d1ecf1;
+
+.filters-bar .form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4B5563;
+}
+
+.filters-bar .btn {
+    height: 38px; /* Căn chỉnh chiều cao với input */
+}
+
+#pagination-container {
+    margin-top: 1.5rem;
+}
+
+/* Style cho link hành động trong bảng */
+.btn-view-details {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* =========================================
+   7. MODAL (GIỮ NGUYÊN)
+   ========================================= */
+.modal-backdrop.show {
+    opacity: 0.5;
+}
+.modal-content {
+    border-radius: 16px;
+    border: none;
+}
+.modal-header {
+    background-color: #F9FAFB;
+    border-bottom: 1px solid #E5E7EB;
+    border-radius: 16px 16px 0 0;
 }
