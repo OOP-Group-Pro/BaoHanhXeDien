@@ -79,7 +79,7 @@ public class PartServiceImpl implements PartService {
 
         Map<String, PartResponse> partDetails = new HashMap<>();
         for (Part part : parts) {
-            partDetails.put(part.getSerialNumber(), partMapper.toPartResponse(part));
+            partDetails.put(part.getPartType(), partMapper.toPartResponse(part));
         }
 
         return partDetails;

@@ -39,4 +39,8 @@ public class ServiceHistory {
             inverseJoinColumns = @JoinColumn(name = "installed_part_id")
     )
     private Set<InstalledPart> partsInvolved; // Danh sách các linh kiện liên quan
+
+    // QUAN TRỌNG: Xe chạy bao nhiêu Km tại thời điểm sửa chữa này?
+    @Column(name = "odometer_reading", nullable = false)
+    private Long odometerReading;
 }

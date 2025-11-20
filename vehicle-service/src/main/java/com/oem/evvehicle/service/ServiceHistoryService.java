@@ -5,6 +5,7 @@ import com.oem.evvehicle.client.vehicle.TechnicianClient;
 import com.oem.evvehicle.dto.external.CenterDetailsDTO;
 import com.oem.evvehicle.dto.external.TechnicianDetailsDTO;
 import com.oem.evvehicle.dto.request.ServiceHistoryRequestDTO;
+import com.oem.evvehicle.dto.response.InstalledPartResponseDTO;
 import com.oem.evvehicle.dto.response.ServiceHistoryResponseDTO;
 import com.oem.evvehicle.entity.InstalledPart;
 import com.oem.evvehicle.entity.ServiceHistory;
@@ -18,6 +19,7 @@ import com.oem.evvehicle.repository.VehicleRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -45,16 +47,23 @@ public class ServiceHistoryService {
     /**
      * Hàm này không thay đổi
      */
+    // 1. HÀM ADD SERVICE HISTORY
+    @Transactional // Thêm cái này để đảm bảo tính toàn vẹn dữ liệu khi update cả 2 bảng
     public ServiceHistoryResponseDTO addServiceHistory(ServiceHistoryRequestDTO requestDTO) {
         Vehicle vehicle = vehicleRepository.findById(requestDTO.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + requestDTO.getVehicleId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
         Technician technician = technicianRepository.findById(requestDTO.getTechnicianId())
-                .orElseThrow(() -> new ResourceNotFoundException("Technician not found with ID: " + requestDTO.getTechnicianId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Technician not found"));
 
         ServiceHistory newHistory = new ServiceHistory();
         newHistory.setDescription(requestDTO.getDescription());
         newHistory.setPerformedDate(requestDTO.getPerformedDate());
+
+        // --- UPDATE MỚI: Ghi nhận ODO tại thời điểm sửa ---
+        newHistory.setOdometerReading(requestDTO.getOdometerReading());
+        // --------------------------------------------------
+
         newHistory.setVehicle(vehicle);
         newHistory.setTechnician(technician);
 
@@ -63,13 +72,19 @@ public class ServiceHistoryService {
             newHistory.setPartsInvolved(new HashSet<>(parts));
         }
 
+        // --- LOGIC DOANH NGHIỆP: Cập nhật ODO mới nhất cho Xe ---
+        // Nếu số Km lần vào xưởng này lớn hơn số Km hiện tại đang lưu trên xe
+        // Thì cập nhật lại thông tin xe để màn hình Vehicle 360 luôn đúng.
+        if (vehicle.getCurrentOdometer() == null ||
+                requestDTO.getOdometerReading() > vehicle.getCurrentOdometer()) {
+
+            vehicle.setCurrentOdometer(requestDTO.getOdometerReading());
+            vehicleRepository.save(vehicle); // Lưu cập nhật vào bảng Vehicle
+        }
+        // -------------------------------------------------------
+
         ServiceHistory savedHistory = historyRepository.save(newHistory);
         return convertToDTO(savedHistory);
-    }
-    public ServiceHistoryResponseDTO getHistoryById(Long id) {
-        ServiceHistory history = historyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("ServiceHistory not found with ID: " + id));
-        return convertToDTO(history);
     }
 
     /**
@@ -96,6 +111,15 @@ public class ServiceHistoryService {
                 .collect(Collectors.toList());
     }
 
+    public ServiceHistoryResponseDTO getHistoryById(Long id) {
+        // 1. Tìm trong DB
+        ServiceHistory history = historyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ServiceHistory not found with ID: " + id));
+
+        // 2. Convert sang DTO (Hàm convertToDTO đã viết ở dưới cùng file)
+        return convertToDTO(history);
+    }
+
     /**
      * 5. UPDATE (MỚI)
      */
@@ -114,6 +138,8 @@ public class ServiceHistoryService {
         // Cập nhật các trường
         existingHistory.setDescription(requestDTO.getDescription());
         existingHistory.setPerformedDate(requestDTO.getPerformedDate());
+        // --- UPDATE MỚI ---
+        existingHistory.setOdometerReading(requestDTO.getOdometerReading());
         existingHistory.setVehicle(vehicle);
         existingHistory.setTechnician(technician);
 
@@ -181,6 +207,28 @@ public class ServiceHistoryService {
         dto.setPerformedDate(history.getPerformedDate());
         dto.setTechnicianName(technicianName);
         dto.setCenterName(centerName);
+        // --- UPDATE MỚI: Map các trường vừa thêm ---
+        // Lấy VIN từ đối tượng Vehicle liên kết (Sửa từ Long thành String)
+        dto.setVehicleVin(history.getVehicle().getVehicleVin());
+
+        // Lấy ODO
+        dto.setOdometerReading(history.getOdometerReading());
+        // -------------------------------------------
+        // BỔ SUNG: Map danh sách phụ tùng liên quan
+        if (history.getPartsInvolved() != null && !history.getPartsInvolved().isEmpty()) {
+            List<InstalledPartResponseDTO> partDTOs = history.getPartsInvolved().stream()
+                    .map(part -> {
+                        InstalledPartResponseDTO pDto = new InstalledPartResponseDTO();
+                        pDto.setInstalledId(part.getInstalledId());
+                        pDto.setSerialNumber(part.getSerialNumber());
+                        pDto.setPartId(part.getPartId());
+                        pDto.setStatus(part.getStatus());
+                        // pDto.setPartName(...) // Nếu có thể lấy tên part
+                        return pDto;
+                    })
+                    .collect(Collectors.toList());
+            dto.setParts(partDTOs);
+        }
 
         return dto;
     }
