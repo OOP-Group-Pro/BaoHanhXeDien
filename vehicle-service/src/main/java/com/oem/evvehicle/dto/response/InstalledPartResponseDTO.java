@@ -8,6 +8,10 @@ import java.time.LocalDateTime;
 public class InstalledPartResponseDTO {
     private Long installedId;
     private Long partId;
+    // Bổ sung: Mã phụ tùng (Lấy từ bảng Parts danh mục)
+    private String partNumber;
+    // Bổ sung: Tên phụ tùng (VD: Battery Pack High Voltage)
+    private String partName;
     private String serialNumber;
     private LocalDateTime installDate;
     private InstallStatus status;

@@ -20,10 +20,20 @@ public class PartMapper {
     public static ClaimPartDetailDto mapToClaimPartDetailDto(ClaimPartDetail claimPartDetail){
         return ClaimPartDetailDto.builder()
                 .partNumber(claimPartDetail.getPartNumber())
+                .partName(claimPartDetail.getPartName())
                 .isApproved(claimPartDetail.getIsApproved())
                 .quantityRequired(claimPartDetail.getQuantityRequired())
                 .serialNumberDefective(claimPartDetail.getSerialNumberDefective())
                 .serialNumberReplace(claimPartDetail.getSerialNumberReplace())
+                .build();
+    }
+
+    public static ClaimPartDetail mapRequestToClaimPartDetail (PartRequestDto request) {
+        return ClaimPartDetail.builder()
+                .partNumber(request.getPartNumber())
+                .partName(request.getPartName())
+                .quantityRequired(request.getQuantity())
+                .isApproved(false)
                 .build();
     }
 }

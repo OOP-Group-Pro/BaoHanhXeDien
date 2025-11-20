@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Component
@@ -57,6 +59,8 @@ public class DataSeeder implements CommandLineRunner {
             vehicle1.setModel("Model S");
             vehicle1.setStatus("Active");
             vehicle1.setCustomer(customer1);
+            vehicle1.setCurrentOdometer(500000L);
+            vehicle1.setWarrantyStartDate(LocalDate.of(2017, 07, 17));
 
             // --- THÊM BIỂN SỐ XE ---
             vehicle1.setLicensePlate("59-G1 12345");

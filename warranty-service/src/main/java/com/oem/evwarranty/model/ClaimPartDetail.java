@@ -23,6 +23,8 @@ public class ClaimPartDetail {
 
     @Column(nullable = false)
     private String partNumber;      // Mã số cho loại phụ tung -> dùng cái này để kiểm tra trong chính sách bảo hành và tồn kho
+    @Column(nullable = true)
+    private String partName;
     @Column(nullable = false)
     private Integer quantityRequired;       // Số lượng yêu cầu
     @Column(nullable = true, unique = true)

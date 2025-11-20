@@ -1,6 +1,8 @@
 package com.oem.evvehicle.dto.response;
 
 import lombok.Data;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -12,4 +14,6 @@ public class VehicleResponseDTO {
     private String status;
     private CustomerResponseDTO customer;// Lồng DTO của Customer vào đây
     private String licensePlate;
+    private LocalDate warrantyStartDate; // Ngày kích hoạt bảo hành
+    private Long currentOdometer;
 }

@@ -26,3 +26,21 @@ export const validateVin = (vin) => {
 export const getVehicleByVin = (vin) => {
     return api.get(`/vehicles/vin/${vin}`); // API này trả về VehicleResponseDTO
 };
+
+
+// 2. Lấy lịch sử sửa chữa (Service History)
+export const getHistoryByVehicleId = (vehicleId) => {
+    // Backend trả về: List<ServiceHistoryResponseDTO> (có odometerReading)
+    return api.get(`/vehicles/${vehicleId}/history`);
+};
+
+// 3. Lấy danh sách phụ tùng đang lắp (Installed Parts)
+export const getPartsByVehicleId = (vehicleId) => {
+    // Backend trả về: List<InstalledPartResponseDTO> (có partNumber, serialNumber)
+    return api.get(`/vehicles/${vehicleId}/parts`);
+};
+
+// API: GET /api/v1/history/{id}
+export const getServiceHistoryDetail = (historyId) => {
+    return api.get(`/history/${historyId}`);
+};

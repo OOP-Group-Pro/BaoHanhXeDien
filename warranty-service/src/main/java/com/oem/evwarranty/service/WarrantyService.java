@@ -33,16 +33,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.oem.evwarranty.mapper.ClaimMapper.mapToClaimDto;
 import static com.oem.evwarranty.mapper.PartMapper.mapToPartDetail;
 
 import com.oem.evwarranty.repository.ClaimPartDetailRepository;
 import com.oem.evwarranty.repository.ClaimStatusLogRepository;
 import com.oem.evwarranty.repository.WarrantyClaimRepository;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
 
 @Service
+@Slf4j
 public class WarrantyService {
 
     // 1. Dependencies Nội bộ (Repositories)
@@ -93,8 +94,10 @@ public class WarrantyService {
         }
         UserResponseDto userInfo = userClient.getScStaffById(scStaffId);
 
-        // BƯỚC 2: TẠO MÃ CLAIM
+        // BƯỚC 2.1: TẠO MÃ CLAIM
         String claimCode = generateClaimCode();
+
+
 
         // BƯỚC 3: KHỞI TẠO ENTITY (SỬA LỖI BUILDER Ở ĐÂY)
         WarrantyClaim newClaim = WarrantyClaim.builder()
@@ -108,6 +111,32 @@ public class WarrantyService {
                 .technicalStaffId(null)
                 // ❌ ĐÃ XÓA DÒNG: .documents(files) -> Vì sai kiểu dữ liệu
                 .build();
+
+        /*
+        Dat log kiem tra co nhan duoc part request dto khong:
+         */
+        List<ClaimPartDetail> partDetails = new ArrayList<>();
+        if (dto.getRequestedParts().isEmpty() || dto.getRequestedParts() == null) {
+            log.error("😡😡😡 Have not get requested parts.");
+        } else {
+            // BUOC 2.2: Tao danh sach part can sua chua:
+            partDetails = dto.getRequestedParts().stream()
+                    .map(partDto -> {
+                        ClaimPartDetail part = PartMapper.mapRequestToClaimPartDetail(partDto);
+                        part.setClaim(newClaim);
+                        return part;
+                    })
+                    .peek(part -> {
+                        log.info("Found part: {}", part.getPartName());
+                    })
+                    .toList();
+        }
+        // Luu danh sach part can sua chua vao claim moi:
+        newClaim.setPartDetails(partDetails);
+
+        if (newClaim.getPartDetails().isEmpty() || newClaim.getPartDetails() == null) {
+            log.error("😭😭😭 Have not get requested parts.");
+        }
 
         // Khởi tạo danh sách documents rỗng để tránh NullPointerException
         if (newClaim.getDocuments() == null) {
@@ -139,14 +168,6 @@ public class WarrantyService {
         // BƯỚC 5: LƯU CLAIM
         // JPA sẽ lưu newClaim -> sau đó tự động lưu danh sách documents bên trong
         claimRepo.save(newClaim);
-
-        // BƯỚC 6: LƯU CÁC THỰC THỂ PHỤ
-        // 6a. Lưu Phụ tùng
-        if (dto.getRequestedParts() != null && !dto.getRequestedParts().isEmpty()) {
-            partDetailRepo.saveAll(dto.getRequestedParts().stream()
-                    .map(d -> mapToPartDetail(d, newClaim))
-                    .toList());
-        }
 
         // 6b. Lưu Log
         logRepo.save(
@@ -248,7 +269,7 @@ public class WarrantyService {
     // Bước dưới đây giống như bước kiểm tra và đánh giá hiệu quả của công tác bảo hành ấy
     // 3. Chức năng: CẬP NHẬT KẾT QUẢ SỬA CHỮA (Lắp/Tháo Serial Number)
     @Transactional
-    public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto) {
+    public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto ,Long realTechnicianId) {
         // [Logic chính]:
         // 1. Kiểm tra trạng thái Claim (Phải là APPROVED/IN_PROGRESS).
         // 2. Cập nhật số seri mới lắp/hỏng cho ClaimPartDetail.
@@ -279,6 +300,7 @@ public class WarrantyService {
         }
 
         // Logic kiểm tra nếu mọi thứ đã xong -> Cập nhật Claim Status thành COMPLETED
+        claim.setTechnicalStaffId(realTechnicianId);
         claim.setCurrentStatus(ClaimStatus.COMPLETED);
         claimRepo.save(claim);
         // ... (Ghi Log)
@@ -286,8 +308,8 @@ public class WarrantyService {
                 .claim(claim)
                 .timestamp(LocalDateTime.now())
                 .status(ClaimStatus.COMPLETED)
-                .processorId(claim.getTechnicalStaffId())
-                .notes("Công tác bảo hành đã hoàn thành.")
+                .processorId(realTechnicianId)
+                .notes("Công tác bảo hành đã hoàn thành.Ghi chú:" + resultDto.getFinalNotes())
                 .build());
     }
 
@@ -348,11 +370,11 @@ public class WarrantyService {
                 .map(entity -> {
                     // Dùng PartMapper cũ
                     ClaimPartDetailDto dto = PartMapper.mapToClaimPartDetailDto(entity);
-
+                    log.info("Test are there parts already had in claim: {}", entity.getPartName());
                     // Lấy PartResponse từ Map
                     PartResponseDto partInfo = finalPartMap.get(entity.getPartNumber());
 
-                    // Gán partName (NẾU TÌM THẤY)
+                   // Gán partName (NẾU TÌM THẤY)
                     if (partInfo != null) {
                         dto.setPartName(partInfo.getName()); // Giả sử hàm là .getName()
                     } else {
@@ -427,6 +449,7 @@ public class WarrantyService {
         if (statusStr != null && !statusStr.isBlank()) {
             try {
                 status = ClaimStatus.valueOf(statusStr.toUpperCase());
+                specification = specification.and(WarrantyClaimSpecification.hasStatus(status));
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("Invalid status value: " + statusStr);
             }
@@ -454,9 +477,14 @@ public class WarrantyService {
                     .map(auth -> auth.getAuthority())
                     .toList();
 
-            if (!roles.contains("ROLE_ADMIN") && ! roles.contains("ROLE_SC_TECHNICIAN") && ! roles.contains("ROLE_EVM_STAFF")) {
+            if (!roles.contains("ROLE_ADMIN") && ! roles.contains("ROLE_EVM_STAFF")) {
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
+                }if (roles.contains("ROLE_SC_TECHNICIAN")) {
+                    Specification<WarrantyClaim> assignedToMe = (root, query, cb) ->
+                            cb.equal(root.get("technicalStaffId"), currentUserId);
+
+                    specification = specification.and(assignedToMe);
                 }
                 else specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
             }
@@ -517,6 +545,6 @@ public class WarrantyService {
     }
 
     public AttachedDocument getDocumentById(Long id) {
-        return attachedDocRepo.findById(id).get();
+        return attachedDocRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Cannot find document with id: " + id));
     }
 }
