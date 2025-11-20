@@ -40,7 +40,7 @@ export function renderStaffSidebar() {
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="">
+                    <a href="/pages/scStaff/appointments.html" class="">
                         <i class="fa-solid fa-calendar-check"></i>
                         Lịch hẹn
                     </a>

@@ -1,204 +1,198 @@
 // src/JS/evm-campaigns.js
-import { getUser } from '../utils/storage.js';
-import { toast } from '../utils/main.js'; // nếu chưa có toast, tạm thay bằng alert
 import {
-  searchCampaigns, createCampaign, updateCampaign, deleteCampaign, getCampaign
+    searchCampaigns,
+    createCampaign,
+    addAffectedVehicle // Import hàm này từ service
 } from '../services/campaignService.js';
-import { listAffectedByCampaign } from '../services/affectedVehicleService.js';
-
-const fmt = (n) => n?.toLocaleString('vi-VN') ?? '—';
-const $ = (id) => document.getElementById(id);
 
 let state = {
-  list: [],
-  selectedId: null,
+    page: 0,
+    size: 10,
+    code: '',
+    status: ''
 };
 
-export async function initEvmCampaignsPage() {
-  // bindings
-  $('#cpn-new-btn').addEventListener('click', openCreateModal);
-  $('#cpn-filter-status').addEventListener('change', reload);
-  $('#cpn-modal-close').addEventListener('click', closeModal);
-  $('#cpn-cancel-btn').addEventListener('click', closeModal);
-  $('#cpn-save-btn').addEventListener('click', onSaveModal);
-  $('#cpn-edit-btn').addEventListener('click', onEditSelected);
-  $('#cpn-del-btn').addEventListener('click', onDeleteSelected);
+let createModal = null;
 
-  await reload();
+/**
+ * Hàm khởi tạo (Gọi từ evmStaff.js)
+ */
+export function setupCampaignManagement() {
+    console.log("LOG: Init Campaign Management JS...");
+
+    const modalEl = document.getElementById('createCampaignModal');
+    if (modalEl) createModal = new bootstrap.Modal(modalEl);
+
+    // Gán sự kiện
+    document.getElementById('btnFilter').addEventListener('click', handleFilter);
+    document.getElementById('btnSaveCampaign').addEventListener('click', handleCreateCampaign);
+
+    // Đếm số dòng VIN khi nhập
+    document.getElementById('campVins').addEventListener('input', (e) => {
+        const lines = e.target.value.split('\n').filter(line => line.trim() !== '');
+        document.getElementById('vinCount').textContent = `Đã nhập: ${lines.length} VIN`;
+    });
+
+    // Tải dữ liệu lần đầu
+    fetchAndRenderCampaigns();
 }
 
-async function reload() {
-  const status = $('#cpn-filter-status').value || undefined;
-  const page = await searchCampaigns({ status, size: 50 });
-  state.list = page?.content ?? [];
-  renderList();
-  renderKpis();
-  if (state.selectedId) selectCampaign(state.selectedId, { silent: true });
+async function handleFilter() {
+    state.code = document.getElementById('filterCode').value.trim();
+    state.status = document.getElementById('filterStatus').value;
+    state.page = 0;
+    await fetchAndRenderCampaigns();
 }
 
-function renderKpis() {
-  const count = state.list.length;
-  const active = state.list.filter(i => i.status === 'ACTIVE').length;
-  // Tổng chi phí: nếu backend chưa có field, mình tạm hiển thị số lượng xe ảnh hưởng * placeholder
-  $('#cpn-total-cost').textContent = '—';
-  $('#cpn-count').textContent = fmt(count);
-  $('#cpn-active').textContent = fmt(active);
+async function fetchAndRenderCampaigns() {
+    const tbody = document.getElementById('campaignTbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border text-success"></div></td></tr>';
+
+    try {
+        const params = {
+            page: state.page,
+            size: state.size
+        };
+        if (state.code) params.code = state.code;
+        if (state.status) params.status = state.status;
+
+        const data = await searchCampaigns(params);
+        renderTable(data.content);
+        renderPagination(data);
+
+    } catch (error) {
+        console.error("Lỗi tải campaign:", error);
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi: ${error.message}</td></tr>`;
+    }
 }
 
-function renderList() {
-  const box = $('#cpn-list');
-  const empty = $('#cpn-empty');
-  box.innerHTML = '';
+function renderTable(campaigns) {
+    const tbody = document.getElementById('campaignTbody');
+    tbody.innerHTML = '';
 
-  if (!state.list.length) {
-    empty.classList.remove('d-none');
-    return;
-  }
-  empty.classList.add('d-none');
+    if (!campaigns || campaigns.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Chưa có chiến dịch nào.</td></tr>';
+        return;
+    }
 
-  for (const c of state.list) {
-    const div = document.createElement('div');
-    div.className = 'list-item';
-    div.innerHTML = `
-      <div>
-        <div class="list-title">${c.code} <span class="badge">${c.status}</span></div>
-        <div class="muted">${c.title ?? ''}</div>
-        <small class="muted">${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}</small>
-      </div>
+    campaigns.forEach(camp => {
+        const start = new Date(camp.startAt).toLocaleDateString('vi-VN');
+        const end = new Date(camp.endAt).toLocaleDateString('vi-VN');
+
+        let statusBadge = 'bg-secondary';
+        if (camp.status === 'ACTIVE') statusBadge = 'bg-success';
+        if (camp.status === 'DRAFT') statusBadge = 'bg-warning text-dark';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="ps-4 fw-bold font-monospace text-primary">${camp.code}</td>
+            <td>${camp.title}</td>
+            <td><span class="badge bg-info text-dark">${camp.type}</span></td>
+            <td>${start} - ${end}</td>
+            <td><span class="badge ${statusBadge}">${camp.status}</span></td>
+            <td class="text-end pe-4">
+                <button class="btn btn-sm btn-outline-primary" title="Xem chi tiết">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger ms-1" title="Xóa/Đóng">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderPagination(pageData) {
+    // (Logic phân trang giống hệt các trang trước, bạn có thể copy lại)
+    const paginationUl = document.getElementById('pagination');
+    paginationUl.innerHTML = '';
+    const { totalPages, number: currentPage } = pageData;
+    if (totalPages <= 1) return;
+
+    // Vẽ đơn giản Pre/Next
+    paginationUl.innerHTML = `
+        <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+            <button class="page-link" onclick="window.changePageCamp(${currentPage - 1})">Trước</button>
+        </li>
+        <li class="page-item disabled"><span class="page-link">${currentPage + 1} / ${totalPages}</span></li>
+        <li class="page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}">
+            <button class="page-link" onclick="window.changePageCamp(${currentPage + 1})">Sau</button>
+        </li>
     `;
-    div.addEventListener('click', () => selectCampaign(c.id));
-    if (c.id === state.selectedId) div.classList.add('active');
-    box.appendChild(div);
-  }
 }
 
-async function selectCampaign(id, { silent } = {}) {
-  state.selectedId = id;
-  renderList();
-
-  const data = await getCampaign(id);
-  const detailBox = $('#cpn-selected');
-  const emptyBox = $('#cpn-selected-empty');
-
-  if (!data) {
-    detailBox.classList.add('d-none');
-    emptyBox.classList.remove('d-none');
-    return;
-  }
-  emptyBox.classList.add('d-none');
-  detailBox.classList.remove('d-none');
-
-  $('#cpn-code').textContent = data.code;
-  $('#cpn-title').textContent = data.title;
-  $('#cpn-type').textContent = data.type;
-  $('#cpn-status').textContent = data.status;
-  $('#cpn-time').textContent = `${fmtTime(data.startAt)} → ${fmtTime(data.endAt)}`;
-
-  await renderAffected(id);
-  if (!silent) toast && toast('Đã tải chi tiết chiến dịch');
+window.changePageCamp = (page) => {
+    state.page = page;
+    fetchAndRenderCampaigns();
 }
 
-async function renderAffected(campaignId) {
-  const tbody = $('#av-tbody');
-  const empty = $('#av-empty');
-  tbody.innerHTML = '';
-  let list = [];
+// ============================================================
+// LOGIC: TẠO CHIẾN DỊCH & IMPORT VIN
+// ============================================================
 
-  try {
-    list = await listAffectedByCampaign(campaignId);
-  } catch {
-    list = [];
-  }
-  if (!list.length) {
-    empty.classList.remove('d-none');
-    return;
-  }
-  empty.classList.add('d-none');
+async function handleCreateCampaign() {
+    const btn = document.getElementById('btnSaveCampaign');
 
-  for (const v of list) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${v.id ?? '—'}</td>
-      <td>${v.vehicleVin ?? v.vin ?? '—'}</td>
-      <td><span class="badge">${v.status ?? '—'}</span></td>
-      <td>
-        <button class="btn sm" data-vin="${v.vin ?? v.vehicleVin}">Chi tiết</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  }
-}
+    // 1. Lấy dữ liệu Form
+    const code = document.getElementById('campCode').value.trim();
+    const title = document.getElementById('campTitle').value.trim();
+    const type = document.getElementById('campType').value;
+    const startAt = document.getElementById('campStart').value;
+    const endAt = document.getElementById('campEnd').value;
+    const vinText = document.getElementById('campVins').value;
 
-/* ============ modal ============ */
-function openCreateModal() {
-  $('#cpn-modal-title').textContent = 'Tạo Chiến dịch';
-  fillModal(); // clear
-  $('#cpn-modal').classList.remove('d-none');
-}
-function openEditModal(data) {
-  $('#cpn-modal-title').textContent = 'Sửa Chiến dịch';
-  fillModal(data);
-  $('#cpn-modal').classList.remove('d-none');
-}
-function closeModal() {
-  $('#cpn-modal').classList.add('d-none');
-}
-function fillModal(d = {}) {
-  $('#m-code').value = d.code ?? '';
-  $('#m-title').value = d.title ?? '';
-  $('#m-type').value = d.type ?? 'RECALL';
-  $('#m-start').value = toLocalInput(d.startAt) ?? '';
-  $('#m-end').value = toLocalInput(d.endAt) ?? '';
-}
-async function onSaveModal() {
-  const payload = {
-    code: $('#m-code').value.trim(),
-    title: $('#m-title').value.trim(),
-    type: $('#m-type').value,
-    startAt: fromLocalInput($('#m-start').value),
-    endAt: fromLocalInput($('#m-end').value),
-  };
-  if (!payload.code || !payload.title || !payload.startAt || !payload.endAt) {
-    alert('Vui lòng nhập đủ thông tin.');
-    return;
-  }
+    if (!code || !title || !startAt || !endAt) {
+        alert("Vui lòng nhập đủ thông tin bắt buộc (*)");
+        return;
+    }
 
-  if (!state.selectedId || $('#cpn-modal-title').textContent.includes('Tạo')) {
-    await createCampaign(payload);
-    toast && toast('Đã tạo chiến dịch');
-  } else {
-    await updateCampaign(state.selectedId, payload);
-    toast && toast('Đã cập nhật chiến dịch');
-  }
-  closeModal();
-  await reload();
-}
+    // Lọc danh sách VIN (bỏ dòng trống)
+    const vinList = vinText.split('\n').map(v => v.trim()).filter(v => v !== '');
 
-async function onEditSelected() {
-  if (!state.selectedId) return;
-  const data = await getCampaign(state.selectedId);
-  if (data) openEditModal(data);
-}
-async function onDeleteSelected() {
-  if (!state.selectedId) return;
-  if (!confirm('Xóa chiến dịch này?')) return;
-  await deleteCampaign(state.selectedId);
-  state.selectedId = null;
-  await reload();
-}
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
 
-/* ============ helpers ============ */
-function fmtTime(s) {
-  if (!s) return '—';
-  try { return new Date(s).toLocaleString('vi-VN'); } catch { return s; }
-}
-function toLocalInput(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  // yyyy-MM-ddTHH:mm for <input type="datetime-local">
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-function fromLocalInput(v) {
-  return v ? new Date(v).toISOString() : null;
+    try {
+        // BƯỚC 1: Tạo Chiến dịch
+        console.log("LOG: Đang tạo chiến dịch...");
+        const campDto = { code, title, type, startAt, endAt };
+
+        // Gọi API tạo (Server trả về object Campaign đã tạo, có ID)
+        const newCampaign = await createCampaign(campDto);
+        console.log("LOG: Tạo thành công. ID =", newCampaign.id);
+
+        // BƯỚC 2: Import VINs (Nếu có)
+        if (vinList.length > 0) {
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang import ${vinList.length} xe...`;
+
+            // Gọi vòng lặp hoặc API bulk (tạm thời dùng loop cho chắc ăn nếu chưa có API bulk)
+            let successCount = 0;
+            for (const vin of vinList) {
+                try {
+                    await addAffectedVehicle(newCampaign.id, {
+                        campaignId: newCampaign.id,
+                        vehicleVin: vin
+                    });
+                    successCount++;
+                } catch (e) {
+                    console.warn(`Lỗi import VIN ${vin}:`, e);
+                }
+            }
+            alert(`Tạo chiến dịch thành công!\nĐã import: ${successCount}/${vinList.length} xe.`);
+        } else {
+            alert("Tạo chiến dịch thành công (Chưa có xe nào).");
+        }
+
+        createModal.hide();
+        document.getElementById('createCampaignForm').reset();
+        document.getElementById('vinCount').textContent = 'Đã nhập: 0 VIN';
+        fetchAndRenderCampaigns(); // Reload bảng
+
+    } catch (error) {
+        alert("Lỗi: " + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Lưu & Phát hành';
+    }
 }

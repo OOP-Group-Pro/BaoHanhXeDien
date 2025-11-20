@@ -10,6 +10,7 @@ import { searchParts } from "./services/partService.js";
 import { getUsersByRole } from "./services/userService.js";
 import { api } from './services/apiClient.js';
 import { setupVehicleLookup } from './JS/vehicle-lookup.js';
+import { setupAppointmentsPage } from './JS/sc-appointments.js';
 
 
 // --- BIẾN TOÀN CỤC ---
@@ -150,6 +151,10 @@ function main() {
     if (bodyId === 'sc-vehicle-lookup-page' || path.includes('vehicle-lookup')) {
         setupVehicleLookup(); // Gọi hàm từ file vehicleLookup.js
     }
+
+    if (bodyId === 'sc-appointments-page' || path.includes('appointments.html')) {
+            setupAppointmentsPage();
+        }
 }
 
 
