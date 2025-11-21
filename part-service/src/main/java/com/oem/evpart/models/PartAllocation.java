@@ -25,8 +25,8 @@ public class PartAllocation {
     private Long serviceCenterId; // FK từ service khác (User-Service)
 
     // 🔹 Thêm trường liên kết với Claim
-    @Column(name = "claim_id", nullable = false)
-    private Long claimId;
+    @Column(name = "claim_code", nullable = false)
+    private String claimCode;
 
     @Column(name = "allocated_qty", nullable = false)
     private Long allocatedQty;

@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,34 +62,47 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- ALLOCATE FOR CLAIM ----------------
     @Override
     @Transactional
-    public PartAllocationResponse allocateForClaim(ClaimAllocationRequest request) {
-        Long partId;
-        try {
-            partId = Long.parseLong(request.getPartNumbers().get(0));
-        } catch (Exception e) {
-            throw new IllegalArgumentException("partNumber không hợp lệ. Cần gửi partId dạng số.");
+    public List<PartAllocationResponse> allocateForClaim(ClaimAllocationRequest request) {
+
+        List<PartAllocationResponse> responses = new ArrayList<>();
+
+        // 1. Duyệt qua từng Item (Mã + Số lượng)
+        for (ClaimAllocationRequest.AllocationItem item : request.getItems()) {
+
+            String partSku = item.getPartNumber();
+            int qtyRequired = item.getQuantity(); // Số lượng riêng của từng món
+
+            // 2. Tìm Part theo Mã SKU (serialNumber trong DB Part)
+            Part part = partRepository.findBySerialNumber(partSku)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Không tìm thấy phụ tùng với mã SKU: " + partSku));
+
+            // 3. Tìm kho còn hàng (logic cũ của bạn)
+            PartInventory inventory = inventoryRepository
+                    .findFirstByPartAndQuantityGreaterThanEqual(part, (long) qtyRequired)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Hết hàng: " + part.getName() + " (Cần: " + qtyRequired + ")"));
+
+            // 4. Trừ kho
+            inventory.setQuantity(inventory.getQuantity() - qtyRequired);
+            inventoryRepository.save(inventory);
+
+            // 5. Tạo bản ghi Allocation
+            PartAllocation allocation = PartAllocation.builder()
+                    .inventory(inventory)
+                    .claimCode(request.getClaimCode()) // Lưu ý: Kiểm tra DB dùng claimId (Long) hay claimCode (String)
+                    // Nếu DB dùng claimId (Long), bạn phải sửa DTO hoặc Entity cho khớp
+                    .deliveredQty((long) qtyRequired)      // ⬅️ Lưu số lượng thực tế
+                    .allocatedDate(LocalDateTime.now())
+                    .status(PartAllocation.AllocationStatus.PENDING)
+                    .serviceCenterId(request.getServiceCenterId())
+                    .build();
+
+            PartAllocation savedAllocation = allocationRepository.save(allocation);
+            responses.add(allocationMapper.toPartAllocationResponse(savedAllocation));
         }
 
-        // 1. Tìm Part
-        Part part = partRepository.findById(partId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Phụ tùng (Part) với ID " + partId + " không tìm thấy."));
-
-        // 2. Tìm kho còn hàng
-        PartInventory inventory = inventoryRepository
-                .findFirstByPartAndQuantityGreaterThanEqual(part, request.getQuantity())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Đã hết hàng cho phụ tùng " + part.getName()
-                                + ". Yêu cầu " + request.getQuantity() + " cái."));
-
-        // 3. Gọi lại hàm createAllocation
-        PartAllocationRequest internalRequest = PartAllocationRequest.builder()
-                .inventoryId(inventory.getInventoryId())
-                .serviceCenterId(request.getServiceCenterId())
-                .allocatedQty(request.getQuantity())
-                .build();
-
-        return createAllocation(internalRequest);
+        return responses;
     }
 
     // ---------------- GET ALLOCATION BY ID ----------------
@@ -121,13 +136,13 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- NEW: GET STATUS BY CLAIM ID ----------------
     @Override
     @Transactional(readOnly = true)
-    public PartAllocationStatusDto getStatusByClaimId(Long claimId) {
-        // 1. Tìm allocation theo claimId (giả định bạn có field claimId trong entity)
-        List<PartAllocation> allocations = allocationRepository.findByClaimId(claimId);
+    public PartAllocationStatusDto getStatusByClaimCode(String claimCode) {
+        // 1. Tìm allocation theo claimCode (giả định bạn có field claimCode trong entity)
+        List<PartAllocation> allocations = allocationRepository.findByClaimCode(claimCode);
 
         if (allocations.isEmpty()) {
             // Không có allocation => có thể không yêu cầu phụ tùng
-            return new PartAllocationStatusDto(claimId, PartAllocation.AllocationStatus.NOT_REQUIRED);
+            return new PartAllocationStatusDto(claimCode, PartAllocation.AllocationStatus.NOT_REQUIRED);
         }
 
         // 2. Lấy allocation gần nhất (hoặc đầu tiên)
@@ -144,6 +159,6 @@ public class PartAllocationServiceImpl implements PartAllocationService {
             status = PartAllocation.AllocationStatus.READY_TO_INSTALL;
         }
 
-        return new PartAllocationStatusDto(claimId, status);
+        return new PartAllocationStatusDto(claimCode, status);
     }
 }
