@@ -67,16 +67,16 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
-    public Page<CampaignResponse> search(String code, com.oem.evwarranty.model.enums.CampaignStatus status,
+    public Page<CampaignResponse> search(String code,
+                                         com.oem.evwarranty.model.enums.CampaignStatus status,
                                          com.oem.evwarranty.model.enums.CampaignType type,
                                          Pageable pageable) {
-        String kw = (code == null) ? "" : code;
-        if (status != null && type != null) {
-            return campaignRepo
-                    .findByCodeContainingIgnoreCaseAndStatusAndType(kw, status, type, pageable)
-                    .map(CampaignMapper::toResponse);
-        }
-        return campaignRepo.findByCodeContainingIgnoreCase(kw, pageable)
+
+        // Xử lý keyword: nếu null thì truyền rỗng để query vẫn chạy đúng
+        String keyword = (code != null) ? code.trim() : "";
+
+        // Gọi hàm search thông minh bên Repository
+        return campaignRepo.search(keyword, status, type, pageable)
                 .map(CampaignMapper::toResponse);
     }
 }

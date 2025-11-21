@@ -117,18 +117,186 @@
                     <hr>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold d-flex justify-content-between">
-                            <span>Danh sách xe ảnh hưởng (VIN)</span>
-                            <small class="text-muted fw-normal">Mỗi dòng 1 số VIN</small>
+                        <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                            <span>Danh sách xe ảnh hưởng</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnOpenVehicleModal">
+                                <i class="bi bi-car-front-fill me-1"></i> Chọn xe từ Hệ thống
+                            </button>
                         </label>
-                        <textarea class="form-control font-monospace" id="campVins" rows="5" placeholder="VF812345...\nVF867890..."></textarea>
-                        <div class="form-text text-primary" id="vinCount">Đã nhập: 0 VIN</div>
+
+                        <div class="border rounded p-2 bg-light" style="min-height: 100px; max-height: 150px; overflow-y: auto;" id="selectedVinContainer">
+                            <span class="text-muted small fst-italic p-1">Chưa có xe nào được chọn.</span>
+                        </div>
+
+                        <textarea class="d-none" id="campVins"></textarea>
+                        <div class="form-text text-primary" id="vinCount">Đã chọn: 0 xe</div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
                 <button type="button" class="btn btn-success" id="btnSaveCampaign">Lưu & Phát hành</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editCampaignModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Cập nhật Chiến dịch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCampaignForm">
+                    <input type="hidden" id="editCampId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên tiêu đề</label>
+                        <input type="text" class="form-control" id="editCampTitle" required>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Loại</label>
+                            <select class="form-select" id="editCampType">
+                                <option value="RECALL">Triệu hồi (Recall)</option>
+                                <option value="SERVICE">Dịch vụ (Service)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Trạng thái</label>
+                            <select class="form-select fw-bold" id="editCampStatus">
+                                <option value="DRAFT" class="text-secondary">Bản nháp (Draft)</option>
+                                <option value="ACTIVE" class="text-success">Đang chạy (Active)</option>
+                                <option value="CLOSED" class="text-danger">Đã đóng (Closed)</option>
+                            </select>
+                            <div class="form-text">Chuyển sang ACTIVE để phát hành.</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày bắt đầu</label>
+                            <input type="datetime-local" class="form-control" id="editCampStart" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày kết thúc</label>
+                            <input type="datetime-local" class="form-control" id="editCampEnd" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" id="btnSaveEdit">Lưu Thay Đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="vehicleSelectModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Chọn Xe từ Hệ thống</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="vehicleSearchKeyword" placeholder="Tìm theo VIN, Model, Biển số...">
+                    <button class="btn btn-primary" type="button" id="btnSearchVehicle">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 50px;">#</th>
+                            <th>VIN</th>
+                            <th>Model</th>
+                            <th>Biển số</th>
+                            <th>Khách hàng</th>
+                        </tr>
+                        </thead>
+                        <tbody id="vehicleSearchResultBody">
+                        <tr><td colspan="5" class="text-center text-muted">Nhập từ khóa để tìm kiếm.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <nav class="mt-3 d-flex justify-content-center">
+                    <ul class="pagination pagination-sm mb-0" id="vehicleModalPagination"></ul>
+                </nav>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div class="text-primary fw-bold" id="modalSelectedCount">Đang chọn: 0 xe</div>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmSelection">Xác nhận chọn</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="viewCampaignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Chi tiết Chiến dịch</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Mã chiến dịch</small>
+                        <div class="fw-bold fs-5 text-primary" id="viewCode">---</div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="badge bg-secondary" id="viewStatus">---</span>
+                        <span class="badge bg-info text-dark" id="viewType">---</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted">Tên tiêu đề</small>
+                    <div class="fw-bold" id="viewTitle">---</div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Thời gian bắt đầu</small>
+                        <div class="fw-bold" id="viewStart">---</div>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Thời gian kết thúc</small>
+                        <div class="fw-bold" id="viewEnd">---</div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h6 class="fw-bold">Danh sách xe bị ảnh hưởng (Affected Vehicles)</h6>
+                <div class="border rounded p-2 bg-light" style="max-height: 200px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered mb-0 bg-white">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>VIN</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                        </thead>
+                        <tbody id="viewVehicleTbody">
+                        <tr><td colspan="3" class="text-center">Đang tải danh sách xe...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>

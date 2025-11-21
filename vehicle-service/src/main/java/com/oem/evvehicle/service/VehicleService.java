@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 public class VehicleService {
 
@@ -169,6 +172,13 @@ public class VehicleService {
             customerNames.put(vehicle.getVehicleVin(), vehicle.getCustomer().getCustomerName());
         });
         return customerNames;
+    }
+
+    // ⬇️ THÊM MỚI: Hàm searchVehicles
+    public Page<VehicleResponseDTO> searchVehicles(String keyword, Pageable pageable) {
+        Page<Vehicle> vehiclePage = vehicleRepository.searchVehicles(keyword, pageable);
+        // Convert Page<Entity> -> Page<DTO>
+        return vehiclePage.map(this::convertToDTO);
     }
 
 }

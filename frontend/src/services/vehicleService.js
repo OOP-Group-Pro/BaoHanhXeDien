@@ -44,3 +44,18 @@ export const getPartsByVehicleId = (vehicleId) => {
 export const getServiceHistoryDetail = (historyId) => {
     return api.get(`/history/${historyId}`);
 };
+
+/**
+ * ⬇️ THÊM MỚI: Tìm kiếm xe (Có phân trang)
+ * API: GET /api/v1/vehicles?keyword=...&page=...&size=...
+ */
+export const searchVehicles = (keyword = '', page = 0, size = 10) => {
+    const params = new URLSearchParams({
+        keyword: keyword,
+        page: page,
+        size: size
+    });
+    // Lưu ý: API Backend của bạn trả về: { status, message, data: PageObject }
+    // Nên chúng ta cần return api.get(...) để lấy full response rồi bóc tách sau
+    return api.get(`/vehicles?${params.toString()}`);
+};
