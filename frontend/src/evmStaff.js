@@ -4,8 +4,14 @@
 import { checkAuth } from './utils/auth.js';
 import { renderHeader } from './components/Header.js';
 import { renderEvmSidebar } from './components/EvmSidebar.js';
+// ⬇️ Import API getClaims để lấy dữ liệu
+import { getClaims } from './services/warrantyService.js';
+
+// ⬇️ Import của bạn của bạn (Giữ nguyên đường dẫn nếu file đó tồn tại)
+// Nếu chưa có file này, bạn hãy comment lại để tránh lỗi code
 import { setupCampaignManagement } from './JS/evm-campaigns.js';
-// Import các file logic con (Sẽ tạo sau)
+
+import { setupEvmDashboard } from './JS/evm-dashboard.js';
 
 
 // 2. HÀM MAIN
@@ -16,10 +22,8 @@ function main() {
 
     // 1. Gác cổng (Chỉ cho phép ROLE_EVM_STAFF)
     const userInfo = checkAuth('ROLE_EVM_STAFF');
-    if (!userInfo) {
-        console.log("LOG: Gác cổng thất bại.");
-        return;
-    }
+    if (!userInfo) return;
+
     console.log("LOG: Login as EVM Staff OK.");
 
     // 2. Vẽ giao diện chung
@@ -30,26 +34,22 @@ function main() {
         console.warn("Lỗi render layout:", e);
     }
 
-    // 3. Router (Điều hướng logic theo trang)
+    // 3. Router
     const path = window.location.pathname;
     const bodyId = document.body.id;
-    console.log("LOG: Path:", path, "| BodyID:", bodyId);
 
     // --- TRANG DASHBOARD (index.html) ---
     if (path.endsWith('/evmStaff/') || path.endsWith('/evmStaff/index.html')) {
         console.log("LOG: Init Dashboard EVM...");
-        // initEvmDashboard(); // (Sẽ làm sau)
+        setupEvmDashboard();
     }
 
-    // --- TRANG QUẢN LÝ CHIẾN DỊCH (campaigns.html) ---
-    // Chúng ta sẽ làm trang này NGAY SAU ĐÂY
+    // --- TRANG CHIẾN DỊCH ---
     if (bodyId === 'evm-campaigns-page' || path.includes('campaigns.html')) {
         console.log("LOG: Init Campaign Management...");
-
-
-        // Sau khi bạn tạo file logic JS cho trang này,
-        // bạn sẽ import và gọi hàm setup ở đây. Ví dụ:
-        setupCampaignManagement();
+        // Gọi code của bạn của bạn
+        if (typeof setupCampaignManagement === 'function') {
+            setupCampaignManagement();
+        }
     }
-
 }

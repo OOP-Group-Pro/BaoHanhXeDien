@@ -92,16 +92,16 @@ public class WarrantyController {
      * PUT /api/v1/claims/{claimId}/approve
      * Chức năng: Phê duyệt yêu cầu bảo hành (Thực hiện bởi EVM Staff)
      */
-    @PutMapping("/{claimId}/approve")
+    @PutMapping("/{claimCode}/approve")
     // @PreAuthorize("hasRole('EVM_STAFF')")
-    public ResponseEntity<Void> approveClaim(@PathVariable Long claimId,
+    public ResponseEntity<Void> approveClaim(@PathVariable String claimCode,
                                              @RequestBody ApproveRequestDto requestDto,
                                              Authentication authentication) {
         // Giả định lấy ID nhân viên EVM từ token
         UserDetailsPrincipal userPrincipal = (UserDetailsPrincipal) authentication.getPrincipal();
         Long evmStaffId = userPrincipal.getUserId();
         Long technicianId = requestDto.getTechnicianId();
-        warrantyService.approveClaim(claimId, evmStaffId, requestDto.getApprovalNotes(), technicianId);
+        warrantyService.approveClaim(claimCode, evmStaffId, requestDto.getApprovalNotes(), technicianId);
         return ResponseEntity.ok().build();
     }
 
@@ -109,12 +109,12 @@ public class WarrantyController {
      * PUT /api/v1/claims/{claimId}/reject
      * Chức năng: Từ chối yêu cầu bảo hành (Thực hiện bởi EVM Staff)
      */
-    @PutMapping("/{claimId}/reject")
+    @PutMapping("/{claimCode}/reject")
     // @PreAuthorize("hasRole('EVM_STAFF')")
-    public ResponseEntity<Void> rejectClaim(@PathVariable Long claimId,
+    public ResponseEntity<Void> rejectClaim(@PathVariable String claimCode,
                                             @RequestParam String reason) { // Lý do từ chối là bắt buộc
         Long evmStaffId = 202L;
-        warrantyService.rejectClaim(claimId, evmStaffId, reason); // Cần thêm rejectClaim() vào Service
+        warrantyService.rejectClaim(claimCode, evmStaffId, reason); // Cần thêm rejectClaim() vào Service
         return ResponseEntity.ok().build();
     }
 

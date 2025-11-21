@@ -7,7 +7,7 @@ import java.util.List;
 public interface WarrantyPolicyService {
     WarrantyPolicyResponse createPolicy(WarrantyPolicyRequest request);
     WarrantyPolicyResponse getPolicyById(Long policyId);
-    List<WarrantyPolicyResponse> getPoliciesByPartId(Long partId);
+    WarrantyPolicyResponse getPolicyByPartId(Long partId);
     WarrantyPolicyResponse updatePolicy(Long policyId, WarrantyPolicyRequest request);
     void deletePolicy(Long policyId);
 }

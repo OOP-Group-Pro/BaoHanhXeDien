@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor // Sử dụng Lombok để tự động inject dependencies
+@RequiredArgsConstructor
 public class PartServiceImpl implements PartService {
 
     private final PartRepository partRepository;
@@ -27,11 +27,11 @@ public class PartServiceImpl implements PartService {
     @Override
     @Transactional
     public PartResponse createPart(PartRequest partRequest) {
-        // Có thể thêm logic kiểm tra serial number đã tồn tại chưa
-         if(partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
-             throw new RuntimeException("Serial number already exists");
-         }
+        if(partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
+            throw new RuntimeException("Serial number already exists");
+        }
         Part newPart = partMapper.toPart(partRequest);
+        newPart.setCreatedAt(java.time.LocalDateTime.now()); // Set thời gian tạo
         Part savedPart = partRepository.save(newPart);
         return partMapper.toPartResponse(savedPart);
     }
@@ -46,8 +46,18 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PartResponse> getAllParts(Pageable pageable) {
-        return partRepository.findAll(pageable).map(partMapper::toPartResponse);
+    public Page<PartResponse> getAllParts(String keyword, Pageable pageable) {
+        Page<Part> partPage;
+
+        if (keyword != null && !keyword.isBlank()) {
+            // Nếu có từ khóa, tìm theo Tên hoặc Mã
+            partPage = partRepository.findByNameContainingIgnoreCaseOrSerialNumberContainingIgnoreCase(keyword, keyword, pageable);
+        } else {
+            // Nếu không, lấy tất cả
+            partPage = partRepository.findAll(pageable);
+        }
+
+        return partPage.map(partMapper::toPartResponse);
     }
 
     @Override
@@ -67,21 +77,22 @@ public class PartServiceImpl implements PartService {
         if (!partRepository.existsById(partId)) {
             throw new ResourceNotFoundException("Part not found with id: " + partId);
         }
-        // Lưu ý: Do có ràng buộc ON DELETE RESTRICT,
-        // nếu Part này đang được tham chiếu ở bảng khác, câu lệnh này sẽ lỗi.
-        // Cần xử lý logic phức tạp hơn nếu muốn xóa (ví dụ: chỉ cho xóa khi không còn liên kết)
         partRepository.deleteById(partId);
     }
 
     @Override
-    public Map<String, PartResponse> getPartDetailsByNumbers (List<String> partNumbers) {
-        List<Part> parts = partRepository.findAllByPartTypeIn(partNumbers);
+    @Transactional(readOnly = true)
+    public Map<String, PartResponse> getPartDetailsByNumbers(List<String> partNumbers) {
+        // ⚠️ LƯU Ý: Nếu partNumbers là danh sách serialNumber (ví dụ PN-123), dùng method này
+        // Nếu partNumbers là partType (ví dụ MOTOR), bạn cần sửa lại repository call tương ứng.
+        // Ở đây tôi giả định bạn tìm theo serialNumber (SKU)
+        List<Part> parts = partRepository.findAllBySerialNumberIn(partNumbers);
 
         Map<String, PartResponse> partDetails = new HashMap<>();
         for (Part part : parts) {
-            partDetails.put(part.getPartType(), partMapper.toPartResponse(part));
+            // Key là serialNumber, Value là Response (đã có thông tin bảo hành nhờ Mapper)
+            partDetails.put(part.getSerialNumber(), partMapper.toPartResponse(part));
         }
-
         return partDetails;
     }
 }

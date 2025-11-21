@@ -38,8 +38,11 @@ public class PartController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PartResponse>> getAllParts(Pageable pageable) {
-        return ResponseEntity.ok(partService.getAllParts(pageable));
+    public ResponseEntity<Page<PartResponse>> getAllParts(
+            @RequestParam(required = false) String name, // ⬇️ Nhận tham số name từ URL
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(partService.getAllParts(name, pageable));
     }
 
     @PutMapping("/{id}")
@@ -58,10 +61,10 @@ public class PartController {
      * Nhận yêu cầu cấp phát dựa trên thông tin claim (tự động tìm kho).
      */
     @PostMapping("/allocate-claim")
-    public ResponseEntity<PartAllocationResponse> requestPartAllocationForClaim(
+    public ResponseEntity<List<PartAllocationResponse>> requestPartAllocationForClaim(
             @Valid @RequestBody ClaimAllocationRequest request) {
 
-        PartAllocationResponse response = allocationService.allocateForClaim(request);
+        List<PartAllocationResponse> response = allocationService.allocateForClaim(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 

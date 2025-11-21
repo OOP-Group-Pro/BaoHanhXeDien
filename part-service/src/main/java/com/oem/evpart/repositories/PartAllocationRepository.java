@@ -22,6 +22,6 @@ public interface PartAllocationRepository extends JpaRepository<PartAllocation, 
      * @return Danh sách các lần phân bổ.
      */
     List<PartAllocation> findByInventory_InventoryId(Long inventoryId);
-    List<PartAllocation> findByClaimId(Long claimId);
+    List<PartAllocation> findByClaimCode(String claimCode);
 
 }

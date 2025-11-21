@@ -31,6 +31,9 @@ public class Part {
     @Column(name = "part_type", length = 50)
     private String partType;
 
+    @Column(name = "price")
+    private Double price;
+
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
@@ -38,11 +41,14 @@ public class Part {
     private LocalDateTime updatedAt;
 
     // ===== Quan hệ =====
-    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WarrantyPolicy> warrantyPolicies;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warranty_policy_id")
+    private WarrantyPolicy warrantyPolicy;
+
 
     @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PartInventory> inventories;
 
-
+    @PrePersist
+    public void prePersist() { createdAt = LocalDateTime.now(); }
 }
