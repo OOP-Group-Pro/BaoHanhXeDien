@@ -13,6 +13,8 @@ public interface PartRepository extends JpaRepository<Part, Long> {
     boolean existsBySerialNumber(String serialNumber);
     Optional<Part> findBySerialNumber(String serialNumber);
 
+    List<Part> findAllBySerialNumberIn(List<String> serialNumbers);
+
     Optional<Part> findByPartType(String type);
 
     List<Part> findAllByPartTypeIn(List<String> partNumbers);
