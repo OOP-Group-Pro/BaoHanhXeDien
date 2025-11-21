@@ -706,7 +706,7 @@ function renderModalContent(details, history) {
         partsHtml = details.partList.map(part => `
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
-                    <strong>${part.partName || part.partNumber}</strong>
+                    <strong>${part.name || part.partNumber}</strong>
                     <small class="d-block text-muted">Số lượng: ${part.quantityRequired}</small>
                 </div>
                 <span class="badge ${part.isApproved ? 'bg-success' : 'bg-secondary'}">

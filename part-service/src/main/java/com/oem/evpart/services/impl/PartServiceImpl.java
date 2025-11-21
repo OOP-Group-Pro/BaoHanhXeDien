@@ -46,8 +46,18 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PartResponse> getAllParts(Pageable pageable) {
-        return partRepository.findAll(pageable).map(partMapper::toPartResponse);
+    public Page<PartResponse> getAllParts(String keyword, Pageable pageable) {
+        Page<Part> partPage;
+
+        if (keyword != null && !keyword.isBlank()) {
+            // Nếu có từ khóa, tìm theo Tên hoặc Mã
+            partPage = partRepository.findByNameContainingIgnoreCaseOrSerialNumberContainingIgnoreCase(keyword, keyword, pageable);
+        } else {
+            // Nếu không, lấy tất cả
+            partPage = partRepository.findAll(pageable);
+        }
+
+        return partPage.map(partMapper::toPartResponse);
     }
 
     @Override

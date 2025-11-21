@@ -38,8 +38,11 @@ public class PartController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PartResponse>> getAllParts(Pageable pageable) {
-        return ResponseEntity.ok(partService.getAllParts(pageable));
+    public ResponseEntity<Page<PartResponse>> getAllParts(
+            @RequestParam(required = false) String name, // ⬇️ Nhận tham số name từ URL
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(partService.getAllParts(name, pageable));
     }
 
     @PutMapping("/{id}")

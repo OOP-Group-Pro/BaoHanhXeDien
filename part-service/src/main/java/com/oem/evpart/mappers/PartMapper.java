@@ -29,8 +29,7 @@ public class PartMapper {
     public PartResponse toPartResponse(Part part) {
         // ✅ LOGIC MỚI: Tìm Policy dựa trên Part ID
         // (Tìm xem có chính sách nào đang gắn với Part này không)
-        WarrantyPolicy policy = policyRepository.findByPart_PartId(part.getPartId())
-                .stream().findFirst().orElse(null);
+        WarrantyPolicy policy = part.getWarrantyPolicy();
 
         return PartResponse.builder()
                 .partId(part.getPartId())
