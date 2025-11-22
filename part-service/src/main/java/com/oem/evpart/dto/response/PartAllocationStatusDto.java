@@ -19,7 +19,7 @@ import lombok.Setter;
 public class PartAllocationStatusDto {
 
     // ID của Claim để Giao diện xác nhận
-    private Long claimId;
+    private String claimCode;
 
     // Trạng thái cấp phát
     private AllocationStatus status;

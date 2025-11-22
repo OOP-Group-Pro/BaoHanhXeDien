@@ -1,136 +1,140 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="utf-8" />
-    <title>Quản lý Chiến dịch (EVM Staff)</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-    <link rel="stylesheet" href="/src/styles/campaigns.css" />
+    <meta charset="UTF-8">
+    <title>Quản lý Chiến dịch - OEM EV Warranty</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="../../src/styles/dashboard.css">
 </head>
+
 <body id="evm-campaigns-page">
-<div class="main-content container-fluid p-4">
-    <div class="flex-between mb-3">
-        <h2 class="page-title">Quản lý Chiến dịch</h2>
-        <button id="cpn-new-btn" class="btn primary">Tạo Chiến dịch mới</button>
-    </div>
 
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <!-- KPI (tổng chi phí / số chiến dịch) -->
-        <div class="card lg:col-span-2">
-            <h3 class="card-title">Tổng quan</h3>
-            <div class="kpi-row">
-                <div class="kpi-box">
-                    <div class="kpi-label">Tổng Chi phí</div>
-                    <div id="cpn-total-cost" class="kpi-value">—</div>
-                </div>
-                <div class="kpi-box">
-                    <div class="kpi-label">Số chiến dịch</div>
-                    <div id="cpn-count" class="kpi-value">—</div>
-                </div>
-                <div class="kpi-box">
-                    <div class="kpi-label">Đang hoạt động</div>
-                    <div id="cpn-active" class="kpi-value">—</div>
+<aside class="sidebar" id="sidebar-placeholder"></aside>
+
+<div class="main-content">
+    <header class="header" id="header-placeholder"></header>
+
+    <main class="container-fluid p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Quản lý Chiến dịch (Recall & Service)</h1>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createCampaignModal">
+                <i class="bi bi-plus-lg me-2"></i>Tạo Chiến dịch Mới
+            </button>
+        </div>
+
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="filterCode" placeholder="Tìm theo Mã hoặc Tên...">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterStatus">
+                            <option value="">-- Tất cả Trạng thái --</option>
+                            <option value="DRAFT">Nháp (Draft)</option>
+                            <option value="ACTIVE">Đang chạy (Active)</option>
+                            <option value="CLOSED">Đã đóng (Closed)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" id="btnFilter">
+                            <i class="bi bi-search"></i> Tìm
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Chi tiết chiến dịch đang chọn -->
-        <aside class="card">
-            <h3 class="card-title">Chi tiết Chiến dịch</h3>
-            <div class="muted" id="cpn-selected-empty">Chưa chọn chiến dịch.</div>
-            <div id="cpn-selected" class="d-none">
-                <div><b>Mã:</b> <span id="cpn-code">—</span></div>
-                <div><b>Tiêu đề:</b> <span id="cpn-title">—</span></div>
-                <div><b>Loại:</b> <span id="cpn-type">—</span></div>
-                <div><b>Trạng thái:</b> <span id="cpn-status">—</span></div>
-                <div><b>Thời gian:</b> <span id="cpn-time">—</span></div>
-                <div class="mt-2 flex gap-2">
-                    <button id="cpn-edit-btn" class="btn sm">Sửa</button>
-                    <button id="cpn-del-btn" class="btn sm danger">Xóa</button>
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Mã Chiến dịch</th>
+                            <th>Tên Chiến dịch</th>
+                            <th>Loại</th>
+                            <th>Thời gian Hiệu lực</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody id="campaignTbody">
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
+                <nav class="d-flex justify-content-end p-3">
+                    <ul class="pagination mb-0" id="pagination"></ul>
+                </nav>
             </div>
-        </aside>
-    </section>
-
-    <!-- Danh sách Campaign + affected vehicles -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <div class="card lg:col-span-1">
-            <div class="flex-between">
-                <h3 class="card-title">Danh sách Chiến dịch</h3>
-                <select id="cpn-filter-status" class="input sm">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="PLANNED">PLANNED</option>
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                    <option value="CANCELLED">CANCELLED</option>
-                </select>
-            </div>
-            <div id="cpn-list" class="list list-hover mt-2"></div>
-            <div id="cpn-empty" class="empty d-none">Chưa có chiến dịch.</div>
         </div>
-
-        <div class="card lg:col-span-2">
-            <h3 class="card-title">Các xe bị ảnh hưởng</h3>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                    <tr>
-                        <th style="width:120px">ID Xe</th>
-                        <th>VIN</th>
-                        <th style="width:140px">Trạng thái</th>
-                        <th style="width:140px">Tác vụ</th>
-                    </tr>
-                    </thead>
-                    <tbody id="av-tbody"></tbody>
-                </table>
-            </div>
-            <div id="av-empty" class="empty d-none">Chưa có xe trong chiến dịch này.</div>
-        </div>
-    </section>
+    </main>
 </div>
 
-<!-- Modal tạo/sửa chiến dịch -->
-<div id="cpn-modal" class="modal d-none">
-    <div class="modal-card w-480">
-        <div class="modal-head">
-            <h3 id="cpn-modal-title">Tạo Chiến dịch</h3>
-            <button class="icon-btn" id="cpn-modal-close">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-row">
-                <label>Mã chiến dịch</label>
-                <input id="m-code" class="input" maxlength="32" placeholder="VD: RECALL-2025-01" />
+<div class="modal fade" id="createCampaignModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Khởi tạo Chiến dịch Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="form-row">
-                <label>Tiêu đề</label>
-                <input id="m-title" class="input" maxlength="200" />
+            <div class="modal-body">
+                <form id="createCampaignForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Mã Chiến dịch (*)</label>
+                            <input type="text" class="form-control" id="campCode" placeholder="VD: RECALL-2025-001" required>
+                            <div class="form-text">Mã duy nhất định danh chiến dịch.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Loại Chiến dịch (*)</label>
+                            <select class="form-select" id="campType" required>
+                                <option value="RECALL">Triệu hồi (Recall)</option>
+                                <option value="SERVICE">Dịch vụ (Service)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên tiêu đề (*)</label>
+                        <input type="text" class="form-control" id="campTitle" placeholder="VD: Thay thế cụm pin cao áp..." required>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày bắt đầu (*)</label>
+                            <input type="datetime-local" class="form-control" id="campStart" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày kết thúc (*)</label>
+                            <input type="datetime-local" class="form-control" id="campEnd" required>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-flex justify-content-between">
+                            <span>Danh sách xe ảnh hưởng (VIN)</span>
+                            <small class="text-muted fw-normal">Mỗi dòng 1 số VIN</small>
+                        </label>
+                        <textarea class="form-control font-monospace" id="campVins" rows="5" placeholder="VF812345...\nVF867890..."></textarea>
+                        <div class="form-text text-primary" id="vinCount">Đã nhập: 0 VIN</div>
+                    </div>
+                </form>
             </div>
-            <div class="form-row">
-                <label>Loại</label>
-                <select id="m-type" class="input">
-                    <option value="RECALL">RECALL</option>
-                    <option value="UPGRADE">UPGRADE</option>
-                </select>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                <button type="button" class="btn btn-success" id="btnSaveCampaign">Lưu & Phát hành</button>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div class="form-row">
-                    <label>Bắt đầu</label>
-                    <input id="m-start" type="datetime-local" class="input"/>
-                </div>
-                <div class="form-row">
-                    <label>Kết thúc</label>
-                    <input id="m-end" type="datetime-local" class="input"/>
-                </div>
-            </div>
-        </div>
-        <div class="modal-foot">
-            <button id="cpn-save-btn" class="btn primary">Lưu</button>
-            <button id="cpn-cancel-btn" class="btn">Hủy</button>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="module" src="/src/evmStaff.js"></script>
-
 </body>
 </html>

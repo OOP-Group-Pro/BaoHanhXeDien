@@ -27,11 +27,9 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
     @Override
     @Transactional
     public WarrantyPolicyResponse createPolicy(WarrantyPolicyRequest request) {
-        Part part = partRepository.findById(request.getPartId())
-                .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + request.getPartId()));
 
         WarrantyPolicy newPolicy = policyMapper.toWarrantyPolicy(request);
-        newPolicy.setPart(part);
+        newPolicy.setParts(request.getParts());
 
         WarrantyPolicy savedPolicy = policyRepository.save(newPolicy);
         return policyMapper.toWarrantyPolicyResponse(savedPolicy);
@@ -47,14 +45,11 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<WarrantyPolicyResponse> getPoliciesByPartId(Long partId) {
-        if (!partRepository.existsById(partId)) {
-            throw new ResourceNotFoundException("Part not found with id: " + partId);
-        }
-        List<WarrantyPolicy> policies = policyRepository.findByPart_PartId(partId);
-        return policies.stream()
-                .map(policyMapper::toWarrantyPolicyResponse)
-                .collect(Collectors.toList());
+    public WarrantyPolicyResponse getPolicyByPartId(Long partId) {
+        Part part = partRepository.findByPartId(partId).orElseThrow( () -> new ResourceNotFoundException("Part not found with id: " + partId));
+
+        WarrantyPolicy policy = part.getWarrantyPolicy();
+        return policyMapper.toWarrantyPolicyResponse(policy);
     }
 
     @Override

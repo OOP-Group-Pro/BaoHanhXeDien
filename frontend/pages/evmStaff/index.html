@@ -1,10 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVM Staff - Phê duyệt Claim</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/src/styles/dashboard.css">
+    <style>
+        /* CSS riêng cho badge tồn kho/chính sách */
+        .badge-stock-ok { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .badge-stock-low { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        .badge-policy-ok { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
+        .badge-policy-fail { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+    </style>
 </head>
-<body>
+<body id="evm-dashboard-page">
 
+<aside class="sidebar" id="sidebar-placeholder"></aside>
+
+<div class="main-content">
+    <header class="header" id="header-placeholder"></header>
+
+    <main class="container-fluid p-4">
+        <h1 class="h3 mb-4 text-gray-800">Trung tâm Phê duyệt Bảo hành</h1>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm text-white bg-warning h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-uppercase">Chờ Xử Lý</h6>
+                        <p class="card-text fs-2 fw-bold" id="kpi-pending">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm text-white bg-success h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-uppercase">Đã Duyệt (Tháng)</h6>
+                        <p class="card-text fs-2 fw-bold" id="kpi-approved">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-primary">Danh sách Yêu cầu Bảo hành</h5>
+            </div>
+
+            <div class="card-body border-bottom bg-light">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Mã Claim</label>
+                        <input type="text" class="form-control form-control-sm" id="filter-code" placeholder="WC-...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Số VIN</label>
+                        <input type="text" class="form-control form-control-sm" id="filter-vin" placeholder="VIN...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Trạng thái</label>
+                        <select class="form-select form-select-sm" id="filter-status">
+                            <option value="WAITING_APPROVAL" selected>Chờ duyệt</option>
+                            <option value="APPROVED">Đã duyệt</option>
+                            <option value="REJECTED">Từ chối</option>
+                            <option value="">Tất cả</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-primary flex-grow-1" id="btn-apply-filter">
+                                <i class="fa-solid fa-filter"></i> Lọc
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btn-clear-filter">
+                                <i class="fa-solid fa-xmark"></i> Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Mã Claim</th>
+                            <th>VIN / Xe</th>
+                            <th>Mô tả lỗi</th>
+                            <th>Ngày gửi</th>
+                            <th>Người gửi</th> <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody id="approval-table-body">
+                        <tr><td colspan="7" class="text-center p-4">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-3 border-top d-flex justify-content-center" id="pagination-container">
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-clipboard-check text-primary me-2"></i>
+                    Thẩm định Yêu cầu: <span id="modal-claim-code" class="text-dark">...</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="modal-body-content">
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Đang phân tích dữ liệu xe và tồn kho...</p>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-white justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-danger" id="btn-reject-action">
+                        <i class="fa-solid fa-xmark me-1"></i> Từ chối
+                    </button>
+                    <button type="button" class="btn btn-success px-4" id="btn-approve-action">
+                        <i class="fa-solid fa-check me-1"></i> PHÊ DUYỆT
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="/src/evmStaff.js"></script>
 </body>
 </html>

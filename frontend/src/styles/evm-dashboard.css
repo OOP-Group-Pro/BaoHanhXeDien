@@ -1,3 +1,4 @@
+/*
 .kpi-row { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
 .kpi     { font-size:28px; font-weight:700; }
 .kpi-right{text-align:right;}
@@ -9,3 +10,151 @@
 .progress>div{ height:100%; background:var(--primary); transition:width .4s ease; }
 
 .card .card-title{ margin-bottom:6px; }
+*/
+
+/*======================================================================================*/
+
+/* src/styles/evm-dashboard.css */
+
+/* 1. CẤU HÌNH MÀU SẮC (EVM Theme - Green) */
+:root {
+    --primary-green: #10B981; /* Màu xanh lá của EVM */
+    --primary-green-dark: #059669;
+    --sidebar-bg: #1E1E2D;
+    --text-light: #F9FAFB;
+    --text-secondary: #9CA3AF;
+    --bg-light: #F3F4F6;
+    --white: #FFFFFF;
+    --border-color: #E5E7EB;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: #1F2937;
+    display: grid;
+    grid-template-columns: 260px 1fr; /* Layout 2 cột chuẩn */
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 2. SIDEBAR (Copy style chuẩn sang đây để file này độc lập) */
+.sidebar {
+    background-color: var(--sidebar-bg);
+    color: var(--text-light);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav {
+    list-style: none;
+    margin-top: 24px;
+    padding-left: 0;
+}
+
+.sidebar-nav li { margin-bottom: 8px; }
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sidebar-nav a i { margin-right: 12px; width: 20px; text-align: center; }
+
+.sidebar-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+}
+
+.sidebar-nav a.active {
+    background-color: var(--primary-green); /* Dùng màu xanh EVM */
+    color: var(--white);
+}
+
+.sidebar-user {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar-sm {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 1.2rem;
+}
+
+/* 3. MAIN CONTENT */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.header {
+    background-color: var(--white);
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 4. DASHBOARD CARDS & TABLE */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.badge {
+    padding: 0.4em 0.8em;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.status-waiting_approval { background-color: #FEF3C7; color: #D97706; }
+.status-approved { background-color: #D1FAE5; color: #059669; }
+.status-rejected { background-color: #FEE2E2; color: #DC2626; }
+
+/* src/styles/dashboard.css */
+
+/* ... (Các code cũ giữ nguyên) ... */
+
+/* =========================================
+   8. TÙY CHỈNH KHOẢNG CÁCH (PADDING)
+   ========================================= */
+
+/* 1. Đẩy nội dung Header xa ra một chút */
+.header {
+    /* Tăng padding trái/phải lên 3rem (khoảng 48px) thay vì mặc định */
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+}
+
+/* 2. Đẩy nội dung Chính (Main) xa ra tương ứng */
+.main-content > main {
+    /* Ghi đè class 'p-4' của Bootstrap */
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+}

@@ -2,7 +2,11 @@ package com.oem.evpart.dto.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 /**
@@ -13,15 +17,20 @@ import java.util.List;
 public class ClaimAllocationRequest {
 
     @NotNull(message = "Claim ID không được để trống")
-    private Long claimId;
-
-    @NotEmpty(message = "Danh sách phụ tùng không được để trống")
-    private List<String> partNumbers; // Giả sử đây là danh sách các partId hoặc partType/SKU
+    private String claimCode;
 
     @NotNull(message = "Service Center ID không được để trống")
     private Long serviceCenterId; // Thống nhất là Integer
 
-    @Min(value = 1, message = "Số lượng phải ít nhất là 1")
-    private Long quantity; // Cần thêm số lượng, giả sử là 1
+    private List<AllocationItem> items;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AllocationItem {
+        private String partNumber; // Mã SKU (serialNumber bên Part)
+        private Integer quantity;
+    }
 }
 
