@@ -16,6 +16,7 @@ public class PartResponse {
     private Double price;
     private String manufacturer;
     private String partType;
+    private Integer inventoryQuantity;
 
     // ⬇️ THÔNG TIN BẢO HÀNH (Flatten từ Policy ra để Frontend dễ dùng)
     private Long warrantyPolicyId;

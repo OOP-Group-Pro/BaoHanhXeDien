@@ -6,12 +6,9 @@ import { renderHeader } from './components/Header.js';
 import { renderEvmSidebar } from './components/EvmSidebar.js';
 // ⬇️ Import API getClaims để lấy dữ liệu
 import { getClaims } from './services/warrantyService.js';
-
-// ⬇️ Import của bạn của bạn (Giữ nguyên đường dẫn nếu file đó tồn tại)
-// Nếu chưa có file này, bạn hãy comment lại để tránh lỗi code
 import { setupCampaignManagement } from './JS/evm-campaigns.js';
-
 import { setupEvmDashboard } from './JS/evm-dashboard.js';
+import { setupEvmReports } from './JS/evm-reports.js'; // ⬅️ Import mới
 
 
 // 2. HÀM MAIN
@@ -51,5 +48,9 @@ function main() {
         if (typeof setupCampaignManagement === 'function') {
             setupCampaignManagement();
         }
+    }
+
+    if (bodyId === 'evm-reports-page' || path.includes('reports.html')) {
+        setupEvmReports();
     }
 }

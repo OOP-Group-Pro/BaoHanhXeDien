@@ -46,7 +46,7 @@ public class Part {
     private WarrantyPolicy warrantyPolicy;
 
 
-    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "part", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PartInventory> inventories;
 
     @PrePersist

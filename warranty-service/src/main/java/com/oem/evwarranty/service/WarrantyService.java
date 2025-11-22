@@ -126,7 +126,7 @@ public class WarrantyService {
                         return part;
                     })
                     .peek(part -> {
-                        log.info("Found part: {}", part.getPartName());
+                        log.info("👀👀👀Found part: {}", part.getPartName());
                     })
                     .toList();
         }
@@ -167,6 +167,9 @@ public class WarrantyService {
         // BƯỚC 5: LƯU CLAIM
         // JPA sẽ lưu newClaim -> sau đó tự động lưu danh sách documents bên trong
         claimRepo.save(newClaim);
+        newClaim.getPartDetails().forEach(part -> {
+            log.info("🥹🥹🥹 Look up claim part: ", part.getPartName());
+        });
 
         // 6b. Lưu Log
         logRepo.save(
@@ -334,9 +337,15 @@ public class WarrantyService {
     public ClaimDto getClaimDetails(String claimCode) {
         WarrantyClaim claim = claimRepo.findByClaimCode(claimCode)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
+        claim.getPartDetails().forEach( part -> {
+                    log.info("⁉️⁉️ Check partDetail of claim {} in getClaimDetails func with it's partDetails: {}", claim.getClaimCode(), part.getPartName());
+                });
 
         // 1. Chuyển đổi cơ bản (dùng Mapper)
         ClaimDto claimDto = ClaimMapper.mapToClaimDto(claim);
+        claimDto.getPartList().forEach( part -> {
+            log.info("⁉️⁉️ Check partDetail of claimDto of {} in getClaimDetails func with it's partDetails: {}", claim.getClaimCode(), part.getPartName());
+        });
 
         // 2. Lấy Tên Khách hàng
         try {
@@ -367,33 +376,15 @@ public class WarrantyService {
                 .distinct()
                 .toList();
 
-        // 4b. Gọi API Feign 1 LẦN DUY NHẤT để lấy Map
-        Map<String, PartResponseDto> partDetailsMap = Map.of(); // Map rỗng
-        if (!partNumbers.isEmpty()) {
-            try {
-                partDetailsMap = partClient.getPartsByNumbers(partNumbers);
-            } catch (Exception e) {
-                // log.error("Không thể lấy chi tiết phụ tùng: {}", e.getMessage());
-            }
-        }
 
-        // 4c. Map vào DTO
-        final Map<String, PartResponseDto> finalPartMap = partDetailsMap; // (Cần cho Lambda)
 
         List<ClaimPartDetailDto> partDtos = claim.getPartDetails().stream()
                 .map(entity -> {
                     // Dùng PartMapper cũ
                     ClaimPartDetailDto dto = PartMapper.mapToClaimPartDetailDto(entity);
-                    log.info("Test are there parts already had in claim: {}", entity.getPartName());
-                    // Lấy PartResponse từ Map
-                    PartResponseDto partInfo = finalPartMap.get(entity.getPartNumber());
+                    log.info("⁉️⁉️⁉️⁉️Test are there parts already had in claim: {}", entity.getPartName());
 
-                   // Gán partName (NẾU TÌM THẤY)
-                    if (partInfo != null) {
-                        dto.setPartName(partInfo.getName()); // Giả sử hàm là .getName()
-                    } else {
-                        dto.setPartName("(Không tìm thấy tên part)");
-                    }
+                    dto.setPartName(entity.getPartName()); // Giả sử hàm là .getName()
 
                     return dto;
                 })

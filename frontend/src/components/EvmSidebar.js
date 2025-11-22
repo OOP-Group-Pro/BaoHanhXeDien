@@ -39,7 +39,7 @@ export function renderEvmSidebar() {
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="">
+                    <a href="/pages/evmStaff/reports.html" class="">
                         <i class="fa-solid fa-chart-pie"></i>
                         Báo cáo
                     </a>
