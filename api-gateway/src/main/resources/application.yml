@@ -82,6 +82,10 @@ spring:
           uri: http://warranty-service:8080
           predicates:
             - Path=/api/v1/claims/** #
+        - id: warranty_service_reports # ⬅️ Sửa tên ID cho rõ ràng
+          uri: http://warranty-service:8080
+          predicates:
+            - Path=/api/v1/reports/** #
 
         # === CAMPAIGN-SERVICE (Áp dụng logic tương tự) ===
         - id: campaign_service

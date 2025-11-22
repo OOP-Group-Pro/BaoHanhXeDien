@@ -8,6 +8,7 @@ import com.oem.evpart.models.Part;
 import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PartServiceImpl implements PartService {
@@ -86,12 +88,16 @@ public class PartServiceImpl implements PartService {
         // ⚠️ LƯU Ý: Nếu partNumbers là danh sách serialNumber (ví dụ PN-123), dùng method này
         // Nếu partNumbers là partType (ví dụ MOTOR), bạn cần sửa lại repository call tương ứng.
         // Ở đây tôi giả định bạn tìm theo serialNumber (SKU)
-        List<Part> parts = partRepository.findAllBySerialNumberIn(partNumbers);
+        //log.info("🤔🤔 getPartDetailsByNumbers received partNumbers : {} ", partNumbers);
+        List<Part> parts = partRepository.findAllByPartTypeIn(partNumbers);
+        parts.forEach(part -> {
+           // log.info("🤔🤔 partRepository.findAllByPartTypeIn : {}", part);
+        });
 
         Map<String, PartResponse> partDetails = new HashMap<>();
         for (Part part : parts) {
             // Key là serialNumber, Value là Response (đã có thông tin bảo hành nhờ Mapper)
-            partDetails.put(part.getSerialNumber(), partMapper.toPartResponse(part));
+            partDetails.put(part.getPartType(), partMapper.toPartResponse(part));
         }
         return partDetails;
     }

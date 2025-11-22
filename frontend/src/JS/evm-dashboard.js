@@ -6,9 +6,24 @@ import { getPartsDetails } from '../services/partService.js'; // ⬅️ Đã có
 let reviewModalInstance = null;
 let currentClaimId = null;
 
+// 1. STATE BỘ LỌC
+let filterState = {
+    page: 0,
+    size: 10,
+    status: 'WAITING_APPROVAL', // Mặc định
+    vin: '',
+    claimCode: ''
+};
+
 export function setupEvmDashboard() {
     console.log("LOG: Init Dashboard EVM Logic...");
     loadEvmStats();
+
+    // Gắn sự kiện cho bộ lọc
+    document.getElementById('btn-apply-filter')?.addEventListener('click', handleFilterApply);
+    document.getElementById('btn-clear-filter')?.addEventListener('click', handleFilterClear);
+
+    // Load lần đầu
     loadApprovalQueue();
     initReviewModal();
 }
@@ -25,50 +40,137 @@ async function loadEvmStats() {
     } catch(e) { console.error(e); }
 }
 
+// 2. HÀM LOAD DANH SÁCH (NÂNG CẤP)
 async function loadApprovalQueue() {
     const tbody = document.getElementById('approval-table-body');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Đang tải...</td></tr>';
+    const paginationEl = document.getElementById('pagination-container'); // Nếu có phân trang
+
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải...</td></tr>';
 
     try {
-        const data = await getClaims({ status: 'WAITING_APPROVAL', size: 20 });
+        // ⬇️ BƯỚC SỬA QUAN TRỌNG: LÀM SẠCH THAM SỐ ⬇️
+        // Tạo một object params mới, chỉ chứa những gì có giá trị
+        const cleanParams = {
+            page: filterState.page,
+            size: filterState.size
+        };
+
+        // Chỉ thêm status nếu khác rỗng (Tất cả)
+        if (filterState.status) {
+            cleanParams.status = filterState.status;
+        }
+
+        // Chỉ thêm VIN nếu người dùng thực sự đã nhập
+        if (filterState.vin && filterState.vin.trim() !== '') {
+            cleanParams.vin = filterState.vin.trim();
+        }
+
+        // Chỉ thêm ClaimCode nếu người dùng thực sự đã nhập
+        if (filterState.claimCode && filterState.claimCode.trim() !== '') {
+            cleanParams.claimCode = filterState.claimCode.trim();
+        }
+
+        // Gọi API với bộ tham số đã làm sạch
+        const data = await getClaims(cleanParams);
+
         tbody.innerHTML = '';
 
         if (data.empty) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Không có yêu cầu nào cần duyệt.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy dữ liệu phù hợp.</td></tr>';
+            paginationEl.innerHTML = ''; // Xóa phân trang
             return;
         }
 
+        // Render Bảng
         data.content.forEach(claim => {
-            const desc = claim.description && claim.description.length > 40
-                ? claim.description.substring(0, 40) + '...'
+            const desc = claim.description && claim.description.length > 30
+                ? claim.description.substring(0, 30) + '...'
                 : (claim.description || '');
+
+            // Badge trạng thái
+            let statusClass = 'bg-secondary';
+            if (claim.currentStatus === 'APPROVED') statusClass = 'bg-success';
+            if (claim.currentStatus === 'WAITING_APPROVAL') statusClass = 'bg-warning text-dark';
+            if (claim.currentStatus === 'REJECTED') statusClass = 'bg-danger';
 
             tbody.innerHTML += `
                 <tr>
-                    <td><span class="fw-bold text-primary">${claim.claimCode}</span></td>
+                    <td class="ps-4 fw-bold text-primary">${claim.claimCode}</td>
                     <td>${claim.vin}</td>
                     <td>${desc}</td>
                     <td>${new Date(claim.dateCreated).toLocaleDateString('vi-VN')}</td>
+                    <td>SC Staff</td> <td><span class="badge ${statusClass}">${claim.currentStatus}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-primary btn-review" 
-                                data-id="${claim.claimCode}" 
+                        <button class="btn btn-sm btn-outline-primary btn-review" 
+                                data-id="${claim.id}" 
                                 data-code="${claim.claimCode}">
-                            <i class="fa-solid fa-magnifying-glass"></i> Thẩm định
+                            <i class="fa-solid fa-eye"></i> Xem
                         </button>
                     </td>
                 </tr>
             `;
         });
 
+        // Render Phân trang
+        renderPagination(data, paginationEl);
+
+        // Gắn lại sự kiện click
         document.querySelectorAll('.btn-review').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                openReviewModal(e.currentTarget.dataset.id, e.currentTarget.dataset.code);
+                const btn = e.currentTarget; // Sửa lỗi logic cũ
+                openReviewModal(btn.dataset.id, btn.dataset.code);
             });
         });
 
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center">Lỗi: ${e.message}</td></tr>`;
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center">Lỗi: ${e.message}</td></tr>`;
     }
+}
+
+// 3. HÀM RENDER PHÂN TRANG
+function renderPagination(pageData, container) {
+    const { number, totalPages, first, last } = pageData;
+
+    let html = `
+        <div class="text-muted small">Trang ${number + 1} / ${totalPages}</div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item ${first ? 'disabled' : ''}">
+                    <button class="page-link" onclick="changePage(${number - 1})">Trước</button>
+                </li>
+                <li class="page-item ${last ? 'disabled' : ''}">
+                    <button class="page-link" onclick="changePage(${number + 1})">Sau</button>
+                </li>
+            </ul>
+        </nav>
+    `;
+    container.innerHTML = html;
+}
+
+// 4. HÀM XỬ LÝ SỰ KIỆN
+function handleFilterApply() {
+    filterState.claimCode = document.getElementById('filter-code').value.trim();
+    filterState.vin = document.getElementById('filter-vin').value.trim();
+    filterState.status = document.getElementById('filter-status').value;
+    filterState.page = 0; // Reset về trang đầu
+    loadApprovalQueue();
+}
+
+function handleFilterClear() {
+    document.getElementById('filter-code').value = '';
+    document.getElementById('filter-vin').value = '';
+    document.getElementById('filter-status').value = 'WAITING_APPROVAL'; // Reset về mặc định
+
+    handleFilterApply();
+}
+
+// Export hàm global để HTML gọi được (cho nút phân trang)
+window.changePage = (newPage) => {
+    filterState.page = newPage;
+    loadApprovalQueue();
 }
 
 // --- 2. MODAL THẨM ĐỊNH ---
@@ -111,7 +213,19 @@ async function openReviewModal(id, code) {
 }
 
 function renderSmartReview(claim, vehicle, partsMap, technicians) {
+    // --- LOG DEBUG START ---
+    console.group("🔍 DEBUG: renderSmartReview");
+    console.log("1. Dữ liệu Claim:", claim);
+    console.log("2. Dữ liệu Xe (Vehicle):", vehicle);
+    console.log("3. Dữ liệu PartsMap (Từ API):", partsMap);
+    console.log("4. Danh sách KTV:", technicians);
+    // --- LOG DEBUG END ---
+
     const body = document.getElementById('modal-body-content');
+
+    if (!partsMap) {
+        console.error("😡 LỖI: partsMap bị null hoặc undefined!");
+    }
 
     // A. Render Dropdown KTV
     let techOptions = '<option value="">-- Chọn Kỹ thuật viên --</option>';
@@ -119,7 +233,7 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
         techOptions += technicians.map(t => `<option value="${t.userId}">${t.fullName}</option>`).join('');
     }
 
-    // B. Render Danh sách Phụ tùng & Logic kiểm tra (Giữ nguyên)
+    // B. Render Danh sách Phụ tùng & Logic kiểm tra
     let totalCost = 0;
     let canApprove = true;
     let warningMessages = [];
@@ -128,8 +242,31 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
     if (!claim.partList || claim.partList.length === 0) {
         partsHtml = '<li class="list-group-item text-muted">Không có phụ tùng yêu cầu</li>';
     } else {
-        partsHtml = claim.partList.map(p => {
-            const info = partsMap[p.partNumber] || {};
+        partsHtml = claim.partList.map((p, index) => {
+            // --- LOG DEBUG VÒNG LẶP ---
+            console.groupCollapsed(`🛠️ Kiểm tra Part #${index + 1}: ${p.partName || 'No Name'}`);
+            console.log("🔹 Dữ liệu Part trong Claim (p):", p);
+
+            // Kiểm tra xem key dùng để map là gì
+            // (Lưu ý: DTO Backend trả về 'partNumber', code cũ bạn dùng 'partType', hãy check log xem cái nào có giá trị)
+            const lookupKey = p.partType || p.partNumber;
+            console.log(`🔹 Key dùng để tra cứu trong Map: "${lookupKey}"`);
+            console.log(`🔹 Giá trị p.partType:`, p.partType);
+            console.log(`🔹 Giá trị p.partNumber:`, p.partNumber);
+
+            const info = partsMap[lookupKey] || {};
+
+            if (Object.keys(info).length === 0) {
+                console.warn(`⚠️ CẢNH BÁO: Không tìm thấy thông tin cho key "${lookupKey}" trong partsMap.`);
+            } else {
+                console.log("✅ Tìm thấy thông tin Part (Info):", info);
+                console.log(`   - Tồn kho (inventoryQuantity): ${info.inventoryQuantity}`);
+                console.log(`   - Giá (price): ${info.price}`);
+                console.log(`   - BH Tháng (warrantyDurationMonths): ${info.warrantyDurationMonths}`);
+                console.log(`   - BH Km (warrantyMileageLimit): ${info.warrantyMileageLimit}`);
+            }
+            // --- LOG DEBUG END ---
+
             const stock = info.inventoryQuantity || 0;
             const price = info.price || 0;
             const lineTotal = price * p.quantityRequired;
@@ -148,10 +285,14 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
 
             // 2. Check Bảo hành
             const warrantyCheck = analyzeWarranty(vehicle, info);
+            console.log("🛡️ Kết quả Check Bảo hành:", warrantyCheck); // Log kết quả check bảo hành
+
             if (!warrantyCheck.isValid) {
                 canApprove = false;
                 warningMessages.push(`Hết bảo hành: <strong>${p.partName || p.partNumber}</strong> - ${warrantyCheck.reason}`);
             }
+
+            console.groupEnd(); // Kết thúc nhóm log cho part này
 
             return `
             <li class="list-group-item">
@@ -174,6 +315,8 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
         }).join('');
     }
 
+    console.groupEnd(); // Kết thúc nhóm log tổng
+
     // C. Tạo thông báo lỗi (Alert)
     let alertHtml = '';
     if (warningMessages.length > 0) {
@@ -193,7 +336,7 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
         btnApprove.disabled = !canApprove;
     }
 
-    // E. Render Giao diện (3 Cột - ĐÃ XÓA NÚT DƯ THỪA)
+    // E. Render Giao diện (3 Cột)
     body.innerHTML = `
         <div class="row">
             <div class="col-md-7 border-end">
@@ -235,8 +378,6 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
                 </div>
         </div>
     `;
-
-    // (Không cần gán onclick lại ở đây nữa vì initReviewModal đã gán 1 lần cho nút ở Footer rồi)
 }
 
 function analyzeWarranty(vehicle, partInfo) {
