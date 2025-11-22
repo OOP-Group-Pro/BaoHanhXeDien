@@ -1,5 +1,6 @@
 package com.oem.evwarranty.service;
 
+
 import com.oem.evwarranty.dto.*;
 import com.oem.evwarranty.mapper.DocumentMapper;
 import com.oem.evwarranty.mapper.PartMapper;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.oem.evwarranty.mapper.ClaimMapper.mapToClaimDto;
 import static com.oem.evwarranty.mapper.PartMapper.mapToPartDetail;
 
 import com.oem.evwarranty.repository.ClaimPartDetailRepository;

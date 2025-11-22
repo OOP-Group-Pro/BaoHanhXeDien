@@ -45,6 +45,15 @@ spring:
       time-to-live: 600000 # 10 phút
       cache-null-values: false
 
+    # Kết nối RabbitMQ
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: password123
+    listener:
+      simple:
+        acknowledge-mode: auto
 feign:
   circuitbreaker:
     enabled: true
@@ -64,9 +73,15 @@ feign:
         connectTimeout: 5000
         readTimeout: 10000
 
+
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
-
+  rabbitmq:
+    exchange: oem.internal.exchange
+    queue: vehicle.user.created.queue   # [Sửa] Bỏ dấu cách thừa trước dấu hai chấm
+    routing-key: user.created           # [QUAN TRỌNG] Sửa thành routing-key (số ít) và gán giá trị trực tiếp
+    routing-keys:
+      vehicle-created: vehicle.created     # [THÊM MỚI] Routing key để gửi đi
 # --- LOGGING (MỚI) ---
 logging:
   level:

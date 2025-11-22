@@ -39,6 +39,15 @@ spring:
     redis:
       time-to-live: 600000 # TTL mặc định 10 phút
       cache-null-values: false # Không cache null
+
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: password123
+    listener:
+      simple:
+        acknowledge-mode: auto
   jpa:
     hibernate:
       dialect: org.hibernate.dialect.MySQLDialect
@@ -63,3 +72,7 @@ storage:
 
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+  rabbitmq:
+    exchange: oem.internal.exchange
+    queue: warranty.vehicle.created.queue # Queue riêng của Warranty
+    routing-key: vehicle.created          # Lắng nghe sự kiện tạo xe

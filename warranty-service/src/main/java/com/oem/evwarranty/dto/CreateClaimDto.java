@@ -1,8 +1,6 @@
 package com.oem.evwarranty.dto;
 
-import com.oem.evwarranty.model.ClaimPartDetail;
 import com.oem.evwarranty.model.utils.PartRequestDto;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

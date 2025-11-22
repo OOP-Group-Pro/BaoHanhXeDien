@@ -10,6 +10,7 @@ spring:
     username: root
     password: 1234
 
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -34,9 +35,21 @@ spring:
       time-to-live: 600000 # TTL mặc định 10 phút (600s)
       cache-null-values: false # Không cache giá trị null để tránh lỗi logic
 
+  rabbitmq:
+    host: rabbitmq        # Tên service trong docker-compose
+    port: 5672
+    username: admin
+    password: password123
+    # Đảm bảo publisher confirm để tránh mất tin
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual # [OPTION] Nếu sau này User Service cũng nhận ti
   sql:
     init:
       mode: always
+
 
   security:
     user:
@@ -73,6 +86,8 @@ logging:
     org.springframework.cache: DEBUG # Để soi log cache hit/miss
     com.oem.evwarranty: DEBUG
     org.springframework.security: DEBUG
+#     Để debug log gửi/nhận RabbitMQ
+    org.springframework.amqp: DEBUG
     # ... giữ lại các log cũ ...
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
@@ -82,7 +97,14 @@ error:
   include-binding-errors: always
   include-stacktrace: always
 
+# ... các cấu hình khác bên trên ...
+
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+  rabbitmq:
+    exchange: oem.internal.exchange
+    routing-keys:
+      user-created: user.created   # <--- Dòng này bắt buộc phải có và thụt lề đúng
+      # Key định tuyến cho sự kiện tạo user
 jwt:
   secret: ${JWT_SECRET}
