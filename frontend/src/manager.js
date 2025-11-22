@@ -146,3 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Nút gửi phiếu
     document.getElementById("save-request-btn")?.addEventListener("click", saveRequest);
 });
+// Nếu dùng token/localStorage
+document.getElementById("logout-btn").addEventListener("click", () => {
+    // Xóa token JWT khỏi localStorage/sessionStorage
+    localStorage.removeItem("jwtToken");
+    // Chuyển về trang login
+    window.location.href = "../../login.html";
+});
