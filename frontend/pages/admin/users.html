@@ -25,10 +25,6 @@
         <li><a href="request.html"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
         <li><a href="inventory.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
         <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
-        <li style="font-style:italic; font-size:0.85rem; text-align:center; margin-top:5px;">
-            <a href="#" id="manager-link">Bạn là Manager?</a>
-        </li>
-
     </ul>
 </nav>
 
@@ -47,7 +43,7 @@
     <div class="content-area" style="grid-template-columns: 1fr;">
         <div class="table-container">
             <h2>Danh sách Người dùng Hệ thống</h2>
-            <table class="table-full-width">
+            <table class="user-table">
                 <thead>
                 <tr>
                     <th>User ID</th>
@@ -62,7 +58,7 @@
                 </tr>
                 </thead>
                 <tbody id="user-table-body">
-                <tr><td colspan="9" style="text-align: center;">Đang tải dữ liệu người dùng...</td></tr>
+                <tr><td colspan="9" style="text-align:center;">Đang tải dữ liệu người dùng...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -70,42 +66,72 @@
 </main>
 
 <!-- Modal Thêm/Sửa User -->
-<div id="user-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
-    <div class="modal-content" style="width:400px; padding:20px; border-radius:8px; background:#fff; position:relative;">
-        <button class="close-btn" id="close-modal-btn" style="position:absolute; top:5px; right:10px; font-size:18px; border:none; background:none; cursor:pointer;">&times;</button>
+<div id="user-modal" class="modal-popup">
+    <div class="modal-box">
+        <button class="close-btn" id="close-modal-btn">&times;</button>
         <h3 id="modal-title">Thêm Người dùng</h3>
         <input type="hidden" id="user-id">
+
         <label>Username</label>
-        <input type="text" id="username" style="width:100%; margin:5px 0; padding:6px;">
+        <input type="text" id="username">
+
         <label>Password</label>
-        <div style="display:flex; align-items:center;">
-            <input type="password" id="password" style="width:100%; margin:5px 0; padding:6px;">
-            <i class="fa-solid fa-eye" id="toggle-password" style="margin-left:5px; cursor:pointer;"></i>
+        <div class="password-wrapper">
+            <input type="password" id="password">
+            <i class="fa-solid fa-eye" id="toggle-password"></i>
         </div>
+
         <label>Email</label>
-        <input type="email" id="email" style="width:100%; margin:5px 0; padding:6px;">
+        <input type="email" id="email">
+
         <label>Phone</label>
-        <input type="text" id="phone" style="width:100%; margin:5px 0; padding:6px;">
+        <input type="text" id="phone">
+
         <label>Role</label>
-        <select id="role" style="width:100%; margin:5px 0; padding:6px;">
-            <option value="ROLE_ADMIN">Admin</option>
-            <option value="ROLE_USER">User</option>
-            <option value="ROLE_TECHNICIAN">Technician</option>
+        <select id="role">
+            <option value="ADMIN">Admin</option>
+            <option value="SC_STAFF">SC Staff</option>
+            <option value="SC_TECHNICIAN">SC Technician</option>
+            <option value="EVM_STAFF">EVM Staff</option>
+            <option value="MANAGER">Manager</option>
         </select>
+
         <label>Status</label>
-        <select id="status" style="width:100%; margin:5px 0; padding:6px;">
+        <select id="status">
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
             <option value="LOCKED">Blocked</option>
         </select>
-        <button id="save-user-btn" class="btn-primary" style="margin-top:10px;">Lưu</button>
+
+        <button id="save-user-btn">Lưu</button>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script type="module" src="/src/admin.js"></script>
 
-<script src="../../src/js/script-admin.js"></script>
+<style>
+    /* Bảng user */
+    .user-table { width: 100%; border-collapse: collapse; background-color: #fff; border-radius: 8px; overflow: hidden; }
+    .user-table th, .user-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    .user-table th { background-color: #007BFF; color: #fff; }
+    .user-table tr:hover { background-color: #f1f1f1; }
+    .btn-action { padding: 4px 8px; margin-right: 4px; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
+    .btn-edit { background-color: #28a745; }
+    .btn-delete { background-color: #dc3545; }
 
-</body>
-</html>
+    /* Modal popup */
+    .modal-popup { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-popup.show { display:flex; }
+    .modal-box { background:#fff; border-radius:12px; width:400px; max-width:90%; padding:20px; box-shadow:0 5px 20px rgba(0,0,0,0.2); position: relative; }
+    .modal-box h3 { margin-top:0; margin-bottom:15px; font-size:1.3rem; }
+    .modal-box label { display:block; margin-top:8px; font-weight:500; }
+    .modal-box input, .modal-box select { width:100%; padding:7px 10px; margin-top:4px; border-radius:6px; border:1px solid #ccc; }
+    .modal-box button { margin-top:15px; width:100%; padding:8px; background-color:#007BFF; border:none; color:#fff; font-size:1rem; border-radius:6px; cursor:pointer; }
+    .close-btn { position:absolute; top:10px; right:12px; font-size:1.3rem; background:none; border:none; cursor:pointer; }
+    .password-wrapper { position:relative; }
+    .password-wrapper i { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; color:#555; }
+</style>
+
 </body>
 </html>

@@ -459,3 +459,114 @@ body {
 .badge-approve:hover {
     background-color: #2ecc71;
     transform: translateY(
+/* ===== User Table ===== */
+.table-full-width {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.table-full-width th, .table-full-width td {
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.table-full-width th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: #f9fafb;
+}
+
+/* Password hide/show */
+.password-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+}
+
+.password-cell i {
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.password-cell i:hover {
+    color: var(--primary-blue);
+}
+
+/* Role badges */
+.role-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.role-admin { background-color: #3B82F6; }
+.role-user { background-color: #10B981; }
+.role-scstaff { background-color: #F59E0B; }
+.role-sctechnician { background-color: #8B5CF6; }
+.role-evmstaff { background-color: #0EA5E9; }
+.role-manager { background-color: #EF4444; }
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.status-active { background-color: #10B981; }
+.status-inactive { background-color: #6B7280; }
+.status-locked { background-color: #EF4444; }
+
+/* Action buttons */
+.btn-action {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: 4px;
+}
+
+.btn-edit {
+    background-color: #3B82F6;
+    color: #fff;
+}
+.btn-edit:hover { background-color: #2563EB; }
+
+.btn-delete {
+    background-color: #EF4444;
+    color: #fff;
+}
+.btn-delete:hover { background-color: #B91C1C; }
+
+/* User Modal - password toggle */
+#user-modal input[type="password"] {
+    width: calc(100% - 35px);
+    display: inline-block;
+}
+#user-modal #toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 38px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+#user-modal #toggle-password:hover {
+    color: var(--primary-blue);
+}

@@ -23,6 +23,7 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
+
 public class SecurityConfig {
 
     private final InternalAuthFilter internalAuthFilter;
