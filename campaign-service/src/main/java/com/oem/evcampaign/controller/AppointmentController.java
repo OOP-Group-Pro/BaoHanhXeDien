@@ -4,7 +4,9 @@ import com.oem.evcampaign.config.ApiConstants;
 import com.oem.evcampaign.dto.request.AppointmentCompleteRequest;
 import com.oem.evcampaign.dto.request.AppointmentCreateRequest;
 import com.oem.evcampaign.dto.request.AppointmentRescheduleRequest;
+import com.oem.evcampaign.dto.request.*;
 import com.oem.evcampaign.dto.response.AppointmentResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.model.enums.AppointmentStatus;
 import com.oem.evcampaign.service.AppointmentService;
 import jakarta.validation.Valid;
@@ -51,14 +53,14 @@ public class AppointmentController {
     }
 
     @GetMapping("/by-campaign/{campaignId}")
-    public Page<AppointmentResponse> listByCampaign(@PathVariable Long campaignId,
-                                                    @RequestParam(required = false) AppointmentStatus status,
-                                                    Pageable pageable) {
+    public PageCacheDto<AppointmentResponse> listByCampaign(@PathVariable Long campaignId,
+                                                            @RequestParam(required = false) AppointmentStatus status,
+                                                            Pageable pageable) {
         return service.listByCampaign(campaignId, status, pageable);
     }
 
     @GetMapping("/by-affected/{affectedId}")
-    public Page<AppointmentResponse> listByAffected(@PathVariable Long affectedId,
+    public PageCacheDto<AppointmentResponse> listByAffected(@PathVariable Long affectedId,
                                                     Pageable pageable) {
         return service.listByAffected(affectedId, pageable);
     }

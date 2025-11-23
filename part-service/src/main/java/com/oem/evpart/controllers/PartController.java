@@ -39,8 +39,11 @@ public class PartController {
     }
 
     @GetMapping
-    public ResponseEntity<PageCacheDto<PartResponse>> getAllParts(Pageable pageable) {
-        return ResponseEntity.ok(partService.getAllParts(pageable));
+    public ResponseEntity<PageCacheDto<PartResponse>> getAllParts( // Đổi kiểu trả về
+                                                                   @RequestParam(required = false) String name,
+                                                                   Pageable pageable
+    ) {
+        return ResponseEntity.ok(partService.getAllParts(name, pageable));
     }
 
     @PutMapping("/{id}")

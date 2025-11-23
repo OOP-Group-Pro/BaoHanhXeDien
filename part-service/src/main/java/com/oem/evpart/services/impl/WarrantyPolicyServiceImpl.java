@@ -31,14 +31,11 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
     @Transactional
     @CacheEvict(value = "warranty_policies", key = "#request.partId")
     public WarrantyPolicyResponse createPolicy(WarrantyPolicyRequest request) {
-        Part part = partRepository.findById(request.getPartId())
-                .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + request.getPartId()));
 
         WarrantyPolicy newPolicy = policyMapper.toWarrantyPolicy(request);
-        newPolicy.setPart(part);
+        newPolicy.setParts(request.getParts());
 
         WarrantyPolicy savedPolicy = policyRepository.save(newPolicy);
-        log.info("Created warranty policy id={} for partId={}", savedPolicy.getPolicyId(), request.getPartId());
         return policyMapper.toWarrantyPolicyResponse(savedPolicy);
     }
 
@@ -52,6 +49,7 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "warranty_policies", key = "#partId")
     public WarrantyPolicyResponse getPolicyByPartId(Long partId) {
         Part part = partRepository.findByPartId(partId).orElseThrow( () -> new ResourceNotFoundException("Part not found with id: " + partId));
 
@@ -72,14 +70,10 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "warranty_policies", allEntries = true)
     public void deletePolicy(Long policyId) {
         if (!policyRepository.existsById(policyId)) {
             throw new ResourceNotFoundException("Policy not found with id: " + policyId);
         }
         policyRepository.deleteById(policyId);
-        log.info("Deleted warranty policy id={}", policyId);
-        // Evict cache: if we know partId, evict that key; else evict all
-        // (programmatic eviction would be done via CacheManager; here we keep consistent behavior)
     }
 }

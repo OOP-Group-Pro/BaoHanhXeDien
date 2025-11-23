@@ -3,13 +3,21 @@ server:
 
 logging:
   level:
-    com.oem.evpart: INFO            # Logging cho app
-    org.springframework: INFO       # Không dùng DEBUG trong production
-    org.hibernate.SQL: DEBUG        # Chỉ debug SQL khi cần
+    com.oem.evpart: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
 
 spring:
   application:
     name: part-service
+
+  # 🔥 [THÊM ĐOẠN NÀY ĐỂ FIX LỖI 500 "UNKNOWN ERROR"] 🔥
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false # Trả về dạng String "2025-11-23T..." thay vì mảng số
+    time-zone: Asia/Ho_Chi_Minh       # Múi giờ VN
+    default-property-inclusion: non_null # Bỏ qua các trường null cho gọn
+  # -----------------------------------------------------
 
   datasource:
     url: jdbc:mysql://mysql-db:3306/part_service?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
@@ -21,7 +29,7 @@ spring:
     hibernate:
       ddl-auto: update
       dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: false   # Production nên tắt show-sql
+    show-sql: false
 
   security:
     user:
@@ -31,13 +39,13 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      host: ${SPRING_DATA_REDIS_HOST:redis-cache} # Lưu ý: nên để fallback là redis-cache nếu chạy docker
       port: ${SPRING_DATA_REDIS_PORT:6379}
 
   cache:
     type: redis
     redis:
-      time-to-live: 600000   # 5 phút, phù hợp production
+      time-to-live: 600000
       cache-null-values: false
 
   main:
@@ -67,7 +75,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus  # bổ sung Prometheus
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always

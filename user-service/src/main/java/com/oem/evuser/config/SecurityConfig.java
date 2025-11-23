@@ -81,20 +81,23 @@ public class SecurityConfig {
 
     // Trong TẤT CẢ các file SecurityConfig.java của backend
 
+    // ... imports
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // FIX: Cho phép cả 2 môi trường Dev và Production
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:63342",
-                "http://localhost:5500",// 1. Cho Vite (Dev)
-                "http://oem.webhop.me"      // 2. Cho Nginx (Production)
-        ));
+        // 1. Cho phép tất cả các nguồn (Origin) bằng Pattern
+        // (Dùng cái này thay cho setAllowedOrigins để linh hoạt hơn với allowCredentials=true)
+        configuration.setAllowedOriginPatterns(List.of("*"));
 
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
+        // 2. Cho phép tất cả các Methods
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+
+        // 3. Cho phép tất cả các Headers (Quan trọng: sửa dòng này)
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // 4. Cho phép gửi Cookie/Auth header
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

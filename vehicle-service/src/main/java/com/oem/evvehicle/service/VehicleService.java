@@ -14,7 +14,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,9 +31,8 @@ public class VehicleService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    // CREATE: Tạo một Vehicle mới
+    // 1. HÀM CREATE
     public VehicleResponseDTO createVehicle(VehicleRequestDTO vehicleRequest) {
-        // Kiểm tra xem VIN đã tồn tại chưa
         if (vehicleRepository.findByVehicleVin(vehicleRequest.getVehicleVin()).isPresent()) {
             throw new DataIntegrityViolationException("VIN '" + vehicleRequest.getVehicleVin() + "' already exists.");
         }
@@ -64,6 +62,11 @@ public class VehicleService {
     }
 
     // 2. HÀM UPDATE
+    @Caching(evict = {
+            @CacheEvict(value = "vehicles_id", key = "#id"),
+            @CacheEvict(value = "vehicles_vin", allEntries = true), // Vì ko biết VIN cũ, xóa hết hoặc query để lấy VIN
+            @CacheEvict(value = "customer_vehicles", allEntries = true)
+    })
     public VehicleResponseDTO updateVehicle(Long id, VehicleRequestDTO vehicleRequest) {
         Vehicle vehicleToUpdate = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + id));
@@ -115,27 +118,6 @@ public class VehicleService {
 
         List<Vehicle> vehicles = vehicleRepository.findByCustomerCustomerId(customerId);
         return vehicles.stream().map(this::convertToDTO).collect(Collectors.toList());
-    }
-
-    // UPDATE: Cập nhật thông tin Vehicle
-    @Caching(evict = {
-            @CacheEvict(value = "vehicles_id", key = "#id"),
-            @CacheEvict(value = "vehicles_vin", allEntries = true), // Vì ko biết VIN cũ, xóa hết hoặc query để lấy VIN
-            @CacheEvict(value = "customer_vehicles", allEntries = true)
-    })
-    public VehicleResponseDTO updateVehicle(Long id, VehicleRequestDTO vehicleRequest) {
-        Vehicle vehicleToUpdate = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + id));
-
-        Customer owner = customerRepository.findById(vehicleRequest.getCustomerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Customer (owner) not found with ID: " + vehicleRequest.getCustomerId()));
-
-        vehicleToUpdate.setModel(vehicleRequest.getModel());
-        vehicleToUpdate.setLicensePlate(vehicleRequest.getLicensePlate());
-        vehicleToUpdate.setCustomer(owner); // (Giờ đã đúng kiểu)
-
-        Vehicle updatedVehicle = vehicleRepository.save(vehicleToUpdate);
-        return convertToDTO(updatedVehicle);
     }
 
     // DELETE: Xóa một Vehicle

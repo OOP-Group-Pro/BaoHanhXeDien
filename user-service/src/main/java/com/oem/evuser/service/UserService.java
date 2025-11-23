@@ -1,13 +1,10 @@
 package com.oem.evuser.service;
 
-import com.oem.evuser.dto.event.UserCreatedEvent;
 import com.oem.evuser.entity.Role;
 import com.oem.evuser.entity.User;
 import com.oem.evuser.mapper.UserMapper;
-import com.oem.evuser.rabbitmq.UserProducer;
 import com.oem.evuser.repository.RoleRepository;
 import com.oem.evuser.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -20,26 +17,23 @@ import org.springframework.security.access.AccessDeniedException;
 import com.oem.evuser.dto.response.UserResponseDto;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.oem.evuser.mapper.UserMapper.mapToUserResponseDto;
 
 @Service
-@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final UserProducer userProducer;
+
     public UserService(UserRepository userRepository,
                        RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder, UserProducer userProducer) {
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
-        this.userProducer = userProducer;
     }
 
     // ... giữ nguyên hàm isAdmin ...
@@ -70,39 +64,16 @@ public class UserService {
 
     // CREATE USER
     @Transactional
-    @CacheEvict(value = "users_list", allEntries = true)
+    @CacheEvict(value = "users_list", allEntries = true) // Xóa cache danh sách khi có user mới
     public User createUser(User user, String roleName) {
         if (!isAdmin()) {
             throw new AccessDeniedException("Chỉ ADMIN mới được phép tạo user!");
         }
-
-        // Logic nghiệp vụ cũ
         Role role = roleRepository.findByRoleName(roleName)
                 .orElseGet(() -> roleRepository.save(new Role(roleName)));
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.addRole(role);
-
-        // 2. Lưu vào DB trước (Quan trọng nhất)
-        User savedUser = userRepository.save(user);
-
-        // 3. [THÊM] Gửi sự kiện sang RabbitMQ (Side Effect)
-        try {
-            UserCreatedEvent event = new UserCreatedEvent(
-                    savedUser.getUserId(),
-                    savedUser.getEmail(),
-                    roleName,
-                    savedUser.getUsername(), // Tạm dùng username làm fullname
-                    LocalDateTime.now().toString()
-            );
-
-            userProducer.sendUserCreatedEvent(event);
-
-        } catch (Exception e) {
-            // Log lỗi nhưng KHÔNG ném Exception ra ngoài để tránh Rollback DB
-            log.error("⚠️ Lỗi gửi event RabbitMQ cho user {}: {}", savedUser.getUsername(), e.getMessage());
-        }
-
-        return savedUser;
+        return userRepository.save(user);
     }
 
     // READ - Lấy user theo ID

@@ -1,11 +1,8 @@
 package com.oem.evcampaign.service;
 
-import com.oem.evcampaign.dto.request.AffectedVehicleCompleteRequest;
-import com.oem.evcampaign.dto.request.AffectedVehicleCreateRequest;
-import com.oem.evcampaign.dto.request.AffectedVehicleScheduleRequest;
-import com.oem.evcampaign.dto.request.AffectedVehicleUpdateRequest;
-import com.oem.evcampaign.dto.response.AffectedVehicleResponse;
-import com.oem.evcampaign.model.enums.AffectedStatus;
+import com.oem.evwarranty.dto.request.*;
+import com.oem.evwarranty.dto.response.AffectedVehicleResponse;
+import com.oem.evwarranty.model.enums.AffectedStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,8 +19,8 @@ public interface AffectedVehicleService {
     AffectedVehicleResponse getByCampaign(Long campaignId, Long affectedId);
     void deleteByCampaign(Long campaignId, Long affectedId);
 
-    Page<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
-                                         AffectedStatus status, Pageable pageable);
+    PageCacheDto<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
+                                                 AffectedStatus status, Pageable pageable);
 
     AffectedVehicleResponse markNotified(Long affectedId);
     AffectedVehicleResponse schedule(Long affectedId, AffectedVehicleScheduleRequest req);

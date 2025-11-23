@@ -5,6 +5,7 @@ import com.oem.evcampaign.dto.request.AppointmentRescheduleRequest;
 import com.oem.evcampaign.dto.request.AppointmentUpdateRequest;
 import com.oem.evcampaign.dto.request.AppointmentCompleteRequest;
 import com.oem.evcampaign.dto.response.AppointmentResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.exception.NotFoundException;
 import com.oem.evcampaign.model.Appointment;
 import com.oem.evcampaign.model.enums.AppointmentStatus;
@@ -131,14 +132,14 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Cacheable(value = "appointment_list", key = "{#campaignId, #affectedId, #pageable.pageNumber}")
-    public Page<AppointmentResponse> search(Long campaignId, Long affectedId, Pageable pageable) {
+    public PageCacheDto<AppointmentResponse> search(Long campaignId, Long affectedId, Pageable pageable) {
         // Nếu đã có các hàm query trong repository thì thay thế tại đây.
         // Tạm thời trả về tất cả rồi map (đơn giản/nhanh để build qua).
-        return appRepo.findAll(pageable).map(AppointmentMapper::toResponse);
+        return PageCacheDto.from(appRepo.findAll(pageable).map(AppointmentMapper::toResponse));
     }
 
     @Override
-    public Page<AppointmentResponse> listByCampaign(Long campaignId, AppointmentStatus status, Pageable pageable) {
+    public PageCacheDto<AppointmentResponse> listByCampaign(Long campaignId, AppointmentStatus status, Pageable pageable) {
         // Ưu tiên dùng repository query nếu bạn đã khai báo:
         //   Page<Appointment> p = appRepo.findByCampaign_IdAndStatus(campaignId, status, pageable);
         // Hoặc:
@@ -146,14 +147,14 @@ public class AppointmentServiceImpl implements AppointmentService {
         //
         // Để không phát sinh thêm sửa repo ở thời điểm này, mình tạm dùng findAll + map
         // (khi cần tối ưu, thêm query vào repo rồi thay thế logic này).
-        return appRepo.findAll(pageable).map(AppointmentMapper::toResponse);
+        return PageCacheDto.from(appRepo.findAll(pageable).map(AppointmentMapper::toResponse));
     }
 
 
     @Override
-    public Page<AppointmentResponse> listByAffected(Long affectedId, Pageable pageable) {
-        return appRepo
+    public PageCacheDto<AppointmentResponse> listByAffected(Long affectedId, Pageable pageable) {
+        return PageCacheDto.from(appRepo
                 .findByAffected_Id(affectedId, pageable)   // lấy theo affected.id
-                .map(AppointmentMapper::toResponse);
+                .map(AppointmentMapper::toResponse));
     }
 }

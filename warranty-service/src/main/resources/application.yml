@@ -3,16 +3,17 @@ server:
   error:
     include-message: always
     include-binding-errors: always
-# Cấu hình Feign Clients:
+
+# Cấu hình Feign Clients
 vehicle-service:
-  url: http://vehicle-service:8080/vehicle-service/ # Giả sử Vehicle Service chạy ở port 8081
+  url: http://vehicle-service:8080/vehicle-service/
 user-staff-service:
-  url: http://user-service:8080/ # Giả sử User Service chạy ở port 8082
+  url: http://user-service:8080/
 part-service:
-  url: http://part-service:8080/ # Giả sử Part Service chạy ở port 8083
+  url: http://part-service:8080/
 campaign-service:
-  url: http://campaign-service:8080/ # Giả sử Campaign Service chạy ở port 8084
-# Cấu hình Feign timeout (giúp tránh chờ đợi quá lâu)
+  url: http://campaign-service:8080/
+
 feign:
   client:
     config:
@@ -20,10 +21,18 @@ feign:
         connectTimeout: 5000
         readTimeout: 10000
 
-
 spring:
   application:
     name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
+
+  # --- [BẮT ĐẦU PHẦN CẦN THÊM/SỬA] ---
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false # Quan trọng nhất: Chuyển Date thành String ISO-8601
+    time-zone: Asia/Ho_Chi_Minh       # Quan trọng: Chỉnh múi giờ về VN
+    default-property-inclusion: non_null # Tùy chọn: Bỏ qua các trường null cho gọn JSON
+  # --- [KẾT THÚC PHẦN CẦN THÊM/SỬA] ---
+
   datasource:
     url: "jdbc:mysql://mysql-db:3306/warranty_service_db?createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000"
     username: root
@@ -37,17 +46,8 @@ spring:
   cache:
     type: redis
     redis:
-      time-to-live: 600000 # TTL mặc định 10 phút
-      cache-null-values: false # Không cache null
-
-  rabbitmq:
-    host: rabbitmq
-    port: 5672
-    username: admin
-    password: password123
-    listener:
-      simple:
-        acknowledge-mode: auto
+      time-to-live: 600000
+      cache-null-values: false
   jpa:
     hibernate:
       dialect: org.hibernate.dialect.MySQLDialect
@@ -58,21 +58,14 @@ spring:
       name: admin
       password: 1234
       roles: ADMIN
-
   cloud:
     compatibility-verifier:
       enabled: false
-
   main:
     allow-bean-definition-overriding: true
-
 
 storage:
   location: uploads
 
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
-  rabbitmq:
-    exchange: oem.internal.exchange
-    queue: warranty.vehicle.created.queue # Queue riêng của Warranty
-    routing-key: vehicle.created          # Lắng nghe sự kiện tạo xe
