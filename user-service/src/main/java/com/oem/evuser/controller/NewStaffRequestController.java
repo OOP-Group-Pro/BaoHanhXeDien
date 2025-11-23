@@ -2,6 +2,7 @@ package com.oem.evuser.controller;
 
 import com.oem.evuser.entity.NewStaffRequest;
 import com.oem.evuser.service.NewStaffRequestService;
+import org.springframework.security.core.userdetails.UserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,24 +18,35 @@ public class NewStaffRequestController {
 
     private final NewStaffRequestService service;
 
+    // 🔥 HÀM HỖ TRỢ: Lấy username chuẩn từ Token
+    private String getUsername(Authentication authentication) {
+        if (authentication == null) return "Unknown";
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        }
+        return principal.toString();
+    }
+
     // 🟢 Manager gửi phiếu
     @PostMapping("/create")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<String> createRequest(@RequestBody NewStaffRequest request,
                                                 Authentication authentication) {
-        String createdBy = authentication.getName();
+        String createdBy = getUsername(authentication);
+        System.out.println(">>> [CREATE] By: " + createdBy);
         service.createRequest(request, createdBy);
         return ResponseEntity.ok("Request submitted successfully");
     }
 
-    // 🟢 Manager xem phiếu đã tạo
+    // 🟢 Manager xem phiếu của mình
     @GetMapping("/my")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<NewStaffRequest>> getMyRequests(Authentication authentication) {
-        String createdBy = authentication.getName();
+        String createdBy = getUsername(authentication);
+        System.out.println(">>> [GET MY] Of: " + createdBy);
         return ResponseEntity.ok(service.getRequestsByCreator(createdBy));
     }
-
     // 🟡 Admin xem tất cả phiếu
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")

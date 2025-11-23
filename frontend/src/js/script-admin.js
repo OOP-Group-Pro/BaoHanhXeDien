@@ -1,3 +1,4 @@
+import { api as apiClient } from '../../src/services/apiClient.js';
 document.addEventListener("DOMContentLoaded", () => {
   const path = location.pathname.toLowerCase();
   const currentPage = path.split('/').pop();
@@ -73,6 +74,7 @@ const isCreateRequestPage = path.endsWith("create-request.html");
                 cancelButtonText: "Hủy bỏ"
             }).then((result) => {
                 if (result.isConfirmed) {
+                localStorage.clear()
                         Swal.fire({
                         title: "Đã đăng xuất!",
                         text: "Bạn đã thoát khỏi hệ thống thành công.",
@@ -80,7 +82,7 @@ const isCreateRequestPage = path.endsWith("create-request.html");
                         showConfirmButton: false,
                         timer: 1500 // Tự động đóng sau 1.5 giây
                     }).then(() => {
-                        window.location.href = '../login/login.html';
+                        window.location.href = '../../index.html';
                     });
                 }
             });
@@ -206,66 +208,61 @@ links.forEach(link => {
         const closeModalBtn = document.getElementById('close-request-modal');
         const createBtn = document.getElementById('create-request-btn');
 
-        const currentUser = { username: 'manager1', roles: ['ROLE_USER', 'ROLE_MANAGER'] };
-
-        let MOCK_REQUESTS = [
-            { requestId: 1, fullName: 'Nguyen Van A', username: 'vana', email: 'vana@test.com', phone: '0123456789', proposedRoles: ['ROLE_USER'], status: 'PENDING', createdBy: 'manager1' }
-        ];
-
-        if (!currentUser.roles.includes('ROLE_MANAGER')) {
-            if (createBtn) createBtn.style.display = 'none';
-            if (tableBody) tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:orange;">Chỉ Manager mới được tạo phiếu</td></tr>';
-        }
-
-        const renderTable = () => {
+        // --- 1. LOAD DANH SÁCH (CHỈ CỦA TÔI) ---
+        const loadRequests = async () => {
             if (!tableBody) return;
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Đang tải dữ liệu...</td></tr>';
+
+            try {
+                // 🔥 Gọi API lấy phiếu của mình
+                const response = await apiClient.get('/staff-requests/my');
+                const requests = response.data || response;
+                renderTable(requests);
+            } catch (error) {
+                console.error(error);
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Lỗi tải dữ liệu</td></tr>';
+            }
+        };
+
+        // --- 2. RENDER BẢNG (KHÔNG NÚT SỬA/XÓA) ---
+        const renderTable = (requests) => {
             tableBody.innerHTML = '';
-            const userRequests = MOCK_REQUESTS.filter(r => r.createdBy === currentUser.username);
-            if (userRequests.length === 0) {
+
+            if (!requests || requests.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Chưa có phiếu nào</td></tr>';
                 return;
             }
-            userRequests.forEach(r => {
+
+            requests.forEach(r => {
                 const row = document.createElement('tr');
+
+                // 🔥 Xử lý Role hiển thị
+                let roleDisplay = r.role || r.roleName || (r.proposedRoles ? (Array.isArray(r.proposedRoles) ? r.proposedRoles[0] : r.proposedRoles) : "Chưa cấp");
+                if (typeof roleDisplay === 'string') roleDisplay = roleDisplay.replace('ROLE_', '');
+
+                const phoneNumber = r.phone || r.phoneNumber || "";
+                const id = r.requestId || r.id;
+
                 row.innerHTML = `
-                    <td>${r.requestId}</td>
+                    <td>${id}</td>
                     <td>${r.fullName}</td>
                     <td>${r.username}</td>
                     <td>${r.email}</td>
-                    <td>${r.phone}</td>
-                    <td>${r.proposedRoles.join(', ')}</td>
-                    <td>${r.status}</td>
+                    <td>${phoneNumber}</td>
+                    <td><span class="badge badge-info" style="font-weight:bold;">${roleDisplay}</span></td>
+                    <td>${createBadge(r.status)}</td>
                     <td>
-                        <button class="btn-icon btn-edit"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-icon btn-delete"><i class="fa-solid fa-trash"></i></button>
+                        <span style="color: #888; font-size: 0.85rem; font-style: italic;">Đã gửi</span>
                     </td>`;
                 tableBody.appendChild(row);
-
-                row.querySelector('.btn-edit').addEventListener('click', () => {
-                    if (!modal || !modalTitle) return;
-                    modalTitle.textContent = 'Chỉnh sửa Phiếu';
-                    modal.style.display = 'flex';
-                    document.getElementById('request-id').value = r.requestId;
-                    document.getElementById('fullName').value = r.fullName;
-                    document.getElementById('username').value = r.username;
-                    document.getElementById('email').value = r.email;
-                    document.getElementById('phone').value = r.phone;
-                    document.getElementById('role').value = r.proposedRoles[0];
-                });
-
-                row.querySelector('.btn-delete').addEventListener('click', () => {
-                    if (confirm(`Bạn có chắc chắn muốn XÓA phiếu ${r.fullName}?`)) {
-                        MOCK_REQUESTS = MOCK_REQUESTS.filter(x => x.requestId !== r.requestId);
-                        renderTable();
-                    }
-                });
             });
         };
 
+        // --- 3. TẠO PHIẾU MỚI ---
         if (createBtn) {
             createBtn.addEventListener('click', () => {
-                if (!modal || !modalTitle) return;
-                modalTitle.textContent = 'Tạo Phiếu Mới';
+                if (!modal) return;
+                modalTitle.textContent = 'Tạo Phiếu Đề Xuất Mới';
                 modal.style.display = 'flex';
                 document.getElementById('request-id').value = '';
                 document.getElementById('fullName').value = '';
@@ -276,33 +273,65 @@ links.forEach(link => {
             });
         }
 
-        if (closeModalBtn) closeModalBtn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
-        window.onclick = function(event) { if (event.target === modal) modal.style.display = 'none'; };
-
         if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-                const id = document.getElementById('request-id').value;
-                const newRequest = {
-                    requestId: id ? parseInt(id) : Date.now(),
+            saveBtn.addEventListener('click', async () => {
+                const requestData = {
                     fullName: document.getElementById('fullName').value,
                     username: document.getElementById('username').value,
                     email: document.getElementById('email').value,
                     phone: document.getElementById('phone').value,
-                    proposedRoles: [document.getElementById('role').value],
-                    status: 'PENDING',
-                    createdBy: currentUser.username
+                    role: document.getElementById('role').value, // 🔥 Gửi Role đi
                 };
-                if (id) {
-                    MOCK_REQUESTS = MOCK_REQUESTS.map(r => r.requestId == newRequest.requestId ? newRequest : r);
-                } else {
-                    MOCK_REQUESTS.push(newRequest);
+
+                if (!requestData.username || !requestData.email) {
+                    Swal.fire('Lỗi', 'Vui lòng điền đủ thông tin', 'warning');
+                    return;
                 }
-                renderTable();
-                if (modal) modal.style.display = 'none';
+
+                try {
+                    saveBtn.innerText = 'Đang gửi...';
+                    saveBtn.disabled = true;
+                    // 🔥 Gọi API tạo mới
+                    await apiClient.post('/staff-requests/create', requestData);
+
+                    Swal.fire('Thành công', 'Đã gửi phiếu đề xuất!', 'success');
+                    if (modal) modal.style.display = 'none';
+                    loadRequests(); // Load lại
+                } catch (error) {
+                    console.error(error);
+                    Swal.fire('Thất bại', 'Lỗi server', 'error');
+                } finally {
+                    saveBtn.innerText = 'Lưu';
+                    saveBtn.disabled = false;
+                }
             });
         }
 
-        renderTable();
+        // --- 4. ĐĂNG XUẤT ---
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                Swal.fire({
+                    title: "Đăng xuất?", text: "Bạn chắc chắn muốn thoát?", icon: "warning",
+                    showCancelButton: true, confirmButtonText: "Đăng xuất"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('refreshToken');
+                        localStorage.removeItem('user');
+                        window.location.href = '../../index.html';
+                    }
+                });
+            });
+        }
+
+        // Modal close logic...
+        if (closeModalBtn) closeModalBtn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+        window.onclick = function(event) { if (event.target === modal) modal.style.display = 'none'; };
+
+        // Khởi chạy
+        loadRequests();
     }
 
     // ================= INVENTORY PAGE =================
