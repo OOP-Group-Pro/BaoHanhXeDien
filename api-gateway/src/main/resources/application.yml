@@ -93,5 +93,13 @@ spring:
           predicates:
             - Path=/api/v1/campaigns/**
 
+  # 🔥 [THÊM ĐOẠN NÀY ĐỂ FIX LỖI 500 "UNKNOWN ERROR"] 🔥
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false # Trả về dạng String "2025-11-23T..." thay vì mảng số
+    time-zone: Asia/Ho_Chi_Minh       # Múi giờ VN
+    default-property-inclusion: non_null # Bỏ qua các trường null cho gọn
+  # -----------------------------------------------------
+
 jwt:
   secret: ${JWT_SECRET}

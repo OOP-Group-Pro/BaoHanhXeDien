@@ -210,19 +210,39 @@ async function setupCreateClaimForm() {
     const searchBtn = document.getElementById('part-search-btn');
     const searchResultsEl = document.getElementById('part-search-results');
 
+    // [DEBUG MODE] Logic tìm kiếm phụ tùng
     searchBtn.addEventListener('click', async () => {
-        const searchTerm = searchInput.value;
-        if (searchTerm.length < 2) {
-            searchResultsEl.innerHTML = '<p class="text-danger">Phải nhập ít nhất 2 ký tự.</p>';
+        console.log("🚀 [STEP 1] Bắt đầu ấn nút tìm kiếm...");
+
+        const rawInput = searchInput.value;
+        const searchTerm = rawInput ? rawInput.trim() : '';
+        console.log(`🧐 [STEP 2] Từ khóa sau khi trim: "${searchTerm}"`);
+
+        if (!searchTerm || searchTerm.length < 2) {
+            console.warn("⚠️ [STEP 2.1] Từ khóa quá ngắn, dừng lại.");
+            searchResultsEl.innerHTML = '<p class="text-danger">Vui lòng nhập tên phụ tùng (ít nhất 2 ký tự).</p>';
             return;
         }
+
         searchResultsEl.innerHTML = '<p class="text-muted">Đang tìm...</p>';
+
         try {
+            console.log("📡 [STEP 3] Bắt đầu gọi API searchParts...");
+
+            // Gọi API
             const data = await searchParts({ name: searchTerm, page: 0, size: 10 });
+
+            console.log("✅ [STEP 4] API trả về thành công!", data);
+
             if (data.empty) {
+                console.log("ℹ️ [STEP 5] API trả về rỗng (data.empty = true)");
                 searchResultsEl.innerHTML = '<p class="text-muted">Không tìm thấy phụ tùng nào.</p>';
                 return;
             }
+
+            console.log("🎨 [STEP 6] Bắt đầu vẽ giao diện (Render HTML)...");
+
+            // Render kết quả
             searchResultsEl.innerHTML = `
                 <ul class="list-group">
                     ${data.content.map(part => `
@@ -239,8 +259,18 @@ async function setupCreateClaimForm() {
                         </li>
                     `).join('')}
                 </ul>`;
+
+            console.log("🏁 [STEP 7] Hoàn tất vẽ giao diện.");
+
         } catch (error) {
-            searchResultsEl.innerHTML = `<p class="text-danger">Lỗi: ${error.message}</p>`;
+            console.error("🔥 [LỖI CHẾT NGƯỜI] Bắt được lỗi tại catch:", error);
+
+            // In chi tiết lỗi ra để soi
+            console.log("❌ Tên lỗi:", error.name);
+            console.log("❌ Nội dung:", error.message);
+            console.log("❌ Stack trace:", error.stack);
+
+            searchResultsEl.innerHTML = `<p class="text-danger">Lỗi: ${error.message || 'Không thể kết nối đến server'}</p>`;
         }
     });
 
