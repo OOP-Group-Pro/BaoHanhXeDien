@@ -1,32 +1,48 @@
 server:
-  port: 8080 #Thay port cho moi service  # 🚀 false = bỏ xác thực, true = bật xác thực
+  port: 8080
 
 logging:
   level:
-    org.springframework: DEBUG
+    com.oem.evpart: INFO            # Logging cho app
+    org.springframework: INFO       # Không dùng DEBUG trong production
+    org.hibernate.SQL: DEBUG        # Chỉ debug SQL khi cần
 
 spring:
   application:
-    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
+    name: part-service
+
   datasource:
     url: jdbc:mysql://mysql-db:3306/part_service?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
       dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+    show-sql: false   # Production nên tắt show-sql
+
   security:
     user:
       name: admin
       password: 1234
       roles: ADMIN
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000   # 5 phút, phù hợp production
+      cache-null-values: false
+
   main:
     allow-bean-definition-overriding: true
 
-# Các service URL (tốt, giữ nguyên)
 vehicle-service:
   url: http://vehicle-service:8080/
 user-service:
@@ -35,7 +51,6 @@ warranty-service:
   url: http://warranty-service:8080/
 campaign-service:
   url: http://campaign-service:8080/
-
 
 feign:
   client:
@@ -47,3 +62,16 @@ feign:
 
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus  # bổ sung Prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

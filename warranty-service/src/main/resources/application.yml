@@ -29,6 +29,16 @@ spring:
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis-cache}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 60000
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # TTL mặc định 10 phút
+      cache-null-values: false # Không cache null
   jpa:
     hibernate:
       dialect: org.hibernate.dialect.MySQLDialect

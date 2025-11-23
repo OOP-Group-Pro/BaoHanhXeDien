@@ -21,6 +21,7 @@
         <module name="user-service" />
         <module name="part-service" />
         <module name="vehicle-service" />
+        <module name="part-service" />
         <module name="warranty-service" />
         <module name="campaign-service" />
       </profile>
