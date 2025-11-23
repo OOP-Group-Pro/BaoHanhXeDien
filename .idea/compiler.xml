@@ -10,7 +10,6 @@
         <module name="template-service (1)" />
         <module name="api-gateway" />
         <module name="user_service" />
-        <module name="template-service" />
       </profile>
       <profile name="Annotation profile for ev-warranty-parent" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -22,6 +21,7 @@
         <module name="user-service" />
         <module name="part-service" />
         <module name="vehicle-service" />
+        <module name="part-service" />
         <module name="warranty-service" />
         <module name="campaign-service" />
       </profile>

@@ -14,6 +14,8 @@ import com.oem.evwarranty.repository.CampaignRepository;
 import com.oem.evwarranty.service.AppointmentService;
 import com.oem.evwarranty.service.mapper.AppointmentMapper;
 import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    // Khi tạo mới, xóa cache list để cập nhật
+    @CacheEvict(value = "appointment_list", allEntries = true)
     public AppointmentResponse create(AppointmentCreateRequest req) {
         var campaign = campaignRepo.findById(req.getCampaignId())
                 .orElseThrow(() -> new NotFoundException("Campaign not found"));
@@ -60,6 +64,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @Cacheable(value = "appointments", key = "#appointmentId")
     public AppointmentResponse get(Long appointmentId) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
@@ -67,6 +72,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @CacheEvict(value = "appointments", key = "#appointmentId")
     public AppointmentResponse update(Long appointmentId, AppointmentUpdateRequest req) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
@@ -81,6 +87,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "appointments", key = "#appointmentId")
     public AppointmentResponse reschedule(Long appointmentId, AppointmentRescheduleRequest req) {
         Appointment a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
@@ -105,6 +112,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
 
     @Override
+    @CacheEvict(value = "appointments", key = "#appointmentId")
     public AppointmentResponse complete(Long appointmentId, AppointmentCompleteRequest req) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
@@ -114,6 +122,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @CacheEvict(value = "appointments", key = "#appointmentId")
     public void delete(Long appointmentId) {
         var a = appRepo.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found"));
@@ -121,6 +130,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @Cacheable(value = "appointment_list", key = "{#campaignId, #affectedId, #pageable.pageNumber}")
     public Page<AppointmentResponse> search(Long campaignId, Long affectedId, Pageable pageable) {
         // Nếu đã có các hàm query trong repository thì thay thế tại đây.
         // Tạm thời trả về tất cả rồi map (đơn giản/nhanh để build qua).

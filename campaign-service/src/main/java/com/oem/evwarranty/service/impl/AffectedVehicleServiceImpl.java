@@ -12,6 +12,9 @@ import com.oem.evwarranty.repository.CampaignRepository;
 import com.oem.evwarranty.service.AffectedVehicleService;
 import com.oem.evwarranty.service.mapper.AffectedVehicleMapper;
 import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,8 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
+    // Khi thêm xe vào chiến dịch -> Xóa cache tìm kiếm
+    @CacheEvict(value = "affected_search", allEntries = true)
     public AffectedVehicleResponse create(AffectedVehicleCreateRequest req) {
         Campaign campaign = campaignRepo.findById(req.getCampaignId())
                 .orElseThrow(() -> new NotFoundException("Campaign not found"));
@@ -50,6 +55,10 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "affected_vehicle", key = "#affectedId"),
+            @CacheEvict(value = "affected_search", allEntries = true)
+    })
     public AffectedVehicleResponse update(Long affectedId, AffectedVehicleUpdateRequest req) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
@@ -64,12 +73,17 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "affected_vehicle", key = "#affectedId"),
+            @CacheEvict(value = "affected_search", allEntries = true)
+    })
     public void delete(Long affectedId) {
         if (!avRepo.existsById(affectedId)) throw new NotFoundException("AffectedVehicle not found");
         avRepo.deleteById(affectedId);
     }
 
     @Override
+    @Cacheable(value = "affected_vehicle", key = "#affectedId")
     public AffectedVehicleResponse get(Long affectedId) {
         return avRepo.findById(affectedId)
                 .map(AffectedVehicleMapper::toResponse)
@@ -77,6 +91,8 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
+    // 🚀 CACHE: Tìm kiếm xe bị ảnh hưởng (Rất quan trọng khi check VIN)
+    @Cacheable(value = "affected_search", key = "{#campaignId, #vinKeyword, #status, #pageable.pageNumber}")
     public Page<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
                                                 AffectedStatus status, Pageable pageable) {
         vinKeyword = (vinKeyword == null) ? "" : vinKeyword;
@@ -95,6 +111,7 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
 
 
     @Override
+    @CacheEvict(value = "affected_vehicle", key = "#affectedId")
     public AffectedVehicleResponse markNotified(Long affectedId) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
@@ -103,6 +120,7 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
+    @CacheEvict(value = "affected_vehicle", key = "#affectedId")
     public AffectedVehicleResponse schedule(Long affectedId, AffectedVehicleScheduleRequest req) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
@@ -116,6 +134,7 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
 
 
     @Override
+    @CacheEvict(value = "affected_vehicle", key = "#affectedId")
     public AffectedVehicleResponse markCompleted(Long affectedId, AffectedVehicleCompleteRequest req) {
         AffectedVehicle av = avRepo.findById(affectedId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
@@ -126,6 +145,8 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
+    // Cache tìm kiếm cụ thể 1 xe trong 1 chiến dịch
+    @Cacheable(value = "affected_vehicle_campaign", key = "#campaignId + '-' + #affectedId")
     public AffectedVehicleResponse getByCampaign(Long campaignId, Long affectedId) {
         AffectedVehicle av = avRepo.findByIdAndCampaignId(affectedId, campaignId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));
@@ -133,6 +154,11 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "affected_vehicle", key = "#affectedId"),
+            @CacheEvict(value = "affected_vehicle_campaign", key = "#campaignId + '-' + #affectedId"),
+            @CacheEvict(value = "affected_search", allEntries = true)
+    })
     public void deleteByCampaign(Long campaignId, Long affectedId) {
         AffectedVehicle av = avRepo.findByIdAndCampaignId(affectedId, campaignId)
                 .orElseThrow(() -> new NotFoundException("AffectedVehicle not found"));

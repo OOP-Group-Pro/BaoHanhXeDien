@@ -1,148 +1,147 @@
-// ===============================
-//  CREATE-REQUEST.JS CHO MANAGER
-// ===============================
+// src/manager.js
+import { checkAuth, logout } from './utils/auth.js';
+import { api } from './services/apiClient.js';
 
-// Backend URL
-const BASE_URL = "http://localhost:8080";
-
-// Lấy token từ localStorage (nếu đang dùng Bearer token)
-function getToken() {
-    return localStorage.getItem("token");
-}
-
-// ========================
-// Load danh sách phiếu của Manager
-// ========================
-async function loadMyRequests() {
-    const tbody = document.getElementById("request-table-body");
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Đang tải...</td></tr>`;
-
-    try {
-        const res = await fetch(`${BASE_URL}/api/v1/staff-requests/my`, {
-            method: "GET",
-            headers: {
-                "Authorization": "Bearer " + getToken()
-            }
-        });
-
-        if (!res.ok) throw new Error("Không load được dữ liệu");
-
-        const data = await res.json();
-        if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Chưa có phiếu nào</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = "";
-        data.forEach(r => {
-            tbody.innerHTML += `
-            <tr>
-                <td>${r.requestId}</td>
-                <td>${r.fullName}</td>
-                <td>${r.username}</td>
-                <td>${r.email || ""}</td>
-                <td>${r.phone || ""}</td>
-                <td>${r.proposedRoles?.map(role => role.roleName).join(", ") || ""}</td>
-                <td>${r.status}</td>
-                <td>-</td>
-            </tr>`;
-        });
-
-    } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">${err.message}</td></tr>`;
-    }
-}
-
-// ========================
-// Mở modal tạo phiếu
-// ========================
-function openCreateModal() {
-    const modal = document.getElementById("request-modal");
-    modal.style.display = "flex";
-
-    document.getElementById("modal-title").innerText = "Tạo Phiếu Mới";
-    document.getElementById("request-id").value = "";
-    document.getElementById("fullName").value = "";
-    document.getElementById("username").value = "";
-    document.getElementById("email").value = "";
-    document.getElementById("phone").value = "";
-    document.getElementById("role").value = "ROLE_USER";
-
-    // Nếu có serviceCenterId input
-    const scInput = document.getElementById("serviceCenterId");
-    if(scInput) scInput.value = "";
-}
-
-// ========================
-// Đóng modal
-// ========================
-function closeCreateModal() {
-    document.getElementById("request-modal").style.display = "none";
-}
-
-// ========================
-// Gửi phiếu
-// ========================
-async function saveRequest() {
-
-    const fullName = document.getElementById("fullName").value.trim();
-    const username = document.getElementById("username").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const role = document.getElementById("role").value;
-
-    // Nếu có serviceCenterId input
-    const serviceCenterInput = document.getElementById("serviceCenterId");
-    const serviceCenterId = serviceCenterInput ? parseInt(serviceCenterInput.value) : null;
-
-    if (!fullName || !username) {
-        Swal.fire("Thiếu thông tin", "Full Name và Username bắt buộc!", "warning");
+async function initManagerPage() {
+    // Kiểm tra quyền manager
+    const userInfo = checkAuth('ROLE_MANAGER');
+    if (!userInfo) {
+        alert('Bạn không có quyền truy cập!');
+        window.location.href = '/login.html';
         return;
     }
 
-    const requestBody = { fullName, username, email, phone, serviceCenterId, proposedRoles: [{ roleName: role }] };
+    const logoutBtn = document.getElementById('logout-btn');
+    const createBtn = document.getElementById('create-request-btn');
+    const saveBtn = document.getElementById('save-request-btn');
+    const closeModalBtn = document.getElementById('close-request-modal');
+    const modal = document.getElementById('request-modal');
+    const tableBody = document.getElementById('request-table-body');
 
-    try {
-        const res = await fetch(`${BASE_URL}/api/v1/staff-requests/create`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + getToken()
-            },
-            body: JSON.stringify(requestBody)
-        });
+    const fullNameInput = document.getElementById('fullName');
+    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const roleSelect = document.getElementById('role');
+    const requestIdInput = document.getElementById('request-id');
 
-        if (!res.ok) throw new Error("Lỗi gửi phiếu");
+    let allRequests = [];
 
-        Swal.fire("Thành công!", "Phiếu đã được gửi!", "success");
-
-        closeCreateModal();
-        loadMyRequests();
-
-    } catch (err) {
-        Swal.fire("Lỗi!", err.message, "error");
-    }
-}
-
-// ========================
-// EVENT LISTENER
-// ========================
-document.addEventListener("DOMContentLoaded", () => {
-
-    // Load danh sách phiếu Manager
-    loadMyRequests();
-
-    // Nút mở modal
-    document.getElementById("create-request-btn")?.addEventListener("click", openCreateModal);
-
-    // Nút đóng modal
-    document.getElementById("close-request-modal")?.addEventListener("click", closeCreateModal);
-
-    // Click ngoài modal để đóng
-    document.getElementById("request-modal")?.addEventListener("click", (e) => {
-        if (e.target.id === "request-modal") closeCreateModal();
+    // --- EVENTS ---
+    logoutBtn.addEventListener('click', () => {
+        logout();
+        window.location.href = '/login.html';
     });
 
-    // Nút gửi phiếu
-    document.getElementById("save-request-btn")?.addEventListener("click", saveRequest);
-});
+    createBtn.addEventListener('click', () => openModal());
+
+    closeModalBtn.addEventListener('click', () => closeModal());
+
+    saveBtn.addEventListener('click', async () => {
+        const fullName = fullNameInput.value.trim();
+        const username = usernameInput.value.trim();
+        const email = emailInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const roleName = roleSelect.value;
+
+        if (!fullName || !username || !roleName) {
+            Swal.fire('Lỗi', 'Full name, username và role là bắt buộc!', 'warning');
+            return;
+        }
+
+        const requestData = { fullName, username, email, phone, roleName };
+
+        try {
+            if (requestIdInput.value) {
+                // Update phiếu (nếu cần)
+                await api.put(`/requests/new-staff/${requestIdInput.value}`, requestData);
+                Swal.fire('Thành công', 'Phiếu đã được cập nhật', 'success');
+            } else {
+                // Tạo phiếu mới
+                await api.post('/requests/new-staff', requestData);
+                Swal.fire('Thành công', 'Phiếu mới đã được tạo', 'success');
+            }
+            closeModal();
+            loadRequestList();
+        } catch (err) {
+            console.error(err);
+            Swal.fire('Lỗi', 'Không thể lưu phiếu', 'error');
+        }
+    });
+
+    // --- FUNCTIONS ---
+    function openModal(request = null) {
+        if (request) {
+            requestIdInput.value = request.requestId;
+            fullNameInput.value = request.fullName;
+            usernameInput.value = request.username;
+            emailInput.value = request.email || '';
+            phoneInput.value = request.phone || '';
+            roleSelect.value = request.roleName;
+            document.getElementById('modal-title').textContent = 'Chỉnh sửa Phiếu';
+        } else {
+            requestIdInput.value = '';
+            fullNameInput.value = '';
+            usernameInput.value = '';
+            emailInput.value = '';
+            phoneInput.value = '';
+            roleSelect.value = 'ROLE_USER';
+            document.getElementById('modal-title').textContent = 'Tạo Phiếu Mới';
+        }
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    async function loadRequestList() {
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Đang tải dữ liệu...</td></tr>';
+        try {
+            const requests = await api.get('/requests/new-staff'); // API backend của bạn
+            allRequests = requests;
+            renderTable(requests);
+        } catch (err) {
+            console.error(err);
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Lỗi tải dữ liệu</td></tr>';
+        }
+    }
+
+    function renderTable(requests) {
+        if (!requests.length) {
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Không có phiếu nào</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = '';
+        requests.forEach(r => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${r.requestId}</td>
+                    <td>${r.fullName}</td>
+                    <td>${r.username}</td>
+                    <td>${r.email || ''}</td>
+                    <td>${r.phone || ''}</td>
+                    <td>${r.roleName}</td>
+                    <td>${r.status}</td>
+                    <td>
+                        <button class="btn-action btn-edit" data-id="${r.requestId}">Sửa</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const req = allRequests.find(r => r.requestId == e.target.dataset.id);
+                openModal(req);
+            });
+        });
+    }
+
+    // INIT
+    loadRequestList();
+}
+
+// Khởi tạo page
+initManagerPage();

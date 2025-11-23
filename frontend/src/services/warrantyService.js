@@ -1,4 +1,4 @@
-/* src/services/warrantyService.js */
+// src/services/warrantyService.js
 import { api } from './apiClient.js'; // Import hàm fetch đã có auth
 
 /**
@@ -52,8 +52,7 @@ export const getClaimDetails = (claimId) => {
  */
 export const getClaimHistory = (claimId) => {
     return api.get(`/claims/${claimId}/history`);
-}
-
+};
 
 /**
  * Cập nhật kết quả sửa chữa (dành cho Kỹ thuật viên)

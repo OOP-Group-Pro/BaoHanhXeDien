@@ -2,6 +2,7 @@ package com.oem.evpart.controllers;
 
 import com.oem.evpart.dto.request.ClaimAllocationRequest;
 import com.oem.evpart.dto.request.PartRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartAllocationResponse;
 import com.oem.evpart.dto.response.PartResponse;
 import com.oem.evpart.services.PartAllocationService;
@@ -38,7 +39,7 @@ public class PartController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PartResponse>> getAllParts(Pageable pageable) {
+    public ResponseEntity<PageCacheDto<PartResponse>> getAllParts(Pageable pageable) {
         return ResponseEntity.ok(partService.getAllParts(pageable));
     }
 

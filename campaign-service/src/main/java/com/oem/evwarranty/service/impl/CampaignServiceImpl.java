@@ -10,6 +10,10 @@ import com.oem.evwarranty.repository.CampaignRepository;
 import com.oem.evwarranty.service.CampaignService;
 import com.oem.evwarranty.service.mapper.CampaignMapper;
 import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +29,8 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
+    // Tạo mới -> Xóa cache tìm kiếm để user thấy dữ liệu mới nhất
+    @CacheEvict(value = "campaigns_search", allEntries = true)
     public CampaignResponse create(CampaignCreateRequest req) {
         if (campaignRepo.existsByCode(req.getCode())) {
             throw new BadRequestException("Campaign code already exists");
@@ -37,6 +43,11 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
+    // Cập nhật -> Xóa/Update cache chi tiết + Xóa cache tìm kiếm
+    @Caching(evict = {
+            @CacheEvict(value = "campaigns", key = "#id"),
+            @CacheEvict(value = "campaigns_search", allEntries = true)
+    })
     public CampaignResponse update(Long id, CampaignUpdateRequest req) {
         Campaign c = campaignRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Campaign not found"));
@@ -54,6 +65,8 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
+    // 🚀 CACHE: Lấy chi tiết chiến dịch (Rất hay dùng)
+    @Cacheable(value = "campaigns", key = "#id")
     public CampaignResponse get(Long id) {
         Campaign c = campaignRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Campaign not found"));
@@ -61,12 +74,18 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "campaigns", key = "#id"),
+            @CacheEvict(value = "campaigns_search", allEntries = true)
+    })
     public void delete(Long id) {
         if (!campaignRepo.existsById(id)) throw new NotFoundException("Campaign not found");
         campaignRepo.deleteById(id);
     }
 
     @Override
+    // 🚀 CACHE: Tìm kiếm chiến dịch (Cache theo tham số tìm kiếm)
+    @Cacheable(value = "campaigns_search", key = "{#code, #status, #type, #pageable.pageNumber, #pageable.pageSize}")
     public Page<CampaignResponse> search(String code, com.oem.evwarranty.model.enums.CampaignStatus status,
                                          com.oem.evwarranty.model.enums.CampaignType type,
                                          Pageable pageable) {

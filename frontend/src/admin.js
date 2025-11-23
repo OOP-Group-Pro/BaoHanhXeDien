@@ -25,24 +25,24 @@ async function initAdminPage() {
 
     async function loadUserList() {
         try {
-            const users = await getAllUsers();
-            allUsers = users;
-            renderUserTable(users);
+            allUsers = await getAllUsers(); // default ADMIN
+            renderUserTable(allUsers);
         } catch (err) {
-            alert('Lỗi tải danh sách user: ' + (err.response?.data?.message || err.message));
+            alert('Lỗi tải danh sách user: ' + (err.message || 'Không xác định'));
         }
     }
 
     function renderUserTable(users) {
         const tbody = document.getElementById('user-table-body');
         tbody.innerHTML = '';
+
         if (!users || !users.length) {
             tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Không có user nào</td></tr>';
             return;
         }
 
         users.forEach(u => {
-            const roleBadges = u.roles.map(r => `<span class="role-badge">${r.roleName}</span>`).join(' ');
+            const roleBadges = (u.roles || []).map(r => `<span class="role-badge">${r.roleName}</span>`).join(' ');
             tbody.innerHTML += `
                 <tr>
                     <td>${u.userId}</td>
@@ -85,20 +85,6 @@ async function initAdminPage() {
     closeModalBtn.addEventListener('click', () => userModal.classList.remove('show'));
     userModal.addEventListener('click', e => { if(e.target===userModal) userModal.classList.remove('show'); });
 
-    // ✅ Toggle password + icon
-    document.addEventListener('click', e => {
-        if (e.target && e.target.id === 'toggle-password') {
-            const pwInput = document.getElementById('password');
-            if (!pwInput) return;
-
-            const isHidden = pwInput.type === 'password';
-            pwInput.type = isHidden ? 'text' : 'password';
-
-            e.target.classList.toggle('fa-eye');
-            e.target.classList.toggle('fa-eye-slash');
-        }
-    });
-
     saveUserBtn.addEventListener('click', async () => {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
@@ -124,9 +110,9 @@ async function initAdminPage() {
                 alert('Tạo user thành công!');
             }
             userModal.classList.remove('show');
-            loadUserList();
+            await loadUserList(); // reload bảng
         } catch (err) {
-            alert('Lỗi lưu user: ' + (err.response?.data?.message || err.message));
+            alert('Lỗi lưu user: ' + (err.message || 'Không xác định'));
         }
     });
 
@@ -141,7 +127,8 @@ async function initAdminPage() {
         document.getElementById('password').value = '';
         document.getElementById('email').value = user.email || '';
         document.getElementById('phone').value = user.phone || '';
-        document.getElementById('role').value = user.roles[0]?.roleName || 'USER';
+        const firstRole = user.roles && user.roles.length ? user.roles[0].roleName : 'USER';
+        document.getElementById('role').value = firstRole;
         document.getElementById('status').value = user.status || 'ACTIVE';
         userModal.classList.add('show');
     }
@@ -151,9 +138,9 @@ async function initAdminPage() {
         try {
             await deleteUser(userId);
             alert('Xóa user thành công!');
-            loadUserList();
+            await loadUserList();
         } catch (err) {
-            alert('Lỗi xóa user: ' + (err.response?.data?.message || err.message));
+            alert('Lỗi xóa user: ' + (err.message || 'Không xác định'));
         }
     }
 
@@ -167,7 +154,7 @@ async function initAdminPage() {
         renderUserTable(filtered);
     });
 
-    loadUserList();
+    await loadUserList();
 }
 
 initAdminPage();

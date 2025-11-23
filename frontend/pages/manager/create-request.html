@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="../../src/styles/style-admin.css">
 </head>
+
 <body>
 
 <nav class="sidebar">
@@ -20,6 +21,9 @@
     </div>
     <ul class="sidebar-nav">
         <li><a href="#" class="active"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+        <button class="btn-logout" id="logout-btn" style="margin-left:10px; background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer;">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
     </ul>
 </nav>
 
@@ -78,6 +82,7 @@
         <button id="save-request-btn" class="btn-primary" style="margin-top:10px;">Gửi Phiếu</button>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/src/manager.js" type="module"></script>
 

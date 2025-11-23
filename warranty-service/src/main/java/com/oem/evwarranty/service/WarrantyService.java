@@ -19,6 +19,9 @@ import com.oem.evwarranty.client.warranty.PartServiceClient;    // Feign Client
 import com.oem.evwarranty.repository.AttachedDocumentRepository;
 import com.oem.evwarranty.repository.specification.WarrantyClaimSpecification;
 import com.oem.evwarranty.security.UserDetailsPrincipal;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -85,6 +88,7 @@ public class WarrantyService {
 
     // ⬇️ BƯỚC 3: HÀM CREATECLAIM (ĐÃ SỬA HOÀN CHỈNH) ⬇️
     @Transactional
+    @CacheEvict(value = "claim_list", allEntries = true)
     public Long createClaim(CreateClaimDto dto, List<MultipartFile> files, Long scStaffId) {
 
         // BƯỚC 1: XÁC THỰC
@@ -185,6 +189,16 @@ public class WarrantyService {
 
     // 2. Chức năng: PHÊ DUYỆT CLAIM (EVM STAFF)
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "claim_details", key = "#claimCode"), // Xóa cache chi tiết của claim này (nếu key là claimCode, cần sửa lại hàm getClaimDetails để dùng claimCode làm key, hoặc dùng claimId nếu sửa controller)
+            // LƯU Ý: Ở đây hàm approve nhận claimId (Long), nhưng hàm getClaimDetails lại dùng claimCode (String).
+            // Để cache hoạt động hiệu quả, nên thống nhất dùng 1 loại key hoặc phải query DB để lấy code từ ID trước khi evict.
+            // Cách đơn giản nhất: Xóa toàn bộ cache chi tiết (hơi tốn kém nhưng an toàn) hoặc chấp nhận cache cũ trong 10p.
+            // Ở đây tôi dùng allEntries = true cho an toàn nhất trong giai đoạn này.
+            @CacheEvict(value = "claim_details", allEntries = true),
+            @CacheEvict(value = "claim_history", allEntries = true),
+            @CacheEvict(value = "claim_list", allEntries = true)
+    })
     public void approveClaim(Long claimId, Long evmStaffId, String approvalNotes, Long technicalStaffId) {
         // [Logic chính]:
         // 1. Kiểm tra trạng thái hiện tại (phải là WAITING_APPROVAL).
@@ -242,6 +256,11 @@ public class WarrantyService {
         partClient.requestPartAllocation(partAllocationRequest);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "claim_details", allEntries = true),
+            @CacheEvict(value = "claim_history", allEntries = true),
+            @CacheEvict(value = "claim_list", allEntries = true)
+    })
     public void rejectClaim(Long claimId, Long evmStaffId, String reason) {
         // B1: Xac dinh claim bi tu choi
         // B2: Kiem tra co reject claim duoc hay khong -> kiem tra trang thai claim -> Chi co the reject neu claim dang trong status WAITING_APPROVAL
@@ -269,6 +288,11 @@ public class WarrantyService {
     // Bước dưới đây giống như bước kiểm tra và đánh giá hiệu quả của công tác bảo hành ấy
     // 3. Chức năng: CẬP NHẬT KẾT QUẢ SỬA CHỮA (Lắp/Tháo Serial Number)
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "claim_details", allEntries = true),
+            @CacheEvict(value = "claim_history", allEntries = true),
+            @CacheEvict(value = "claim_list", allEntries = true)
+    })
     public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto) {
         // [Logic chính]:
         // 1. Kiểm tra trạng thái Claim (Phải là APPROVED/IN_PROGRESS).
@@ -316,7 +340,11 @@ public class WarrantyService {
 
     // 4. Chức năng: XEM CHI TIẾT CLAIM (BẢN NÂNG CẤP CUỐI CÙNG)
     @Transactional(readOnly = true)
+    // 🚀 CACHE: Cache chi tiết Claim.
+    // Key là claimCode.
+    @Cacheable(value = "claim_details", key = "#claimCode")
     public ClaimDto getClaimDetails(String claimCode) {
+        System.out.println(">>> Getting Claim Details from DB for Code: " + claimCode);
         WarrantyClaim claim = claimRepo.findByClaimCode(claimCode)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
 
@@ -401,6 +429,7 @@ public class WarrantyService {
 
     // 5. Chức năng: XEM LỊCH SỬ TRẠNG THÁI
     @Transactional(readOnly = true)
+    @Cacheable(value = "claim_history", key = "#claimCode")
     public List<ClaimStatusLogDto> getClaimStatusHistory(String claimCode) {
         // Sử dụng phương thức findByClaimId trong LogRepo
         List<ClaimStatusLog> logs = logRepo.findByClaim_ClaimCodeOrderByTimestampAsc(claimCode);
@@ -432,6 +461,7 @@ public class WarrantyService {
     }
 
     // =======Ham lay claims duoc loc:========
+    @Cacheable(value = "claim_list", key = "{#claimCode, #vin, #statusStr, #pageable.pageNumber}")
     public Page<ClaimDto> getClaims(
             String claimCode,
             String vin,

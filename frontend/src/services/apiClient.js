@@ -3,72 +3,88 @@ import { logout } from '../utils/auth.js';
 
 const API_BASE_URL = '/api/v1';
 
+// Hàm loại bỏ dấu "/" bị dư ở cuối endpoint
+const clean = (path) => path.replace(/\/+$/, "");
+
 async function apiClient(endpoint, options = {}) {
     const token = getToken();
+
     const headers = { ...options.headers };
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // Xử lý FormData (nếu body là FormData thì để browser tự set Content-Type)
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
+    // Set Content-Type cho POST & PUT
+    if (options.method && ['POST', 'PUT'].includes(options.method)) {
+        if (options.body && !(options.body instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+        }
     }
 
     const config = {
         ...options,
-        headers: headers,
+        headers
     };
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    // GET/DELETE không được có body
+    if (config.method === 'GET' || config.method === 'DELETE') {
+        delete config.body;
+    }
 
-    // -------------------------------------------------------
-    // ⬇️ SỬA LỖI: ĐỌC BODY 1 LẦN DUY NHẤT ĐỂ TRÁNH LỖI STREAM ⬇️
-    // -------------------------------------------------------
+    const url = `${API_BASE_URL}${clean(endpoint)}`;
 
-    // 1. Kiểm tra nếu response là Blob (File) thì trả về ngay
+    const response = await fetch(url, config);
+
+    // Blob
     if (options.responseType === 'blob') {
         if (!response.ok) throw new Error('Lỗi tải file');
-        return response.blob();
+        return await response.blob();
     }
 
-    // 2. Đọc toàn bộ body dưới dạng Text trước
-    const responseText = await response.text();
+    const text = await response.text();
 
-    // 3. Thử Parse JSON
     let data;
     try {
-        data = JSON.parse(responseText);
-    } catch (e) {
-        // Nếu không phải JSON, data chính là text
-        data = responseText;
+        data = JSON.parse(text);
+    } catch {
+        data = text;
     }
 
-    // 4. Xử lý Lỗi (Dựa trên status code)
     if (!response.ok) {
         if (response.status === 401) {
             logout();
-            throw new Error('Phiên đăng nhập hết hạn.');
+            throw new Error('Phiên đăng nhập hết hạn');
         }
 
-        // Lấy message lỗi ưu tiên từ JSON, nếu không thì dùng text
-        const errorMessage = (typeof data === 'object' && data.message)
-            ? data.message
-            : (typeof data === 'string' ? data : 'Lỗi API');
+        const message =
+            typeof data === 'object' && data?.message
+                ? data.message
+                : typeof data === 'string'
+                ? data
+                : 'Lỗi API';
 
-        console.error('API Error:', errorMessage, 'Path:', endpoint);
-        throw new Error(errorMessage);
+        console.error("API Error:", message, "Path:", clean(endpoint));
+        throw new Error(message);
     }
 
-    // 5. Trả về dữ liệu thành công
     return data;
 }
 
 export const api = {
-    get: (endpoint) => apiClient(endpoint),
-    getBlob: (endpoint) => apiClient(endpoint, { method: 'GET', responseType: 'blob' }),
-    post: (endpoint, body) => apiClient(endpoint, { method: 'POST', body: (body instanceof FormData) ? body : JSON.stringify(body) }),
-    put: (endpoint, body) => apiClient(endpoint, { method: 'PUT', body: (body instanceof FormData) ? body : JSON.stringify(body) }),
-    delete: (endpoint) => apiClient(endpoint, { method: 'DELETE' }),
+    get: (endpoint) => apiClient(clean(endpoint), { method: 'GET' }),
+    getBlob: (endpoint) =>
+        apiClient(clean(endpoint), { method: 'GET', responseType: 'blob' }),
+    post: (endpoint, body) =>
+        apiClient(clean(endpoint), {
+            method: 'POST',
+            body: body instanceof FormData ? body : JSON.stringify(body),
+        }),
+    put: (endpoint, body) =>
+        apiClient(clean(endpoint), {
+            method: 'PUT',
+            body: body instanceof FormData ? body : JSON.stringify(body),
+        }),
+    delete: (endpoint) =>
+        apiClient(clean(endpoint), { method: 'DELETE' }),
 };
