@@ -26,7 +26,7 @@ public class WarrantyPolicyMapper {
     public WarrantyPolicyResponse toWarrantyPolicyResponse(WarrantyPolicy policy) {
         return WarrantyPolicyResponse.builder()
                 .policyId(policy.getPolicyId())
-                .partId(policy.getPart().getPartId()) // Lấy ID từ đối tượng Part liên kết
+                .parts(policy.getParts()) // Lấy ID từ đối tượng Part liên kết
                 .durationMonths(policy.getDurationMonths())
                 .mileageLimit(policy.getMileageLimit())
                 .conditions(policy.getConditions())

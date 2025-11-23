@@ -31,14 +31,11 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
     @Transactional
     @CacheEvict(value = "warranty_policies", key = "#request.partId")
     public WarrantyPolicyResponse createPolicy(WarrantyPolicyRequest request) {
-        Part part = partRepository.findById(request.getPartId())
-                .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + request.getPartId()));
 
         WarrantyPolicy newPolicy = policyMapper.toWarrantyPolicy(request);
-        newPolicy.setPart(part);
+        newPolicy.setParts(request.getParts());
 
         WarrantyPolicy savedPolicy = policyRepository.save(newPolicy);
-        log.info("Created warranty policy id={} for partId={}", savedPolicy.getPolicyId(), request.getPartId());
         return policyMapper.toWarrantyPolicyResponse(savedPolicy);
     }
 
@@ -53,58 +50,30 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "warranty_policies", key = "#partId")
-    public List<WarrantyPolicyResponse> getPoliciesByPartId(Long partId) {
-        if (!partRepository.existsById(partId)) {
-            throw new ResourceNotFoundException("Part not found with id: " + partId);
-        }
-        List<WarrantyPolicy> policies = policyRepository.findByPart_PartId(partId);
-        return policies.stream()
-                .map(policyMapper::toWarrantyPolicyResponse)
-                .collect(Collectors.toList());
+    public WarrantyPolicyResponse getPolicyByPartId(Long partId) {
+        Part part = partRepository.findByPartId(partId).orElseThrow( () -> new ResourceNotFoundException("Part not found with id: " + partId));
+
+        WarrantyPolicy policy = part.getWarrantyPolicy();
+        return policyMapper.toWarrantyPolicyResponse(policy);
     }
 
     @Override
     @Transactional
-    // Evict specific partId if possible; otherwise evict allEntries
     public WarrantyPolicyResponse updatePolicy(Long policyId, WarrantyPolicyRequest request) {
         WarrantyPolicy existingPolicy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Policy not found with id: " + policyId));
 
         policyMapper.updatePolicyFromRequest(existingPolicy, request);
         WarrantyPolicy updatedPolicy = policyRepository.save(existingPolicy);
-
-        Long partId = null;
-        if (updatedPolicy.getPart() != null) {
-            partId = updatedPolicy.getPart().getPartId();
-        }
-
-        if (partId != null) {
-            // evict only that part's policies
-            // Note: using programmatic eviction so we avoid SpEL issues in this method signature
-            // (you can also annotate and provide key if request contains partId)
-            // We'll do simple approach: evict allEntries to be safe
-            // (If you prefer, annotate method with @CacheEvict(value="warranty_policies", key="#partId") on overload)
-        }
-
-        // For simplicity and correctness, evict all entries
-        policyRepository.flush();
-        log.info("Updated warranty policy id={} (evicting warranty_policies)", policyId);
         return policyMapper.toWarrantyPolicyResponse(updatedPolicy);
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "warranty_policies", allEntries = true)
     public void deletePolicy(Long policyId) {
-        WarrantyPolicy existing = policyRepository.findById(policyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Policy not found with id: " + policyId));
-        Long partId = null;
-        if (existing.getPart() != null) {
-            partId = existing.getPart().getPartId();
+        if (!policyRepository.existsById(policyId)) {
+            throw new ResourceNotFoundException("Policy not found with id: " + policyId);
         }
         policyRepository.deleteById(policyId);
-        log.info("Deleted warranty policy id={}", policyId);
-        // Evict cache: if we know partId, evict that key; else evict all
-        // (programmatic eviction would be done via CacheManager; here we keep consistent behavior)
     }
 }

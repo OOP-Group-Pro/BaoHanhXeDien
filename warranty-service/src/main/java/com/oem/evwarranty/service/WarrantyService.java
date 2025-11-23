@@ -4,7 +4,6 @@ import com.oem.evwarranty.dto.*;
 import com.oem.evwarranty.mapper.DocumentMapper;
 import com.oem.evwarranty.mapper.PartMapper;
 import com.oem.evwarranty.model.AttachedDocument;
-import com.oem.evwarranty.model.utils.PartResponseDto;
 import com.oem.evwarranty.model.utils.UserResponseDto;
 import com.oem.evwarranty.client.warranty.UserServiceClient;
 import com.oem.evwarranty.enums.ClaimStatus;
@@ -31,12 +30,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.oem.evwarranty.mapper.PartMapper.mapToPartDetail;
 
 import com.oem.evwarranty.repository.ClaimPartDetailRepository;
 import com.oem.evwarranty.repository.ClaimStatusLogRepository;
@@ -131,7 +127,7 @@ public class WarrantyService {
                         return part;
                     })
                     .peek(part -> {
-                        log.info("Found part: {}", part.getPartName());
+                        log.info("👀👀👀Found part: {}", part.getPartName());
                     })
                     .toList();
         }
@@ -172,6 +168,9 @@ public class WarrantyService {
         // BƯỚC 5: LƯU CLAIM
         // JPA sẽ lưu newClaim -> sau đó tự động lưu danh sách documents bên trong
         claimRepo.save(newClaim);
+        newClaim.getPartDetails().forEach(part -> {
+            log.info("🥹🥹🥹 Look up claim part: ", part.getPartName());
+        });
 
         // 6b. Lưu Log
         logRepo.save(
@@ -199,7 +198,7 @@ public class WarrantyService {
             @CacheEvict(value = "claim_history", allEntries = true),
             @CacheEvict(value = "claim_list", allEntries = true)
     })
-    public void approveClaim(Long claimId, Long evmStaffId, String approvalNotes, Long technicalStaffId) {
+    public void approveClaim(String claimCode, Long evmStaffId, String approvalNotes, Long technicalStaffId) {
         // [Logic chính]:
         // 1. Kiểm tra trạng thái hiện tại (phải là WAITING_APPROVAL).
         // 2. Cập nhật trạng thái Claim.
@@ -207,7 +206,7 @@ public class WarrantyService {
         // 4. Ghi Log.
         // 5. Yêu cầu cấp phát phụ tùng (Gọi Part-Service).
         /*  ### Chu y: O day,   */
-        WarrantyClaim claim = claimRepo.findById(claimId)
+        WarrantyClaim claim = claimRepo.findByClaimCode(claimCode)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
 
         if (claim.getCurrentStatus() != ClaimStatus.WAITING_APPROVAL) {
@@ -222,7 +221,7 @@ public class WarrantyService {
         // BƯỚC 3: CẬP NHẬT CHI TIẾT PHỤ TÙNG
         // Giả sử logic phê duyệt là phê duyệt tất cả các part trong claim này
         // Thuc ra de cho dung thi phai kiem tra moi part co trong chinh sach bao hanh hay khong, trong kho con hay khong -> vay thi phai truy cuu den Doi tuong part -> vay thi phai goi api den Part-service de lay thong tin hoac thuc hien method kiem tra luon
-        List<ClaimPartDetail> parts = partDetailRepo.findAllByClaim_Id(claimId);
+        List<ClaimPartDetail> parts = partDetailRepo.findAllByClaim_Id(claim.getId());
         List<String> partNumbers = new ArrayList<>();   // Danh sách phụ tùng đã được duyệt
         for (ClaimPartDetail part : parts) {
             // Nếu có kiểm tra các điều kiện phê duyệt phụ tùng thậm chí là gọi đến part-service để kiểm tra thì sẽ thực hiện ở đây. Nhưng hiện tại cho đơn giản thì duyệt hết mà ko cần ktra
@@ -242,18 +241,34 @@ public class WarrantyService {
                         .notes(approvalNotes != null ? approvalNotes : "Yêu cầu đã được EVM phê duyệt.")
                         .build());
 
-        // BƯỚC 5: GỌI SERVICE NGOÀI - YÊU CẦU CẤP PHÁT PHỤ TÙNG
-        // De yeu cau cap phat, can biet Ai, noi nao yeu cau cap phat :
-        //Bước 5 chỉ thực hiện sau khi đã biết api của bên part-service cho nên hiện tại chưa dùng
-        // Tao request cap phat:
-        PartAllocationRequest partAllocationRequest = new PartAllocationRequest(
-                claimId,
-                partNumbers,
-                claim.getCenterId(),
-                claim.getScStaffId()
-        );
-        // Gui yeu cau
-        partClient.requestPartAllocation(partAllocationRequest);
+        // BƯỚC 5: GỌI SERVICE NGOÀI
+        try {
+            List<ClaimPartDetail> partRequests = claim.getPartDetails();
+
+            if (partRequests != null && !partRequests.isEmpty()) {
+
+                // 1. Map từ ClaimPartDetail sang PartRequestItem
+                List<PartAllocationRequest.PartRequestItem> items = partRequests.stream()
+                        .map(p -> PartAllocationRequest.PartRequestItem.builder()
+                                .partNumber(p.getPartNumber())      // Mã SKU (Type)
+                                .quantity(p.getQuantityRequired())  // Số lượng thực tế cần
+                                .build())
+                        .toList();
+
+                // 2. Tạo Request
+                PartAllocationRequest allocationRequest = PartAllocationRequest.builder()
+                        .claimCode(claim.getClaimCode())
+                        .serviceCenterId(claim.getCenterId())
+                        .items(items) // ⬅️ Gửi danh sách chi tiết
+                        .build();
+
+                // 3. Gửi đi
+                partClient.requestPartAllocation(allocationRequest);
+            }
+        } catch (Exception e) {
+            log.error("❌ Lỗi cấp phát phụ tùng: {}", e.getMessage());
+            // Tùy chọn: throw e nếu muốn rollback transaction khi lỗi
+        }
     }
 
     @Caching(evict = {
@@ -261,12 +276,12 @@ public class WarrantyService {
             @CacheEvict(value = "claim_history", allEntries = true),
             @CacheEvict(value = "claim_list", allEntries = true)
     })
-    public void rejectClaim(Long claimId, Long evmStaffId, String reason) {
+    public void rejectClaim(String claimCode, Long evmStaffId, String reason) {
         // B1: Xac dinh claim bi tu choi
         // B2: Kiem tra co reject claim duoc hay khong -> kiem tra trang thai claim -> Chi co the reject neu claim dang trong status WAITING_APPROVAL
         // B3: Reject -> cap nhat currentStatus = ClaimStatus.REJECTED -> Luu lai: claimRepo.save(claim)
         // B4: Ghi vao log
-        WarrantyClaim claim = claimRepo.findById(claimId).orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại"));
+        WarrantyClaim claim = claimRepo.findByClaimCode(claimCode).orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại"));
 
         if(claim.getCurrentStatus() != ClaimStatus.WAITING_APPROVAL) {
             throw new IllegalStateException("Claim không thể bị từ chối ");
@@ -347,9 +362,15 @@ public class WarrantyService {
         System.out.println(">>> Getting Claim Details from DB for Code: " + claimCode);
         WarrantyClaim claim = claimRepo.findByClaimCode(claimCode)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
+        claim.getPartDetails().forEach( part -> {
+                    log.info("⁉️⁉️ Check partDetail of claim {} in getClaimDetails func with it's partDetails: {}", claim.getClaimCode(), part.getPartName());
+                });
 
         // 1. Chuyển đổi cơ bản (dùng Mapper)
         ClaimDto claimDto = ClaimMapper.mapToClaimDto(claim);
+        claimDto.getPartList().forEach( part -> {
+            log.info("⁉️⁉️ Check partDetail of claimDto of {} in getClaimDetails func with it's partDetails: {}", claim.getClaimCode(), part.getPartName());
+        });
 
         // 2. Lấy Tên Khách hàng
         try {
@@ -380,33 +401,15 @@ public class WarrantyService {
                 .distinct()
                 .toList();
 
-        // 4b. Gọi API Feign 1 LẦN DUY NHẤT để lấy Map
-        Map<String, PartResponseDto> partDetailsMap = Map.of(); // Map rỗng
-        if (!partNumbers.isEmpty()) {
-            try {
-                partDetailsMap = partClient.getPartsByNumbers(partNumbers);
-            } catch (Exception e) {
-                // log.error("Không thể lấy chi tiết phụ tùng: {}", e.getMessage());
-            }
-        }
 
-        // 4c. Map vào DTO
-        final Map<String, PartResponseDto> finalPartMap = partDetailsMap; // (Cần cho Lambda)
 
         List<ClaimPartDetailDto> partDtos = claim.getPartDetails().stream()
                 .map(entity -> {
                     // Dùng PartMapper cũ
                     ClaimPartDetailDto dto = PartMapper.mapToClaimPartDetailDto(entity);
-                    log.info("Test are there parts already had in claim: {}", entity.getPartName());
-                    // Lấy PartResponse từ Map
-                    PartResponseDto partInfo = finalPartMap.get(entity.getPartNumber());
+                    log.info("⁉️⁉️⁉️⁉️Test are there parts already had in claim: {}", entity.getPartName());
 
-                   // Gán partName (NẾU TÌM THẤY)
-                    if (partInfo != null) {
-                        dto.setPartName(partInfo.getName()); // Giả sử hàm là .getName()
-                    } else {
-                        dto.setPartName("(Không tìm thấy tên part)");
-                    }
+                    dto.setPartName(entity.getPartName()); // Giả sử hàm là .getName()
 
                     return dto;
                 })
@@ -461,8 +464,16 @@ public class WarrantyService {
     }
 
     // =======Ham lay claims duoc loc:========
-    @Cacheable(value = "claim_list", key = "{#claimCode, #vin, #statusStr, #pageable.pageNumber}")
-    public Page<ClaimDto> getClaims(
+    @Cacheable(
+            value = "claim_list",
+            key = "(#claimCode ?: '') + '-' + " +
+                    "(#vin ?: '') + '-' + " +
+                    "(#statusStr ?: '') + '-' + " +
+                    "(#fromDate ?: '') + '-' + " +
+                    "(#toDate ?: '') + '-' + " +
+                    "#pageable.pageNumber + '-' + #pageable.pageSize"
+    )
+    public PageCacheDto<ClaimDto> getClaims(
             String claimCode,
             String vin,
             String statusStr,
@@ -493,66 +504,59 @@ public class WarrantyService {
         specification = specification.and(WarrantyClaimSpecification.createdAfter(fromDate))
                 .and(WarrantyClaimSpecification.createdBefore(toDate));
 
-        // Lay Principal tu SecurityContext
         Object principal = authentication.getPrincipal();
-        // Ap dung logic phan quyen theo loai Principal:
+
         if (principal instanceof UserDetailsPrincipal userDetails) {
 
             Long currentUserId = userDetails.getUserId();
             Long currentCenterId = userDetails.getCenterId();
 
             List<String> roles = authentication.getAuthorities().stream()
-                    .map(auth -> auth.getAuthority())
+                    .map(a -> a.getAuthority())
                     .toList();
 
-            if (!roles.contains("ROLE_ADMIN") && ! roles.contains("ROLE_SC_TECHNICIAN") && ! roles.contains("ROLE_EVM_STAFF")) {
+            if (!roles.contains("ROLE_ADMIN") &&
+                    !roles.contains("ROLE_SC_TECHNICIAN") &&
+                    !roles.contains("ROLE_EVM_STAFF")) {
+
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
+                } else {
+                    specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
                 }
-                else specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
             }
-        } else if (principal instanceof String && principal.equals("internal-service")) {
-        } else {
-            // Case C: Lỗi bảo mật không xác định
-            throw new AccessDeniedException("Cannot determine user identity or authorization context.");
+
+        } else if (!(principal instanceof String && principal.equals("internal-service"))) {
+            throw new AccessDeniedException("Cannot determine user identity");
         }
 
-        // de toi uu viec goi feign và goi api thì thay vì mỗi một claim gọi một lần,
-        // Thì lấy danh sách những cái cần gọi, sau đó tạo feign yêu cầu truy vấn theo danh sách và
-        // Trả về thông tin cần theo danh sách đó
-
-        // Có 2 thông tin cần feign về:
-        // 1 là userDetail từ user service
-        // 2 là customer name từ VIN của vehicle service (Chu y, cafn loc VIN trung lap truoc khi goi feign)
-        // Bước làm:
-
-        // 1: Lay ket qua tu CSDL chua goi Feign:
         Page<WarrantyClaim> claimPage = claimRepo.findAll(specification, pageable);
 
-        // Lay danh sach technician ma claim da co:
         List<Long> technicianIds = claimPage.getContent().stream()
                 .map(WarrantyClaim::getTechnicalStaffId)
                 .filter(id -> id != null)
                 .distinct()
                 .toList();
-        // Lay danh sach cac VIN (loai bo trung lap)
+
         List<String> vins = claimPage.getContent().stream()
                 .map(WarrantyClaim::getVin)
                 .distinct()
                 .toList();
-        // Goi 2 feign de lay cac thong tin theo danh sach:
-        Map<String, String> customerNameMap = vehicleClient.getCustomerNamesByVins(vins);
-        Map<Long, UserResponseDto> technicianMap = userClient.getUserDetailsMap(technicianIds);
 
-        // Truyen du lieu vao List cac claim Dto:
+        Map<String, String> customerNameMap = Optional.ofNullable(
+                vehicleClient.getCustomerNamesByVins(vins)
+        ).orElse(Collections.emptyMap());
+
+        Map<Long, UserResponseDto> technicianMap = Optional.ofNullable(
+                userClient.getUserDetailsMap(technicianIds)
+        ).orElse(Collections.emptyMap());
+
         List<ClaimDto> claimDtos = claimPage.getContent().stream()
+                .filter(Objects::nonNull) // loại bỏ item null
                 .map(claim -> {
                     ClaimDto dto = ClaimMapper.mapToClaimDto(claim);
-                    // gan customer name vao dto:
                     dto.setCustomerName(customerNameMap.getOrDefault(dto.getVin(), "(Không tìm thấy)"));
-
                     if (claim.getTechnicalStaffId() != null) {
-                        // Lay thong tin cua technician neu da co :
                         UserResponseDto userInfo = technicianMap.get(claim.getTechnicalStaffId());
                         if (userInfo != null) {
                             dto.setTechnicalName(userInfo.getFullName());
@@ -563,9 +567,16 @@ public class WarrantyService {
                 .toList();
 
 
-        // 4️⃣ Lấy page
-        return new PageImpl<>(claimDtos, pageable, claimPage.getTotalElements());
+        return PageCacheDto.from(
+                new PageImpl<>(
+                        Optional.ofNullable(claimDtos).orElse(Collections.emptyList()),
+                        pageable,
+                        claimPage.getTotalElements()
+                )
+        );
+
     }
+
 
     public AttachedDocument getDocumentById(Long id) {
         return attachedDocRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Cannot find document with id: " + id));

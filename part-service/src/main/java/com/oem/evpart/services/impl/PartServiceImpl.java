@@ -35,13 +35,12 @@ public class PartServiceImpl implements PartService {
     @Transactional
     @CacheEvict(value = "parts_list", allEntries = true)
     public PartResponse createPart(PartRequest partRequest) {
-        if (partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
-            log.warn("Attempt to create duplicate serialNumber: {}", partRequest.getSerialNumber());
+        if(partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
             throw new RuntimeException("Serial number already exists");
         }
         Part newPart = partMapper.toPart(partRequest);
+        newPart.setCreatedAt(java.time.LocalDateTime.now()); // Set thời gian tạo
         Part savedPart = partRepository.save(newPart);
-        log.info("Created new Part with ID: {}", savedPart.getPartId());
         return partMapper.toPartResponse(savedPart);
     }
 
@@ -49,7 +48,6 @@ public class PartServiceImpl implements PartService {
     @Transactional(readOnly = true)
     @Cacheable(value = "parts", key = "#partId")
     public PartResponse getPartById(Long partId) {
-        log.info(">>> Getting Part from Database for ID: {}", partId);
         Part part = partRepository.findById(partId)
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + partId));
         return partMapper.toPartResponse(part);
@@ -57,18 +55,25 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "parts_list", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
-    public PageCacheDto<PartResponse> getAllParts(Pageable pageable) {
-        Page<PartResponse> page = partRepository.findAll(pageable)
-                .map(partMapper::toPartResponse);
-        return new PageCacheDto<>(
-                page.getContent(),
-                page.getTotalElements(),
-                page.getTotalPages()
-        );
-    }
+    // Lưu cache dưới dạng PageCacheDto (Serializable & POJO) => An toàn tuyệt đối
+    @Cacheable(value = "parts_list", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #keyword")
+    public PageCacheDto<PartResponse> getAllParts(String keyword, Pageable pageable) {
+        Page<Part> partPage;
 
-    @Override
+        // Logic tìm kiếm giữ nguyên
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            partPage = partRepository.searchParts(keyword.trim(), pageable);
+        } else {
+            partPage = partRepository.findAll(pageable);
+        }
+
+        // CHUYỂN ĐỔI TỪ PAGE -> PAGECACHEDTO
+
+            return PageCacheDto.from(partPage.map(partMapper::toPartResponse));
+        }
+
+
+        @Override
     @Transactional
     @Caching(
             put = { @CachePut(value = "parts", key = "#partId") },
@@ -80,7 +85,6 @@ public class PartServiceImpl implements PartService {
 
         partMapper.updatePartFromRequest(existingPart, partRequest);
         Part updatedPart = partRepository.save(existingPart);
-        log.info("Updated Part ID {}", partId);
         return partMapper.toPartResponse(updatedPart);
     }
 
@@ -94,22 +98,28 @@ public class PartServiceImpl implements PartService {
     )
     public void deletePart(Long partId) {
         if (!partRepository.existsById(partId)) {
-            log.warn("Attempt to delete non-existent Part ID {}", partId);
             throw new ResourceNotFoundException("Part not found with id: " + partId);
         }
         partRepository.deleteById(partId);
-        log.info("Deleted Part ID {}", partId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, PartResponse> getPartDetailsByNumbers(List<String> partNumbers) {
+        // ⚠️ LƯU Ý: Nếu partNumbers là danh sách serialNumber (ví dụ PN-123), dùng method này
+        // Nếu partNumbers là partType (ví dụ MOTOR), bạn cần sửa lại repository call tương ứng.
+        // Ở đây tôi giả định bạn tìm theo serialNumber (SKU)
+        //log.info("🤔🤔 getPartDetailsByNumbers received partNumbers : {} ", partNumbers);
         List<Part> parts = partRepository.findAllByPartTypeIn(partNumbers);
+        parts.forEach(part -> {
+           // log.info("🤔🤔 partRepository.findAllByPartTypeIn : {}", part);
+        });
 
         Map<String, PartResponse> partDetails = new HashMap<>();
         for (Part part : parts) {
+            // Key là serialNumber, Value là Response (đã có thông tin bảo hành nhờ Mapper)
             partDetails.put(part.getPartType(), partMapper.toPartResponse(part));
         }
-
         return partDetails;
     }
 }

@@ -31,9 +31,8 @@ public class VehicleService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    // CREATE: Tạo một Vehicle mới
+    // 1. HÀM CREATE
     public VehicleResponseDTO createVehicle(VehicleRequestDTO vehicleRequest) {
-        // Kiểm tra xem VIN đã tồn tại chưa
         if (vehicleRepository.findByVehicleVin(vehicleRequest.getVehicleVin()).isPresent()) {
             throw new DataIntegrityViolationException("VIN '" + vehicleRequest.getVehicleVin() + "' already exists.");
         }
@@ -120,7 +119,6 @@ public class VehicleService {
         List<Vehicle> vehicles = vehicleRepository.findByCustomerCustomerId(customerId);
         return vehicles.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
-
 
     // DELETE: Xóa một Vehicle
     @Caching(evict = {

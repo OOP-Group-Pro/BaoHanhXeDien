@@ -3,6 +3,7 @@ package com.oem.evwarranty.dto;
 import com.oem.evwarranty.model.utils.SerialUpdateDetail;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.Map;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class ClaimRepairResultDto {
     private Long technicianId; // ID Kỹ thuật viên hoàn thành
     private String finalNotes; // Ghi chú kết quả sửa chữa

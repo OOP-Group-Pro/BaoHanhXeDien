@@ -1,6 +1,8 @@
 package com.oem.evpart.config;
 
-import org.springframework.beans.factory.annotation.Value; // Import thêm cái này
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,17 +19,28 @@ import java.time.Duration;
 @EnableCaching
 public class RedisConfig {
 
-    // Lấy giá trị từ application.yml, nếu không có thì mặc định 10 phút (600000ms)
-    @Value("${spring.cache.redis.time-to-live:600000}")
-    private long timeToLive;
-
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // hỗ trợ LocalDateTime, Java 8 date/time
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // ⚡ bật Default Typing để giữ type info khi serialize bất kỳ object nào
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL
+        );
+
+        // Serializer chung, có type info → deserialize an toàn
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMillis(timeToLive)) // SỬA: Dùng biến timeToLive thay vì hardcode
-                .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(60))          // TTL cache
+                .disableCachingNullValues()                 // không cache null
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)

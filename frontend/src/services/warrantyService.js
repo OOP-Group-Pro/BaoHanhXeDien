@@ -1,4 +1,4 @@
-// src/services/warrantyService.js
+/* src/services/warrantyService.js */
 import { api } from './apiClient.js'; // Import hàm fetch đã có auth
 
 /**
@@ -31,11 +31,15 @@ export const rejectClaim = (claimId, reason) => {
 };
 
 /**
- * Phê duyệt một Claim
- * API: PUT /api/v1/claims/{claimId}/approve?approvalNotes=...
+ * Phê duyệt một Claim (Cập nhật)
+ * API: PUT /api/v1/claims/{claimId}/approve
+ * Body: { approvalNotes: "...", technicianId: 123 }
  */
-export const approveClaim = (claimId, approvalNotes = '') => {
-    return api.put(`/claims/${claimId}/approve?approvalNotes=${encodeURIComponent(approvalNotes)}`);
+export const approveClaim = (claimId, approvalNotes, technicianId) => {
+    return api.put(`/claims/${claimId}/approve`, {
+        approvalNotes: approvalNotes,
+        technicianId: parseInt(technicianId)
+    });
 };
 
 /**

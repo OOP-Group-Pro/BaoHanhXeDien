@@ -1,25 +1,44 @@
 server:
   port: 8080
+  servlet:
+    context-path: /vehicle-service # Chú ý: context-path này quan trọng cho Feign Client
+  error:
+    include-message: always
+    include-binding-errors: always
 
 spring:
   application:
-    name: user-service # Đặt tên rõ ràng cho service
-
+    name: OEM_EV_WARRANTY_MANAGEMENT_SYSTEM
   datasource:
-    url: jdbc:mysql://mysql-db:3306/user_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true&autoReconnect=true&connectTimeout=30000
+    url: jdbc:mysql://mysql-db:3306/vehicle_service?createDatabaseIfNotExist=true&serverTimezone=UTC&autoReconnect=true&connectTimeout=30000
     username: root
     password: 1234
-
-
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        format_sql: true
-    database-platform: org.hibernate.dialect.MySQLDialect
-    defer-datasource-initialization: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  # 🔥 [THÊM ĐOẠN NÀY ĐỂ FIX LỖI 500 "UNKNOWN ERROR"] 🔥
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false # Trả về dạng String "2025-11-23T..." thay vì mảng số
+    time-zone: Asia/Ho_Chi_Minh       # Múi giờ VN
+    default-property-inclusion: non_null # Bỏ qua các trường null cho gọn
+  # -----------------------------------------------------
+
+  profiles:
+    active: dev
+  security:
+    user:
+      name: admin
+      password: 1234
+      roles: ADMIN
+  main:
+    allow-bean-definition-overriding: true
 
   # --- CẤU HÌNH REDIS (MỚI) ---
   data:
@@ -32,79 +51,34 @@ spring:
   cache:
     type: redis
     redis:
-      time-to-live: 600000 # TTL mặc định 10 phút (600s)
-      cache-null-values: false # Không cache giá trị null để tránh lỗi logic
-
-  rabbitmq:
-    host: rabbitmq        # Tên service trong docker-compose
-    port: 5672
-    username: admin
-    password: password123
-    # Đảm bảo publisher confirm để tránh mất tin
-    publisher-confirm-type: correlated
-    publisher-returns: true
-    listener:
-      simple:
-        acknowledge-mode: manual # [OPTION] Nếu sau này User Service cũng nhận ti
-  sql:
-    init:
-      mode: always
-
-
-  security:
-    user:
-      name: admin
-      password: 1234
-      roles: ADMIN
-  main:
-    allow-bean-definition-overriding: true
-
-service:
-  vehicle:
-    url: http://vehicle-service:8080
-  warranty:
-    url: http://warranty-service:8080
-  part:
-    url: http://part-service:8080
-  campaign:
-    url: http://campaign-service:8080
+      time-to-live: 600000 # 10 phút
+      cache-null-values: false
 
 feign:
+  circuitbreaker:
+    enabled: true
   client:
     config:
+      user-center-service:
+        url: http://user-service:8080/
+      user-technician-service:
+        url: http://user-service:8080/
+      campaign-service:
+        url: http://campaign-service:8080/
+      part-service:
+        url: http://part-service:8080/
+      warranty-service:
+        url: http://warranty-service:8080/
       default:
         connectTimeout: 5000
         readTimeout: 10000
 
-circuitbreaker:
-  enabled: true
+app:
+  internal-secret: ${INTERNAL_SERVICE_SECRET}
 
-# --- CẤU HÌNH LOGGING (MỚI) ---
+# --- LOGGING (MỚI) ---
 logging:
   level:
     root: INFO
-    org.springframework.cache: DEBUG # Để soi log cache hit/miss
+    org.springframework.cache: DEBUG
     com.oem.evwarranty: DEBUG
-    org.springframework.security: DEBUG
-    #     Để debug log gửi/nhận RabbitMQ
-    org.springframework.amqp: DEBUG
-    # ... giữ lại các log cũ ...
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-
-error:
-  include-message: always
-  include-binding-errors: always
-  include-stacktrace: always
-
-# ... các cấu hình khác bên trên ...
-
-app:
-  internal-secret: ${INTERNAL_SERVICE_SECRET}
-  rabbitmq:
-    exchange: oem.internal.exchange
-    routing-keys:
-      user-created: user.created   # <--- Dòng này bắt buộc phải có và thụt lề đúng
-      # Key định tuyến cho sự kiện tạo user
-jwt:
-  secret: ${JWT_SECRET}

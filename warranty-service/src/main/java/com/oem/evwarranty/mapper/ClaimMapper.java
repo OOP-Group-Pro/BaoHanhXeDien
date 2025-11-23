@@ -36,6 +36,11 @@ public class ClaimMapper {
                             .toList()
             );
         }
+        if (claim.getPartDetails() != null) {
+            dto.setPartList(claim.getPartDetails().stream()
+                    .map(PartMapper::mapToClaimPartDetailDto)
+            .toList());
+        }
         return dto;
     }
 
