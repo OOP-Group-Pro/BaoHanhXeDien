@@ -78,4 +78,12 @@ public class PartController {
         Map<String, PartResponse> partMap = partService.getPartDetailsByNumbers(partNumbers);
         return ResponseEntity.ok(partMap);
     }
+
+    // API Test Check Tồn Kho (Gọi thủ công để test RabbitMQ)
+    // Ví dụ: POST /api/v1/parts/check-stock?serial=SERIAL_123
+    @PostMapping("/check-stock")
+    public String checkStock(@RequestParam String serial) {
+        partService.checkStockAndNotify(serial);
+        return "Đã kiểm tra tồn kho cho serial: " + serial;
+    }
 }

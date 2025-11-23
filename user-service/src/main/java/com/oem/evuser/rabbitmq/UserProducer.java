@@ -1,5 +1,6 @@
 package com.oem.evuser.rabbitmq;
 
+
 import com.oem.evuser.dto.event.UserCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,13 +18,17 @@ public class UserProducer {
     @Value("${app.rabbitmq.exchange}")
     private String exchange;
 
-    // Nếu không tìm thấy trong yml, nó sẽ dùng "user.created" làm mặc định
+    // Lấy routing key từ yml, nếu lỗi thì dùng mặc định "user.created"
     @Value("${app.rabbitmq.routing-keys.user-created:user.created}")
     private String routingKey;
 
     public void sendUserCreatedEvent(UserCreatedEvent event) {
-        log.info("🚀 [RabbitMQ] Sending UserCreatedEvent: {}", event);
-        // Tự động convert sang JSON nhờ config ở Bước 3
-        rabbitTemplate.convertAndSend(exchange, routingKey, event);
+        log.info("🚀 [RabbitMQ] Đang gửi sự kiện UserCreatedEvent: {}", event);
+        try {
+            rabbitTemplate.convertAndSend(exchange, routingKey, event);
+            log.info("✅ [RabbitMQ] Gửi thành công tới Exchange: {}", exchange);
+        } catch (Exception e) {
+            log.error("❌ [RabbitMQ] Gửi thất bại: {}", e.getMessage());
+        }
     }
 }

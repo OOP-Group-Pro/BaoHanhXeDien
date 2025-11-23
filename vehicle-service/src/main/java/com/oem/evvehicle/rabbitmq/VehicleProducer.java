@@ -23,12 +23,12 @@ public class VehicleProducer {
     private String routingKey;
 
     public void sendVehicleCreatedEvent(VehicleCreatedEvent event) {
-        log.info("🚀 [RabbitMQ] Sending VehicleCreatedEvent for VIN: {}", event.getVin());
+        log.info("🚀 [RabbitMQ] Đang gửi sự kiện VehicleCreatedEvent cho VIN: {}", event.getVin());
         try {
             rabbitTemplate.convertAndSend(exchange, routingKey, event);
-            log.info("✅ Event sent successfully to Exchange: {}", exchange);
+            log.info("✅ Gửi thành công: {}", exchange);
         } catch (Exception e) {
-            log.error("❌ Failed to send VehicleCreatedEvent: {}", e.getMessage());
+            log.error("❌ Gửi thất bại: {}", e.getMessage());
         }
     }
 }

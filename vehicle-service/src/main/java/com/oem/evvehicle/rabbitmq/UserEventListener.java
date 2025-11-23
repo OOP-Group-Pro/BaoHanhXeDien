@@ -19,18 +19,18 @@ public class UserEventListener {
     @RabbitListener(queues = "${app.rabbitmq.queue}")
     @Transactional
     public void handleUserCreatedEvent(UserCreatedEvent event) {
-        log.info("📨 [RabbitMQ] Vehicle Service received event: {}", event);
+        log.info("📨[RabbitMQ] Nhận sự kiện User Created: {}", event);
 
         // 1. Chỉ xử lý nếu là Khách hàng (ROLE_USER)
         if ("ROLE_USER".equals(event.getRole())) {
 
             // 2. Check trùng lặp (Idempotency)
             if (customerRepository.existsByUserId(event.getUserId())) {
-                log.warn("⚠️ Customer profile already exists for UserID: {}", event.getUserId());
+                log.warn("⚠ Customer đã tồn tại với UserID: {}", event.getUserId());
                 return;
             }
 
-            log.info("✅ Detect new Customer (ID: {}). Saving to DB...", event.getUserId());
+            log.info("✅Phát hiện khách hàng mới (ID: {}). Đang lưu vào cơ sở dữ liệu...", event.getUserId());
 
             // 3. Map dữ liệu từ Event sang Entity Customer
             Customer newCustomer = new Customer();
@@ -41,7 +41,7 @@ public class UserEventListener {
 
             // 4. Lưu vào Database
             customerRepository.save(newCustomer);
-            log.info("💾 Saved Customer successfully. Internal ID: {}", newCustomer.getCustomerId());
+            log.info("💾✅ Đã tạo hồ sơ Customer mới. ID: {}", newCustomer.getCustomerId());
         }
     }
 }

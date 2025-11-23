@@ -1,14 +1,18 @@
-package com.oem.evwarranty.config;
+package com.oem.evcampaign.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.DefaultClassMapper; // Import này quan trọng
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class RabbitMQConfig {
@@ -19,22 +23,39 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.queue}")
     private String queueName;
 
-    @Value("${app.rabbitmq.routing-key:vehicle.created}")
+    @Value("${app.rabbitmq.routing-key}")
     private String routingKey;
 
+    // --- [FIX LỖI ClassNotFoundException] ---
     @Bean
     public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
-    }
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
 
-    // [QUAN TRỌNG] Tự động khai báo Queue/Exchange
+        // Tạo ClassMapper thủ công
+        DefaultClassMapper classMapper = new DefaultClassMapper();
+
+        // QUAN TRỌNG: Map class từ 'evpart' sang 'evcampaign'
+        Map<String, Class<?>> idClassMapping = new HashMap<>();
+        // Khi nhận được tin từ 'com.oem.evpart...', hãy map nó vào DTO của 'campaign'
+        idClassMapping.put("com.oem.evpart.dto.event.InventoryLowEvent", com.oem.evcampaign.dto.event.InventoryLowEvent.class);
+
+        classMapper.setIdClassMapping(idClassMapping);
+
+        // Tin tưởng tất cả các package (để tránh lỗi bảo mật nếu có)
+        classMapper.setTrustedPackages("*");
+
+        converter.setClassMapper(classMapper);
+        return converter;
+    }
+    // ----------------------------------------
+
     @Bean
     public AmqpAdmin amqpAdmin(ConnectionFactory connectionFactory) {
         return new RabbitAdmin(connectionFactory);
     }
 
     @Bean
-    public Queue warrantyQueue() {
+    public Queue campaignQueue() {
         return new Queue(queueName, true);
     }
 
@@ -43,25 +64,11 @@ public class RabbitMQConfig {
         return new TopicExchange(exchangeName);
     }
 
-    @Value("${app.rabbitmq.consumer.queue:part.claim.approved.queue}")
-    private String claimQueueName;
-
-    @Value("${app.rabbitmq.consumer.routing-key:claim.approved}")
-    private String claimRoutingKey;
-
-
-    // 1. Khai báo Queue nhận tin Claim
     @Bean
-    public Queue claimQueue() {
-        return new Queue(claimQueueName, true);
+    public Binding binding(Queue queue, TopicExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with(routingKey);
     }
 
-
-    // 2. Binding vào Exchange
-    @Bean
-    public Binding claimBinding(Queue claimQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(claimQueue).to(exchange).with(claimRoutingKey);
-    }
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);

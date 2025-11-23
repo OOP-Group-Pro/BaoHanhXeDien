@@ -1,8 +1,9 @@
 package com.oem.evcampaign.service;
 
-import com.oem.evwarranty.dto.request.*;
-import com.oem.evwarranty.dto.response.AffectedVehicleResponse;
-import com.oem.evwarranty.model.enums.AffectedStatus;
+import com.oem.evcampaign.dto.request.*;
+import com.oem.evcampaign.dto.response.AffectedVehicleResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
+import com.oem.evcampaign.model.enums.AffectedStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

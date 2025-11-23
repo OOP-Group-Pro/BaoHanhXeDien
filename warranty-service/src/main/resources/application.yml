@@ -48,6 +48,13 @@ spring:
     redis:
       time-to-live: 600000
       cache-null-values: false
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: password123
+    publisher-confirm-type: correlated
+    publisher-returns: true
   jpa:
     hibernate:
       dialect: org.hibernate.dialect.MySQLDialect
@@ -69,3 +76,12 @@ storage:
 
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+  rabbitmq:
+    exchange: oem.internal.exchange
+    # [QUAN TRỌNG] Kiểm tra kỹ dòng này
+    queue: warranty.vehicle.created.queue
+    routing-key: vehicle.created
+      # [THÊM MỚI] Cấu hình để nghe lệnh duyệt bảo hành
+    consumer:
+      queue: part.claim.approved.queue
+      routing-key: claim.approved

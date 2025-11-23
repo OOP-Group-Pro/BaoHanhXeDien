@@ -1,5 +1,5 @@
 package com.oem.evcampaign.controller;
-
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.config.ApiConstants;
 import com.oem.evcampaign.dto.request.AffectedVehicleCompleteRequest;
 import com.oem.evcampaign.dto.request.AffectedVehicleCreateRequest;
@@ -37,7 +37,8 @@ public class AffectedVehicleController {
                                                 @RequestParam(required = false) String vin,
                                                 @RequestParam(required = false) AffectedStatus status,
                                                 Pageable pageable) {
-        return service.search(campaignId, vin, status, pageable);
+        PageCacheDto<AffectedVehicleResponse> result = service.search(campaignId, vin, status, pageable);
+        return (Page<AffectedVehicleResponse>) ResponseEntity.ok(result);
     }
 
     @GetMapping("/{affectedId}")

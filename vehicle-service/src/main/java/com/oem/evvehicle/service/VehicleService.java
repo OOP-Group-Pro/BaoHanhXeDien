@@ -1,19 +1,23 @@
 package com.oem.evvehicle.service;
 
+import com.oem.evvehicle.dto.event.VehicleCreatedEvent;
 import com.oem.evvehicle.dto.response.CustomerResponseDTO;
 import com.oem.evvehicle.dto.request.VehicleRequestDTO;
 import com.oem.evvehicle.dto.response.VehicleResponseDTO;
 import com.oem.evvehicle.entity.Customer;
 import com.oem.evvehicle.entity.Vehicle;
 import com.oem.evvehicle.exception.ResourceNotFoundException;
+import com.oem.evvehicle.rabbitmq.VehicleProducer;
 import com.oem.evvehicle.repository.CustomerRepository;
 import com.oem.evvehicle.repository.VehicleRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,6 +27,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class VehicleService {
 
     @Autowired
@@ -31,23 +36,29 @@ public class VehicleService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    // 1. HÀM CREATE
+    @Autowired
+    private VehicleProducer vehicleProducer;
+
+    @Transactional
     public VehicleResponseDTO createVehicle(VehicleRequestDTO vehicleRequest) {
+        // 1. Validate VIN
         if (vehicleRepository.findByVehicleVin(vehicleRequest.getVehicleVin()).isPresent()) {
             throw new DataIntegrityViolationException("VIN '" + vehicleRequest.getVehicleVin() + "' already exists.");
         }
 
+        // 2. Tìm Customer
         Customer owner = customerRepository.findById(vehicleRequest.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
+        // 3. Map dữ liệu (Bao gồm cả logic update mới của bạn)
         Vehicle newVehicle = new Vehicle();
         newVehicle.setVehicleVin(vehicleRequest.getVehicleVin());
         newVehicle.setLicensePlate(vehicleRequest.getLicensePlate());
         newVehicle.setModel(vehicleRequest.getModel());
         newVehicle.setCustomer(owner);
 
-        // --- UPDATE MỚI CHO LOGIC BẢO HÀNH ---
-        // Mặc định nếu không nhập ngày bán thì lấy ngày hiện tại
+        // --- UPDATE MỚI CỦA BẠN ---
+        // Nếu không nhập ngày bán thì lấy ngày hiện tại
         newVehicle.setWarrantyStartDate(
                 vehicleRequest.getWarrantyStartDate() != null ? vehicleRequest.getWarrantyStartDate() : LocalDate.now()
         );
@@ -55,9 +66,31 @@ public class VehicleService {
         newVehicle.setCurrentOdometer(
                 vehicleRequest.getCurrentOdometer() != null ? vehicleRequest.getCurrentOdometer() : 0L
         );
-        // -------------------------------------
+        // ---------------------------
 
+        // 4. Lưu vào DB (MySQL)
         Vehicle savedVehicle = vehicleRepository.save(newVehicle);
+
+        // 5. [QUAN TRỌNG] Bắn tin nhắn sang RabbitMQ
+        try {
+            VehicleCreatedEvent event = new VehicleCreatedEvent(
+                    savedVehicle.getVehicleId(),
+                    savedVehicle.getVehicleVin(),
+                    savedVehicle.getLicensePlate(),
+                    owner.getCustomerId(),
+                    // Chuyển LocalDate sang String để gửi qua JSON
+                    savedVehicle.getWarrantyStartDate().toString()
+            );
+
+            // Gửi đi
+            vehicleProducer.sendVehicleCreatedEvent(event);
+
+        } catch (Exception e) {
+            // Log lỗi nhưng KHÔNG throw exception để tránh rollback việc tạo xe
+            // (Vì lỗi gửi tin nhắn không nên ngăn cản việc bán xe)
+            log.error("⚠️ Lỗi gửi RabbitMQ Event cho xe {}: {}", savedVehicle.getVehicleVin(), e.getMessage());
+        }
+
         return convertToDTO(savedVehicle);
     }
 
