@@ -21,16 +21,24 @@ public class RedisConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // 1. ObjectMapper hỗ trợ Java 8 Date/Time
         ObjectMapper objectMapper = new ObjectMapper();
+
+        // hỗ trợ LocalDateTime, Java 8 date/time
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
+        // ⚡ bật Default Typing để giữ type info khi serialize bất kỳ object nào
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL
+        );
+
+        // Serializer chung, có type info → deserialize an toàn
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(60))
-                .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(60))          // TTL cache
+                .disableCachingNullValues()                 // không cache null
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 

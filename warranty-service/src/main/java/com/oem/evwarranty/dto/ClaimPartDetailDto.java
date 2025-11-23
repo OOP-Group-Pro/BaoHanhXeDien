@@ -1,12 +1,12 @@
 package com.oem.evwarranty.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Builder
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ClaimPartDetailDto {
     private String partNumber;      // Mã số cho loại phụ tung -> dùng cái này để kiểm tra trong chính sách bảo hành và tồn kho
     private String partName;

@@ -1,5 +1,6 @@
 package com.oem.evcampaign.service.impl;
 
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.model.enums.CampaignStatus;
 import com.oem.evcampaign.model.enums.CampaignType;
 import com.oem.evcampaign.dto.request.CampaignCreateRequest;
@@ -87,16 +88,16 @@ public class CampaignServiceImpl implements CampaignService {
     @Override
     // 🚀 CACHE: Tìm kiếm chiến dịch (Cache theo tham số tìm kiếm)
     @Cacheable(value = "campaigns_search", key = "{#code, #status, #type, #pageable.pageNumber, #pageable.pageSize}")
-    public Page<CampaignResponse> search(String code, CampaignStatus status,
-                                         CampaignType type,
-                                         Pageable pageable) {
+    public PageCacheDto<CampaignResponse> search(String code, CampaignStatus status,
+                                                 CampaignType type,
+                                                 Pageable pageable) {
         String kw = (code == null) ? "" : code;
         if (status != null && type != null) {
-            return campaignRepo
+            return PageCacheDto.from(campaignRepo
                     .findByCodeContainingIgnoreCaseAndStatusAndType(kw, status, type, pageable)
-                    .map(CampaignMapper::toResponse);
+                    .map(CampaignMapper::toResponse));
         }
-        return campaignRepo.findByCodeContainingIgnoreCase(kw, pageable)
-                .map(CampaignMapper::toResponse);
+        return PageCacheDto.from(campaignRepo.findByCodeContainingIgnoreCase(kw, pageable)
+                .map(CampaignMapper::toResponse));
     }
 }

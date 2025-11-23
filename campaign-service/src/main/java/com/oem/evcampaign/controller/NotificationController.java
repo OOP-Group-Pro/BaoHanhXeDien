@@ -3,6 +3,7 @@ package com.oem.evcampaign.controller;
 import com.oem.evcampaign.config.ApiConstants;
 import com.oem.evcampaign.dto.request.NotificationCreateRequest;
 import com.oem.evcampaign.dto.response.NotificationResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.service.NotificationService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -35,12 +36,12 @@ public class NotificationController {
     }
 
     @GetMapping("/by-campaign/{campaignId}")
-    public Page<NotificationResponse> listByCampaign(@PathVariable Long campaignId, Pageable pageable) {
+    public PageCacheDto<NotificationResponse> listByCampaign(@PathVariable Long campaignId, Pageable pageable) {
         return service.listByCampaign(campaignId, pageable);
     }
 
     @GetMapping("/by-affected/{affectedId}")
-    public Page<NotificationResponse> listByAffected(@PathVariable Long affectedId, Pageable pageable) {
+    public PageCacheDto<NotificationResponse> listByAffected(@PathVariable Long affectedId, Pageable pageable) {
         return service.listByAffected(affectedId, pageable);
     }
 }

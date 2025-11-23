@@ -4,6 +4,7 @@ import com.oem.evcampaign.config.ApiConstants;
 import com.oem.evcampaign.dto.request.CampaignCreateRequest;
 import com.oem.evcampaign.dto.request.CampaignUpdateRequest;
 import com.oem.evcampaign.dto.response.CampaignResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.model.enums.CampaignStatus;
 import com.oem.evcampaign.model.enums.CampaignType;
 import com.oem.evcampaign.service.CampaignService;
@@ -47,10 +48,10 @@ public class CampaignController {
     }
 
     @GetMapping
-    public Page<CampaignResponse> search(@RequestParam(required = false) String code,
-                                         @RequestParam(required = false) CampaignStatus status,
-                                         @RequestParam(required = false) CampaignType type,
-                                         Pageable pageable) {
+    public PageCacheDto<CampaignResponse> search(@RequestParam(required = false) String code,
+                                                 @RequestParam(required = false) CampaignStatus status,
+                                                 @RequestParam(required = false) CampaignType type,
+                                                 Pageable pageable) {
         return service.search(code, status, type, pageable);
     }
 }

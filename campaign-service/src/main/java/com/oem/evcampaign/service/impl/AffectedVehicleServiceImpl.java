@@ -6,6 +6,7 @@ import com.oem.evcampaign.dto.request.AffectedVehicleScheduleRequest;
 import com.oem.evcampaign.dto.request.AffectedVehicleUpdateRequest;
 import com.oem.evcampaign.dto.request.*;
 import com.oem.evcampaign.dto.response.AffectedVehicleResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.exception.BadRequestException;
 import com.oem.evcampaign.exception.NotFoundException;
 import com.oem.evcampaign.model.AffectedVehicle;
@@ -97,20 +98,20 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     @Override
     // 🚀 CACHE: Tìm kiếm xe bị ảnh hưởng (Rất quan trọng khi check VIN)
     @Cacheable(value = "affected_search", key = "{#campaignId, #vinKeyword, #status, #pageable.pageNumber}")
-    public Page<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
-                                                AffectedStatus status, Pageable pageable) {
+    public PageCacheDto<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
+                                                        AffectedStatus status, Pageable pageable) {
         vinKeyword = (vinKeyword == null) ? "" : vinKeyword;
 
         if (status != null) {
-            return avRepo.findByCampaignIdAndStatus(campaignId, status, pageable)
-                    .map(AffectedVehicleMapper::toResponse);
+            return PageCacheDto.from(avRepo.findByCampaignIdAndStatus(campaignId, status, pageable)
+                    .map(AffectedVehicleMapper::toResponse));
         }
         if (!vinKeyword.isEmpty()) {
-            return avRepo.findByCampaignIdAndVehicleVinContainingIgnoreCase(campaignId, vinKeyword, pageable)
-                    .map(AffectedVehicleMapper::toResponse);
+            return PageCacheDto.from(avRepo.findByCampaignIdAndVehicleVinContainingIgnoreCase(campaignId, vinKeyword, pageable)
+                    .map(AffectedVehicleMapper::toResponse));
         }
-        return avRepo.findByCampaignId(campaignId, pageable)
-                .map(AffectedVehicleMapper::toResponse);
+        return PageCacheDto.from(avRepo.findByCampaignId(campaignId, pageable)
+                .map(AffectedVehicleMapper::toResponse));
     }
 
 

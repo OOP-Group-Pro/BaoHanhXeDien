@@ -1,4 +1,4 @@
-package com.oem.evpart.dto.response;
+package com.oem.evvehicle.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

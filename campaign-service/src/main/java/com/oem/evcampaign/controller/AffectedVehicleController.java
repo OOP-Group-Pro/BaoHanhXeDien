@@ -6,6 +6,7 @@ import com.oem.evcampaign.dto.request.AffectedVehicleCreateRequest;
 import com.oem.evcampaign.dto.request.AffectedVehicleScheduleRequest;
 import com.oem.evcampaign.dto.request.*;
 import com.oem.evcampaign.dto.response.AffectedVehicleResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.model.enums.AffectedStatus;
 import com.oem.evcampaign.service.AffectedVehicleService;
 import jakarta.validation.Valid;
@@ -32,10 +33,10 @@ public class AffectedVehicleController {
     }
 
     @GetMapping
-    public Page<AffectedVehicleResponse> search(@PathVariable Long campaignId,
-                                                @RequestParam(required = false) String vin,
-                                                @RequestParam(required = false) AffectedStatus status,
-                                                Pageable pageable) {
+    public PageCacheDto<AffectedVehicleResponse> search(@PathVariable Long campaignId,
+                                                        @RequestParam(required = false) String vin,
+                                                        @RequestParam(required = false) AffectedStatus status,
+                                                        Pageable pageable) {
         return service.search(campaignId, vin, status, pageable);
     }
 

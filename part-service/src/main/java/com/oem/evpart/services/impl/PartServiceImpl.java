@@ -68,15 +68,8 @@ public class PartServiceImpl implements PartService {
         }
 
         // CHUYỂN ĐỔI TỪ PAGE -> PAGECACHEDTO
-        List<PartResponse> content = partPage.map(partMapper::toPartResponse).getContent();
 
-            return new PageCacheDto<>(
-                    content,
-                    partPage.getTotalElements(),
-                    partPage.getTotalPages(),
-                    partPage.getNumber(),
-                    partPage.getSize()
-            );
+            return PageCacheDto.from(partPage.map(partMapper::toPartResponse));
         }
 
 

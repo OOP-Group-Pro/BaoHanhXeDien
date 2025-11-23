@@ -3,17 +3,13 @@ package com.oem.evwarranty.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oem.evwarranty.dto.ApproveRequestDto;
-import com.oem.evwarranty.dto.ClaimDto;
-import com.oem.evwarranty.dto.CreateClaimDto;
-import com.oem.evwarranty.dto.ClaimRepairResultDto;
+import com.oem.evwarranty.dto.*;
 import com.oem.evwarranty.model.AttachedDocument;
 import com.oem.evwarranty.security.UserDetailsPrincipal;
 import com.oem.evwarranty.service.FileStorageService;
 import com.oem.evwarranty.service.WarrantyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -145,7 +141,7 @@ public class WarrantyController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SC_STAFF', 'EVM_STAFF', 'SC_TECHNICIAN')")
     @GetMapping
-    public Page<ClaimDto> getClaims(
+    public PageCacheDto<ClaimDto> getClaims(
             @RequestParam(required = false) String claimCode,
             @RequestParam(required = false) String vin,
             @RequestParam(required = false) String status,
