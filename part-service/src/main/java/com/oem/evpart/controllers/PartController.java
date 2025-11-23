@@ -2,6 +2,7 @@ package com.oem.evpart.controllers;
 
 import com.oem.evpart.dto.request.ClaimAllocationRequest;
 import com.oem.evpart.dto.request.PartRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartAllocationResponse;
 import com.oem.evpart.dto.response.PartResponse;
 import com.oem.evpart.services.PartAllocationService;
@@ -38,8 +39,11 @@ public class PartController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PartResponse>> getAllParts(Pageable pageable) {
-        return ResponseEntity.ok(partService.getAllParts(pageable));
+    public ResponseEntity<PageCacheDto<PartResponse>> getAllParts( // Đổi kiểu trả về
+                                                                   @RequestParam(required = false) String name,
+                                                                   Pageable pageable
+    ) {
+        return ResponseEntity.ok(partService.getAllParts(name, pageable));
     }
 
     @PutMapping("/{id}")
@@ -58,10 +62,10 @@ public class PartController {
      * Nhận yêu cầu cấp phát dựa trên thông tin claim (tự động tìm kho).
      */
     @PostMapping("/allocate-claim")
-    public ResponseEntity<PartAllocationResponse> requestPartAllocationForClaim(
+    public ResponseEntity<List<PartAllocationResponse>> requestPartAllocationForClaim(
             @Valid @RequestBody ClaimAllocationRequest request) {
 
-        PartAllocationResponse response = allocationService.allocateForClaim(request);
+        List<PartAllocationResponse> response = allocationService.allocateForClaim(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 

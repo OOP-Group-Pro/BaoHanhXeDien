@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>EVM Staff - Báo cáo Thống kê</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/src/styles/evm-dashboard.css">
+</head>
+<body id="evm-reports-page">
+
+<aside class="sidebar" id="sidebar-placeholder"></aside>
+
+<div class="main-content">
+    <header class="header" id="header-placeholder"></header>
+
+    <main class="container-fluid p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Báo cáo & Thống kê</h1>
+            <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                <i class="fa-solid fa-rotate-right"></i> Cập nhật
+            </button>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-bold">Tỷ lệ Trạng thái Claim</div>
+                    <div class="card-body">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-bold">Top 5 Phụ tùng hay hỏng nhất</div>
+                    <div class="card-body">
+                        <canvas id="topPartsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white fw-bold">Xu hướng Yêu cầu Bảo hành (Năm nay)</div>
+            <div class="card-body">
+                <canvas id="trendChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="module" src="/src/evmStaff.js"></script>
+</body>
+</html>

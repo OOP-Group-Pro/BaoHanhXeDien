@@ -1,7 +1,10 @@
 package com.oem.evpart.dto.request;
 
+import com.oem.evpart.models.Part;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -10,8 +13,7 @@ import lombok.*;
 @Builder
 public class WarrantyPolicyRequest {
 
-    @NotNull(message = "partId là bắt buộc")
-    private Long partId;
+    private List<Part> parts;
 
     private Integer durationMonths;
 

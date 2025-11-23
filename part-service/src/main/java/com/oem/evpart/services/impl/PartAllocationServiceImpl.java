@@ -15,12 +15,19 @@ import com.oem.evpart.repositories.PartInventoryRepository;
 import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartAllocationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PartAllocationServiceImpl implements PartAllocationService {
@@ -33,66 +40,98 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- CREATE ALLOCATION ----------------
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "allocation_status", allEntries = true),
+            // SỬA: Cần xóa cache danh sách allocation của kho
+            @CacheEvict(value = "allocations_by_inventory", key = "#request.inventoryId"),
+            @CacheEvict(value = "allocations_by_center", key = "#request.serviceCenterId")
+    })
     public PartAllocationResponse createAllocation(PartAllocationRequest request) {
-        // 1. Tìm kho chứa phụ tùng
         PartInventory inventory = inventoryRepository.findById(request.getInventoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Inventory not found with id: " + request.getInventoryId()));
 
-        // 2. Kiểm tra số lượng tồn kho
         if (inventory.getQuantity() < request.getAllocatedQty()) {
             throw new IllegalArgumentException("Insufficient stock. Available: " + inventory.getQuantity()
                     + ", Requested: " + request.getAllocatedQty());
         }
 
-        // 3. Trừ số lượng tồn kho
         inventory.setQuantity(inventory.getQuantity() - request.getAllocatedQty());
         inventoryRepository.save(inventory);
 
-        // 4. Tạo bản ghi phân bổ
         PartAllocation newAllocation = allocationMapper.toPartAllocation(request);
         newAllocation.setInventory(inventory);
 
         PartAllocation savedAllocation = allocationRepository.save(newAllocation);
+        log.info("Created allocation id={} inventoryId={}", savedAllocation.getAllocationId(), request.getInventoryId());
         return allocationMapper.toPartAllocationResponse(savedAllocation);
     }
 
     // ---------------- ALLOCATE FOR CLAIM ----------------
     @Override
     @Transactional
-    public PartAllocationResponse allocateForClaim(ClaimAllocationRequest request) {
-        Long partId;
-        try {
-            partId = Long.parseLong(request.getPartNumbers().get(0));
-        } catch (Exception e) {
-            throw new IllegalArgumentException("partNumber không hợp lệ. Cần gửi partId dạng số.");
+    @CacheEvict(value = "allocation_status", allEntries = true) // Xóa cache liên quan
+    public List<PartAllocationResponse> allocateForClaim(ClaimAllocationRequest request) {
+        List<PartAllocationResponse> responses = new ArrayList<>();
+
+        // 1. Duyệt qua từng Item yêu cầu
+        for (ClaimAllocationRequest.AllocationItem item : request.getItems()) {
+
+            // ⚠️ QUAN TRỌNG: Giá trị này là "PIN", "MOTOR" (Mã Loại)
+            String reqPartType = item.getPartNumber();
+            int qtyRequired = item.getQuantity();
+
+            // 2. Tìm danh sách các Part Model thuộc loại này (VD: Tìm tất cả các loại PIN)
+            List<Part> candidateParts = partRepository.findAllByPartType(reqPartType);
+
+            if (candidateParts.isEmpty()) {
+                throw new ResourceNotFoundException("Không tìm thấy loại phụ tùng nào có mã loại: " + reqPartType);
+            }
+
+            // 3. Thuật toán tìm kho: "First Match" (Tìm thằng nào còn hàng thì lấy)
+            PartInventory selectedInventory = null;
+            Part selectedPart = null;
+
+            for (Part part : candidateParts) {
+                // Tìm trong kho của Part này xem có đủ số lượng không
+                // Lưu ý: Cần filter thêm serviceCenterId nếu kho của bạn chia theo trạm
+                // Ở đây tôi giả định kho chung hoặc logic tìm inventory đã bao gồm location
+                var inventoryOpt = inventoryRepository.findFirstByPartAndQuantityGreaterThanEqual(part, (long) qtyRequired);
+
+                if (inventoryOpt.isPresent()) {
+                    selectedInventory = inventoryOpt.get();
+                    selectedPart = part;
+                    break;
+                }
+            }
+
+            if (selectedInventory == null) {
+                throw new ResourceNotFoundException("Hết hàng (Out of Stock) cho loại: " + reqPartType);
+            }
+
+            selectedInventory.setQuantity(selectedInventory.getQuantity() - qtyRequired);
+            inventoryRepository.save(selectedInventory);
+
+            PartAllocation allocation = PartAllocation.builder()
+                    .inventory(selectedInventory)
+                    .claimCode(request.getClaimCode())
+                    .deliveredQty((long) qtyRequired)
+                    .allocatedDate(LocalDateTime.now())
+                    .status(PartAllocation.AllocationStatus.PENDING)
+                    .serviceCenterId(request.getServiceCenterId())
+                    .build();
+
+            PartAllocation savedAllocation = allocationRepository.save(allocation);
+            responses.add(allocationMapper.toPartAllocationResponse(savedAllocation));
         }
 
-        // 1. Tìm Part
-        Part part = partRepository.findById(partId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Phụ tùng (Part) với ID " + partId + " không tìm thấy."));
-
-        // 2. Tìm kho còn hàng
-        PartInventory inventory = inventoryRepository
-                .findFirstByPartAndQuantityGreaterThanEqual(part, request.getQuantity())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Đã hết hàng cho phụ tùng " + part.getName()
-                                + ". Yêu cầu " + request.getQuantity() + " cái."));
-
-        // 3. Gọi lại hàm createAllocation
-        PartAllocationRequest internalRequest = PartAllocationRequest.builder()
-                .inventoryId(inventory.getInventoryId())
-                .serviceCenterId(request.getServiceCenterId())
-                .allocatedQty(request.getQuantity())
-                .build();
-
-        return createAllocation(internalRequest);
+        return responses;
     }
 
     // ---------------- GET ALLOCATION BY ID ----------------
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "allocations_by_id", key = "#allocationId")
     public PartAllocationResponse getAllocationById(Long allocationId) {
         return allocationRepository.findById(allocationId)
                 .map(allocationMapper::toPartAllocationResponse)
@@ -112,6 +151,7 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- GET ALLOCATION BY INVENTORY ----------------
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "allocations_by_inventory", key = "#inventoryId")
     public List<PartAllocationResponse> getAllocationsByInventoryId(Long inventoryId) {
         return allocationRepository.findByInventory_InventoryId(inventoryId).stream()
                 .map(allocationMapper::toPartAllocationResponse)
@@ -121,19 +161,16 @@ public class PartAllocationServiceImpl implements PartAllocationService {
     // ---------------- NEW: GET STATUS BY CLAIM ID ----------------
     @Override
     @Transactional(readOnly = true)
-    public PartAllocationStatusDto getStatusByClaimId(Long claimId) {
-        // 1. Tìm allocation theo claimId (giả định bạn có field claimId trong entity)
-        List<PartAllocation> allocations = allocationRepository.findByClaimId(claimId);
+    @Cacheable(value = "allocation_status", key = "#claimCode")
+    public PartAllocationStatusDto getStatusByClaimCode(String claimCode) {
+        List<PartAllocation> allocations = allocationRepository.findByClaimCode(claimCode);
 
         if (allocations.isEmpty()) {
-            // Không có allocation => có thể không yêu cầu phụ tùng
-            return new PartAllocationStatusDto(claimId, PartAllocation.AllocationStatus.NOT_REQUIRED);
+            return new PartAllocationStatusDto(claimCode, PartAllocation.AllocationStatus.NOT_REQUIRED);
         }
 
-        // 2. Lấy allocation gần nhất (hoặc đầu tiên)
         PartAllocation allocation = allocations.get(0);
 
-        // 3. Xác định trạng thái (giả định entity có trường "status" hoặc "deliveredQty")
         PartAllocation.AllocationStatus status;
 
         if (allocation.getDeliveredQty() == null || allocation.getDeliveredQty() == 0) {
@@ -144,6 +181,6 @@ public class PartAllocationServiceImpl implements PartAllocationService {
             status = PartAllocation.AllocationStatus.READY_TO_INSTALL;
         }
 
-        return new PartAllocationStatusDto(claimId, status);
+        return new PartAllocationStatusDto(claimCode, status);
     }
 }

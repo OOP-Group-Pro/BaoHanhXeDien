@@ -30,8 +30,8 @@ public class WarrantyPolicyController {
     }
 
     @GetMapping("/part/{partId}")
-    public ResponseEntity<List<WarrantyPolicyResponse>> getPoliciesByPartId(@PathVariable Long partId) {
-        return ResponseEntity.ok(policyService.getPoliciesByPartId(partId));
+    public ResponseEntity<WarrantyPolicyResponse> getPoliciesByPartId(@PathVariable Long partId) {
+        return ResponseEntity.ok(policyService.getPolicyByPartId(partId));
     }
 
     @PutMapping("/{id}")

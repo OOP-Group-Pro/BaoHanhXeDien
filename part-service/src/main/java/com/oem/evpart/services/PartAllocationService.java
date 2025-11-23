@@ -17,7 +17,7 @@ public interface PartAllocationService {
     /**
      * Phân bổ phụ tùng cho một Claim cụ thể.
      */
-    PartAllocationResponse allocateForClaim(ClaimAllocationRequest request);
+    List<PartAllocationResponse> allocateForClaim(ClaimAllocationRequest request);
 
     /**
      * Lấy thông tin một lần phân bổ cụ thể bằng ID.
@@ -38,5 +38,5 @@ public interface PartAllocationService {
      * Lấy trạng thái cấp phát phụ tùng cho một Claim cụ thể.
      * Dùng cho màn hình Kỹ thuật viên để hiển thị tiến độ.
      */
-    PartAllocationStatusDto getStatusByClaimId(Long claimId);
+    PartAllocationStatusDto getStatusByClaimCode(String claimCode);
 }

@@ -1,5 +1,21 @@
 
 services:
+  redis-cache:
+    image: redis:6.2-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    networks:
+      - oem-network
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+
+
   # 1. CSDL MYSQL
   mysql-db:
     image: mysql:8.0
@@ -36,7 +52,11 @@ services:
     environment:
       JWT_SECRET: "we_dont_talk_anymore_like_we_used_to_do"
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
@@ -52,8 +72,12 @@ services:
     networks:
       - oem-network
     environment:
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
@@ -70,7 +94,12 @@ services:
       - oem-network
     environment:
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
@@ -87,7 +116,11 @@ services:
       - oem-network
     environment:
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
@@ -108,7 +141,11 @@ services:
     # Khai báo phụ thuộc cho WARRANTY-SERVICE
     environment:
       INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+      redis-cache:
+        condition: service_healthy
       mysql-db:
         condition: service_healthy
       user-service:

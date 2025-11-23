@@ -15,8 +15,13 @@ public class PartRequest {
 
     private String serialNumber;
 
+    private Double price;
+
     private String manufacturer;
 
     private String partType;
+
+    // ⬇️ TRƯỜNG MỚI: ID của chính sách bảo hành áp dụng
+    private Long warrantyPolicyId;
 }
 
