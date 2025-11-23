@@ -20,6 +20,7 @@ public class WarrantyPolicy {
     private Long policyId;
 
     @OneToMany(mappedBy = "warrantyPolicy")
+    @ToString.Exclude
     private List<Part> parts;
 
     @Column(name = "duration_months")

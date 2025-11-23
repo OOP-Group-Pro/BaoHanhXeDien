@@ -26,6 +26,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="ev-warranty-parent" target="21" />
       <module name="template-service" target="21" />
       <module name="template-service (1)" target="21" />
       <module name="user_service" target="21" />
