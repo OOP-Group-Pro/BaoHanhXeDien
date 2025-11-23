@@ -2,7 +2,6 @@ package com.oem.evwarranty.mapper;
 
 import com.oem.evwarranty.dto.AttachedDocumentDto;
 import com.oem.evwarranty.model.AttachedDocument;
-import com.oem.evwarranty.model.WarrantyClaim;
 
 public class DocumentMapper {
     public static AttachedDocumentDto mapToAttachedDocumentDto(AttachedDocument document) {

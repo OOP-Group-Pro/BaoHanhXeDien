@@ -18,6 +18,9 @@ import com.oem.evwarranty.client.warranty.PartServiceClient;    // Feign Client
 import com.oem.evwarranty.repository.AttachedDocumentRepository;
 import com.oem.evwarranty.repository.specification.WarrantyClaimSpecification;
 import com.oem.evwarranty.security.UserDetailsPrincipal;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -27,9 +30,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -83,6 +84,7 @@ public class WarrantyService {
 
     // ⬇️ BƯỚC 3: HÀM CREATECLAIM (ĐÃ SỬA HOÀN CHỈNH) ⬇️
     @Transactional
+    @CacheEvict(value = "claim_list", allEntries = true)
     public Long createClaim(CreateClaimDto dto, List<MultipartFile> files, Long scStaffId) {
 
         // BƯỚC 1: XÁC THỰC
@@ -186,6 +188,16 @@ public class WarrantyService {
 
     // 2. Chức năng: PHÊ DUYỆT CLAIM (EVM STAFF)
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "claim_details", key = "#claimCode"), // Xóa cache chi tiết của claim này (nếu key là claimCode, cần sửa lại hàm getClaimDetails để dùng claimCode làm key, hoặc dùng claimId nếu sửa controller)
+            // LƯU Ý: Ở đây hàm approve nhận claimId (Long), nhưng hàm getClaimDetails lại dùng claimCode (String).
+            // Để cache hoạt động hiệu quả, nên thống nhất dùng 1 loại key hoặc phải query DB để lấy code từ ID trước khi evict.
+            // Cách đơn giản nhất: Xóa toàn bộ cache chi tiết (hơi tốn kém nhưng an toàn) hoặc chấp nhận cache cũ trong 10p.
+            // Ở đây tôi dùng allEntries = true cho an toàn nhất trong giai đoạn này.
+            @CacheEvict(value = "claim_details", allEntries = true),
+            @CacheEvict(value = "claim_history", allEntries = true),
+            @CacheEvict(value = "claim_list", allEntries = true)
+    })
     public void approveClaim(String claimCode, Long evmStaffId, String approvalNotes, Long technicalStaffId) {
         // [Logic chính]:
         // 1. Kiểm tra trạng thái hiện tại (phải là WAITING_APPROVAL).
@@ -259,6 +271,11 @@ public class WarrantyService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "claim_details", allEntries = true),
+            @CacheEvict(value = "claim_history", allEntries = true),
+            @CacheEvict(value = "claim_list", allEntries = true)
+    })
     public void rejectClaim(String claimCode, Long evmStaffId, String reason) {
         // B1: Xac dinh claim bi tu choi
         // B2: Kiem tra co reject claim duoc hay khong -> kiem tra trang thai claim -> Chi co the reject neu claim dang trong status WAITING_APPROVAL
@@ -286,11 +303,12 @@ public class WarrantyService {
     // Bước dưới đây giống như bước kiểm tra và đánh giá hiệu quả của công tác bảo hành ấy
     // 3. Chức năng: CẬP NHẬT KẾT QUẢ SỬA CHỮA (Lắp/Tháo Serial Number)
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "claim_details", allEntries = true),
+            @CacheEvict(value = "claim_history", allEntries = true),
+            @CacheEvict(value = "claim_list", allEntries = true)
+    })
     public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto, Long currentTechnicianId) {
-        // [Logic chính]:
-        // 1. Kiểm tra trạng thái Claim (Phải là APPROVED/IN_PROGRESS).
-        // 2. Cập nhật số seri mới lắp/hỏng cho ClaimPartDetail.
-        // 3. Cập nhật trạng thái Claim thành COMPLETED (nếu tất cả serial được điền).
 
         WarrantyClaim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
@@ -333,12 +351,16 @@ public class WarrantyService {
 
     // 4. Chức năng: XEM CHI TIẾT CLAIM (BẢN NÂNG CẤP CUỐI CÙNG)
     @Transactional(readOnly = true)
+    // 🚀 CACHE: Cache chi tiết Claim.
+    // Key là claimCode.
+    @Cacheable(value = "claim_details", key = "#claimCode")
     public ClaimDto getClaimDetails(String claimCode) {
+        System.out.println(">>> Getting Claim Details from DB for Code: " + claimCode);
         WarrantyClaim claim = claimRepo.findByClaimCode(claimCode)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
         claim.getPartDetails().forEach( part -> {
-            log.info("⁉️⁉️ Check partDetail of claim {} in getClaimDetails func with it's partDetails: {}", claim.getClaimCode(), part.getPartName());
-        });
+                    log.info("⁉️⁉️ Check partDetail of claim {} in getClaimDetails func with it's partDetails: {}", claim.getClaimCode(), part.getPartName());
+                });
 
         // 1. Chuyển đổi cơ bản (dùng Mapper)
         ClaimDto claimDto = ClaimMapper.mapToClaimDto(claim);
@@ -406,6 +428,7 @@ public class WarrantyService {
 
     // 5. Chức năng: XEM LỊCH SỬ TRẠNG THÁI
     @Transactional(readOnly = true)
+    @Cacheable(value = "claim_history", key = "#claimCode")
     public List<ClaimStatusLogDto> getClaimStatusHistory(String claimCode) {
         // Sử dụng phương thức findByClaimId trong LogRepo
         List<ClaimStatusLog> logs = logRepo.findByClaim_ClaimCodeOrderByTimestampAsc(claimCode);
@@ -437,7 +460,16 @@ public class WarrantyService {
     }
 
     // =======Ham lay claims duoc loc:========
-    public Page<ClaimDto> getClaims(
+    @Cacheable(
+            value = "claim_list",
+            key = "(#claimCode ?: '') + '-' + " +
+                    "(#vin ?: '') + '-' + " +
+                    "(#statusStr ?: '') + '-' + " +
+                    "(#fromDate ?: '') + '-' + " +
+                    "(#toDate ?: '') + '-' + " +
+                    "#pageable.pageNumber + '-' + #pageable.pageSize"
+    )
+    public PageCacheDto<ClaimDto> getClaims(
             String claimCode,
             String vin,
             String statusStr,
@@ -468,71 +500,62 @@ public class WarrantyService {
         specification = specification.and(WarrantyClaimSpecification.createdAfter(fromDate))
                 .and(WarrantyClaimSpecification.createdBefore(toDate));
 
-        // Lay Principal tu SecurityContext
         Object principal = authentication.getPrincipal();
-        // Ap dung logic phan quyen theo loai Principal:
+
         if (principal instanceof UserDetailsPrincipal userDetails) {
 
             Long currentUserId = userDetails.getUserId();
             Long currentCenterId = userDetails.getCenterId();
 
             List<String> roles = authentication.getAuthorities().stream()
-                    .map(auth -> auth.getAuthority())
+                    .map(a -> a.getAuthority())
                     .toList();
 
-            if (!roles.contains("ROLE_ADMIN") && ! roles.contains("ROLE_EVM_STAFF")) {
+            if (!roles.contains("ROLE_ADMIN") &&
+                    !roles.contains("ROLE_EVM_STAFF")) {
+
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
                 }if (roles.contains("ROLE_SC_TECHNICIAN")) {
                     Specification<WarrantyClaim> assignedToMe = (root, query, cb) ->
-                            cb.equal(root.get("technicalStaffId"), currentUserId);
-
-                    specification = specification.and(assignedToMe);
+                        cb.equal(root.get("technicalStaffId"), currentUserId);
+                    specification = specification.and(assignedToMe);}
+                else {
+                    specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
                 }
-                else specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
             }
-        } else if (principal instanceof String && principal.equals("internal-service")) {
-        } else {
-            // Case C: Lỗi bảo mật không xác định
-            throw new AccessDeniedException("Cannot determine user identity or authorization context.");
+
+        } else if (!(principal instanceof String && principal.equals("internal-service"))) {
+            throw new AccessDeniedException("Cannot determine user identity");
         }
 
-        // de toi uu viec goi feign và goi api thì thay vì mỗi một claim gọi một lần,
-        // Thì lấy danh sách những cái cần gọi, sau đó tạo feign yêu cầu truy vấn theo danh sách và
-        // Trả về thông tin cần theo danh sách đó
-
-        // Có 2 thông tin cần feign về:
-        // 1 là userDetail từ user service
-        // 2 là customer name từ VIN của vehicle service (Chu y, cafn loc VIN trung lap truoc khi goi feign)
-        // Bước làm:
-
-        // 1: Lay ket qua tu CSDL chua goi Feign:
         Page<WarrantyClaim> claimPage = claimRepo.findAll(specification, pageable);
 
-        // Lay danh sach technician ma claim da co:
         List<Long> technicianIds = claimPage.getContent().stream()
                 .map(WarrantyClaim::getTechnicalStaffId)
                 .filter(id -> id != null)
                 .distinct()
                 .toList();
-        // Lay danh sach cac VIN (loai bo trung lap)
+
         List<String> vins = claimPage.getContent().stream()
                 .map(WarrantyClaim::getVin)
                 .distinct()
                 .toList();
-        // Goi 2 feign de lay cac thong tin theo danh sach:
-        Map<String, String> customerNameMap = vehicleClient.getCustomerNamesByVins(vins);
-        Map<Long, UserResponseDto> technicianMap = userClient.getUserDetailsMap(technicianIds);
 
-        // Truyen du lieu vao List cac claim Dto:
+        Map<String, String> customerNameMap = Optional.ofNullable(
+                vehicleClient.getCustomerNamesByVins(vins)
+        ).orElse(Collections.emptyMap());
+
+        Map<Long, UserResponseDto> technicianMap = Optional.ofNullable(
+                userClient.getUserDetailsMap(technicianIds)
+        ).orElse(Collections.emptyMap());
+
         List<ClaimDto> claimDtos = claimPage.getContent().stream()
+                .filter(Objects::nonNull) // loại bỏ item null
                 .map(claim -> {
                     ClaimDto dto = ClaimMapper.mapToClaimDto(claim);
-                    // gan customer name vao dto:
                     dto.setCustomerName(customerNameMap.getOrDefault(dto.getVin(), "(Không tìm thấy)"));
-
                     if (claim.getTechnicalStaffId() != null) {
-                        // Lay thong tin cua technician neu da co :
                         UserResponseDto userInfo = technicianMap.get(claim.getTechnicalStaffId());
                         if (userInfo != null) {
                             dto.setTechnicalName(userInfo.getFullName());
@@ -543,9 +566,16 @@ public class WarrantyService {
                 .toList();
 
 
-        // 4️⃣ Lấy page
-        return new PageImpl<>(claimDtos, pageable, claimPage.getTotalElements());
+        return PageCacheDto.from(
+                new PageImpl<>(
+                        Optional.ofNullable(claimDtos).orElse(Collections.emptyList()),
+                        pageable,
+                        claimPage.getTotalElements()
+                )
+        );
+
     }
+
 
     public AttachedDocument getDocumentById(Long id) {
         return attachedDocRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Cannot find document with id: " + id));

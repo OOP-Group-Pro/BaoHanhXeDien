@@ -1,19 +1,29 @@
 package com.oem.evpart.services.impl;
 
+import com.oem.evpart.dto.event.InventoryLowEvent;
 import com.oem.evpart.dto.request.PartRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartResponse;
 import com.oem.evpart.exceptions.ResourceNotFoundException;
 import com.oem.evpart.mappers.PartMapper;
 import com.oem.evpart.models.Part;
+import com.oem.evpart.models.PartInventory;
+import com.oem.evpart.rabbitmq.InventoryProducer;
 import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +36,47 @@ public class PartServiceImpl implements PartService {
     private final PartRepository partRepository;
     private final PartMapper partMapper;
 
+    private final InventoryProducer inventoryProducer;
+    // Lấy ngưỡng mặc định từ file yml (ví dụ: 5)
+    @Value("${app.inventory.default-min-threshold:5}")
+    private int minThreshold;
+    @Transactional(readOnly = true)
+    public void checkStockAndNotify(String serialNumber) {
+        // 1. Tìm Part theo Serial Number
+        Part part = partRepository.findBySerialNumber(serialNumber)
+                .orElseThrow(() -> new RuntimeException("Part not found with Serial: " + serialNumber));
+
+        long totalAvailableQuantity = 0;
+
+        // 2. Tính tổng tồn kho từ danh sách Inventory
+        if (part.getInventories() != null && !part.getInventories().isEmpty()) {
+            totalAvailableQuantity = part.getInventories().stream()
+                    // Chỉ đếm những hàng đang 'Available' (Sẵn sàng dùng)
+                    .filter(inv -> PartInventory.Status.Available.equals(inv.getStatus()))
+                    .mapToLong(PartInventory::getQuantity) // Lấy field quantity (kiểu Long)
+                    .sum();
+        }
+
+        log.info("🔍 Check Stock for {}: Total Available = {}", part.getName(), totalAvailableQuantity);
+
+        // 3. So sánh với ngưỡng an toàn -> Bắn Event
+        if (totalAvailableQuantity <= minThreshold) {
+            InventoryLowEvent event = new InventoryLowEvent(
+                    part.getSerialNumber(),
+                    part.getName(),
+                    (int) totalAvailableQuantity, // Cast Long -> Int cho DTO
+                    "Cảnh báo: Phụ tùng " + part.getName() + " sắp hết hàng (Dưới " + minThreshold + ")!",
+                    LocalDateTime.now().toString()
+            );
+
+            inventoryProducer.sendInventoryLowEvent(event);
+        }
+    }
+
+
     @Override
     @Transactional
+    @CacheEvict(value = "parts_list", allEntries = true)
     public PartResponse createPart(PartRequest partRequest) {
         if(partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
             throw new RuntimeException("Serial number already exists");
@@ -40,6 +89,7 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "parts", key = "#partId")
     public PartResponse getPartById(Long partId) {
         Part part = partRepository.findById(partId)
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + partId));
@@ -48,22 +98,30 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PartResponse> getAllParts(String keyword, Pageable pageable) {
+    // Lưu cache dưới dạng PageCacheDto (Serializable & POJO) => An toàn tuyệt đối
+    @Cacheable(value = "parts_list", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #keyword")
+    public PageCacheDto<PartResponse> getAllParts(String keyword, Pageable pageable) {
         Page<Part> partPage;
 
-        if (keyword != null && !keyword.isBlank()) {
-            // Nếu có từ khóa, tìm theo Tên hoặc Mã
-            partPage = partRepository.findByNameContainingIgnoreCaseOrSerialNumberContainingIgnoreCase(keyword, keyword, pageable);
+        // Logic tìm kiếm giữ nguyên
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            partPage = partRepository.searchParts(keyword.trim(), pageable);
         } else {
-            // Nếu không, lấy tất cả
             partPage = partRepository.findAll(pageable);
         }
 
-        return partPage.map(partMapper::toPartResponse);
-    }
+        // CHUYỂN ĐỔI TỪ PAGE -> PAGECACHEDTO
 
-    @Override
+            return PageCacheDto.from(partPage.map(partMapper::toPartResponse));
+        }
+
+
+        @Override
     @Transactional
+    @Caching(
+            put = { @CachePut(value = "parts", key = "#partId") },
+            evict = { @CacheEvict(value = "parts_list", allEntries = true) }
+    )
     public PartResponse updatePart(Long partId, PartRequest partRequest) {
         Part existingPart = partRepository.findById(partId)
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + partId));
@@ -75,6 +133,12 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "parts", key = "#partId"),
+                    @CacheEvict(value = "parts_list", allEntries = true)
+            }
+    )
     public void deletePart(Long partId) {
         if (!partRepository.existsById(partId)) {
             throw new ResourceNotFoundException("Part not found with id: " + partId);

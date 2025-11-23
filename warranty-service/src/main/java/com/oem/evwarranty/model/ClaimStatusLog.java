@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.oem.evwarranty.enums.ClaimStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import com.oem.evwarranty.model.WarrantyClaim;
-import org.w3c.dom.Text;
 
 import java.time.LocalDateTime;
 

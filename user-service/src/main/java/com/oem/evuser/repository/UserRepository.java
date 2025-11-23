@@ -1,0 +1,14 @@
+package com.oem.evuser.repository;
+
+import com.oem.evuser.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+    boolean existsByUsername(String username);
+    List<User> findByRoles_RoleNameAndServiceCenterId (String roleName, Long serviceCenterId);
+    List<User> findByRoles_RoleName (String roleName);
+}

@@ -13,6 +13,10 @@ public class Customer {
     @Column(name = "customer_id")
     private Long customerId;
 
+    // [THÊM MỚI] ID tham chiếu sang User Service (Quan trọng cho đồng bộ)
+    @Column(name = "user_id", unique = true)
+    private Long userId;
+
     @Column(name = "customer_name", nullable = false)
     private String customerName;
 

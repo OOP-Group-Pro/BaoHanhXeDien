@@ -53,7 +53,27 @@ export function renderTechnicianSidebar() {
             </div>
         </nav>
     `;
+        const menuLinks = placeholder.querySelectorAll('.sidebar-nav a');
+        menuLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault(); // Ngăn thẻ a load lại trang
 
+                // Bước 1: Xóa class 'active' khỏi TẤT CẢ các link
+                menuLinks.forEach(item => item.classList.remove('active'));
+
+                // Bước 2: Thêm class 'active' cho link VỪA BẤM
+                link.classList.add('active');
+
+                // Bước 3: (Tùy chọn) Gọi hàm chuyển đổi nội dung
+                // Ví dụ: Bạn có thể bắt sự kiện này ở file technician.js để ẩn hiện bảng
+                const section = link.getAttribute('data-section');
+                triggerSectionChange(section);
+            });
+        });
+    function triggerSectionChange(sectionName) {
+        const event = new CustomEvent('switchSection', { detail: sectionName });
+        document.dispatchEvent(event);
+    }
     // Gắn sự kiện Logout (Giống StaffSidebar)
     const logoutBtn = document.getElementById('sidebar-logout-btn');
     if (logoutBtn) {

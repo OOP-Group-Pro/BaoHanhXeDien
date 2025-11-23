@@ -4,15 +4,34 @@ services:
     image: redis:6.2-alpine
     container_name: redis-cache
     ports:
-        - "6379:6379"
+      - "6379:6379"
     networks:
-        - oem-network
+      - oem-network
     command: redis-server --save 60 1 --loglevel warning
     healthcheck:
-        test: [ "CMD", "redis-cli", "ping" ]
-        interval: 5s
-        timeout: 3s
-        retries: 5
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: oem-rabbitmq
+    ports:
+      - "5672:5672"   # Port nhận message (AMQP)
+      - "15672:15672" # Port giao diện quản lý (UI)
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password123
+    networks:
+      - oem-network
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
   # 1. CSDL MYSQL
   mysql-db:
     image: mysql:8.0
@@ -56,6 +75,8 @@ services:
         condition: service_healthy
       mysql-db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
 
   # 3. VEHICLE-SERVICE
@@ -69,13 +90,15 @@ services:
     networks:
       - oem-network
     environment:
-      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
       SPRING_DATA_REDIS_HOST: redis-cache
       SPRING_DATA_REDIS_PORT: 6379
+      INTERNAL_SERVICE_SECRET: "we_dont_talk_anymore"
     depends_on:
       redis-cache:
         condition: service_healthy
       mysql-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
 
@@ -94,9 +117,12 @@ services:
       SPRING_DATA_REDIS_HOST: redis-cache
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+
       redis-cache:
         condition: service_healthy
       mysql-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
 
@@ -119,6 +145,8 @@ services:
         condition: service_healthy
       mysql-db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     command: /bin/sh -c "sleep 15 && java -jar /app.jar"
 
   # 6. WARRANTY-SERVICE (ĐÃ THÊM depends_on CHÍNH XÁC)
@@ -140,6 +168,8 @@ services:
       SPRING_DATA_REDIS_HOST: redis-cache
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       redis-cache:
         condition: service_healthy
       mysql-db:

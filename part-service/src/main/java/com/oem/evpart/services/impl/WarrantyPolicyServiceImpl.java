@@ -10,22 +10,26 @@ import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.repositories.WarrantyPolicyRepository;
 import com.oem.evpart.services.WarrantyPolicyService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     private final WarrantyPolicyRepository policyRepository;
     private final PartRepository partRepository;
-    private final WarrantyPolicyMapper policyMapper; // Giả sử bạn đã tạo mapper này
+    private final WarrantyPolicyMapper policyMapper;
 
     @Override
     @Transactional
+    @CacheEvict(value = "warranty_policies", key = "#request.partId")
     public WarrantyPolicyResponse createPolicy(WarrantyPolicyRequest request) {
 
         WarrantyPolicy newPolicy = policyMapper.toWarrantyPolicy(request);
@@ -45,6 +49,7 @@ public class WarrantyPolicyServiceImpl implements WarrantyPolicyService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "warranty_policies", key = "#partId")
     public WarrantyPolicyResponse getPolicyByPartId(Long partId) {
         Part part = partRepository.findByPartId(partId).orElseThrow( () -> new ResourceNotFoundException("Part not found with id: " + partId));
 

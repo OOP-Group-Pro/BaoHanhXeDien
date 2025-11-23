@@ -9,6 +9,8 @@ import com.oem.evvehicle.repository.InstalledPartRepository;
 import com.oem.evvehicle.repository.VehicleRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Thêm Transactional
 
@@ -28,6 +30,7 @@ public class InstalledPartService {
      * Cập nhật: Thêm @Transactional
      */
     @Transactional // Đảm bảo lưu và gọi trừ kho là một giao dịch
+    @CacheEvict(value = "vehicle_parts", key = "#requestDTO.vehicleId")
     public InstalledPartResponseDTO installPart(InstalledPartRequestDTO requestDTO) {
         Vehicle vehicle = vehicleRepository.findById(requestDTO.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + requestDTO.getVehicleId()));
@@ -52,6 +55,7 @@ public class InstalledPartService {
 
     // 3. UPDATE (MỚI)
     @Transactional
+    @CacheEvict(value = "vehicle_parts", allEntries = true) // update có thể đổi xe, nên clear hết cho an toàn
     public InstalledPartResponseDTO updatePart(Long id, InstalledPartRequestDTO requestDTO) {
         // Tìm Part cũ
         InstalledPart existingPart = installedPartRepository.findById(id)
@@ -72,7 +76,8 @@ public class InstalledPartService {
         return convertToDTO(updatedPart);
     }
 
-
+    // 🚀 Cache danh sách phụ tùng trên 1 xe (Rất hay dùng khi tra cứu bảo hành)
+    @Cacheable(value = "vehicle_parts", key = "#vehicleId")
     public List<InstalledPartResponseDTO> getPartsByVehicleId(Long vehicleId) {
         if (!vehicleRepository.existsById(vehicleId)) {
             throw new ResourceNotFoundException("Vehicle not found with ID: " + vehicleId);

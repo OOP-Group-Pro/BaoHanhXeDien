@@ -3,6 +3,7 @@ package com.oem.evpart.dto.response;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat; // ⬅️ Import cái này
 
 @Getter
 @Setter
@@ -24,7 +25,9 @@ public class PartResponse {
     private Integer warrantyMileageLimit;
     private String warrantyConditions;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 }
 

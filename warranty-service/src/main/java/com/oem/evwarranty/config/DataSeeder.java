@@ -2,7 +2,7 @@ package com.oem.evwarranty.config;
 
 import com.oem.evwarranty.enums.ClaimStatus;
 import com.oem.evwarranty.model.*;
-import com.oem.evwarranty.repository.*;
+import com.oem.evwarranty.repository.WarrantyClaimRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

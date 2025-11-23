@@ -23,6 +23,10 @@ spring:
           uri: http://user-service:8080
           predicates:
             - Path=/api/v1/auth/**
+        - id: user_service_request
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/v1/staff-requests/**
 
         # === PART-SERVICE (Sửa lỗi 404) ===
         # FIX: Tạo 4 route riêng, dùng cú pháp /** đã chạy
@@ -92,6 +96,14 @@ spring:
           uri: http://campaign-service:8080
           predicates:
             - Path=/api/v1/campaigns/**
+
+  # 🔥 [THÊM ĐOẠN NÀY ĐỂ FIX LỖI 500 "UNKNOWN ERROR"] 🔥
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false # Trả về dạng String "2025-11-23T..." thay vì mảng số
+    time-zone: Asia/Ho_Chi_Minh       # Múi giờ VN
+    default-property-inclusion: non_null # Bỏ qua các trường null cho gọn
+  # -----------------------------------------------------
 
 jwt:
   secret: ${JWT_SECRET}

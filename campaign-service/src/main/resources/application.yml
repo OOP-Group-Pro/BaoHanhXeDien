@@ -43,5 +43,31 @@ spring:
 
   main:
     allow-bean-definition-overriding: true
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+      cache-null-values: false
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: password123
+    listener:
+      simple:
+        acknowledge-mode: auto
+
+  # 🔥 [THÊM ĐOẠN NÀY ĐỂ FIX LỖI 500 "UNKNOWN ERROR"] 🔥
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false # Trả về dạng String "2025-11-23T..." thay vì mảng số
+    time-zone: Asia/Ho_Chi_Minh       # Múi giờ VN
+    default-property-inclusion: non_null # Bỏ qua các trường null cho gọn
+  # -----------------------------------------------------
+
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+  rabbitmq:
+    exchange: oem.internal.exchange
+    queue: campaign.inventory.low.queue  # Tên Queue riêng của Campaign
+    routing-key: inventory.low           # Key cần lắng nghe (khớp với Part Service)

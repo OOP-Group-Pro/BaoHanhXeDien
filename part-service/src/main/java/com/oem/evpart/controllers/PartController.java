@@ -2,6 +2,7 @@ package com.oem.evpart.controllers;
 
 import com.oem.evpart.dto.request.ClaimAllocationRequest;
 import com.oem.evpart.dto.request.PartRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartAllocationResponse;
 import com.oem.evpart.dto.response.PartResponse;
 import com.oem.evpart.services.PartAllocationService;
@@ -38,9 +39,9 @@ public class PartController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PartResponse>> getAllParts(
-            @RequestParam(required = false) String name, // ⬇️ Nhận tham số name từ URL
-            Pageable pageable
+    public ResponseEntity<PageCacheDto<PartResponse>> getAllParts( // Đổi kiểu trả về
+                                                                   @RequestParam(required = false) String name,
+                                                                   Pageable pageable
     ) {
         return ResponseEntity.ok(partService.getAllParts(name, pageable));
     }
@@ -76,5 +77,13 @@ public class PartController {
         // Nó nhận 1 List<String> và trả về Map<String (partNumber), PartResponse (chi tiết)>
         Map<String, PartResponse> partMap = partService.getPartDetailsByNumbers(partNumbers);
         return ResponseEntity.ok(partMap);
+    }
+
+    // API Test Check Tồn Kho (Gọi thủ công để test RabbitMQ)
+    // Ví dụ: POST /api/v1/parts/check-stock?serial=SERIAL_123
+    @PostMapping("/check-stock")
+    public String checkStock(@RequestParam String serial) {
+        partService.checkStockAndNotify(serial);
+        return "Đã kiểm tra tồn kho cho serial: " + serial;
     }
 }
