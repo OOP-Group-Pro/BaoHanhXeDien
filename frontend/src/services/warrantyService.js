@@ -56,8 +56,7 @@ export const getClaimDetails = (claimId) => {
  */
 export const getClaimHistory = (claimId) => {
     return api.get(`/claims/${claimId}/history`);
-}
-
+};
 
 /**
  * Cập nhật kết quả sửa chữa (dành cho Kỹ thuật viên)

@@ -589,211 +589,221 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-        const API_BASE_URL = 'http://localhost:80';
-        const statusFilter = document.getElementById('status-filter');
-        const tableBody = document.getElementById('claims-table-body');
+        // Wrap logic in try/catch so a single runtime error doesn't stop the rest of the UI
+        try {
+            const API_BASE_URL = 'http://localhost:80';
+            const statusFilter = document.getElementById('status-filter');
+            const tableBody = document.getElementById('claims-table-body');
 
-        const modal = document.getElementById('create-claim-modal');
-        const openModalBtn = document.getElementById('open-create-claim-modal');
-        const closeModalBtn = document.getElementById('close-claim-modal');
-        const cancelModalBtn = document.getElementById('cancel-claim-modal');
-        const createClaimForm = document.getElementById('create-claim-form');
-        const submitClaimBtn = document.getElementById('submit-claim-btn');
-        const claimErrorMessage = document.getElementById('claim-error-message');
+            const modal = document.getElementById('create-claim-modal');
+            const openModalBtn = document.getElementById('open-create-claim-modal');
+            const closeModalBtn = document.getElementById('close-claim-modal');
+            const cancelModalBtn = document.getElementById('cancel-claim-modal');
+            const createClaimForm = document.getElementById('create-claim-form');
+            const submitClaimBtn = document.getElementById('submit-claim-btn');
+            const claimErrorMessage = document.getElementById('claim-error-message');
 
-        // Lấy token từ localStorage
-        const token = localStorage.getItem('jwtToken'); // giả sử bạn lưu token key là 'jwtToken'
-        // if (!token) {
-        //     alert("Bạn chưa đăng nhập! Vui lòng đăng nhập trước khi truy cập.");
-        //     window.location.href = "login.html"; // chuyển về trang đăng nhập
-        //     return;
-        // }
+            // Lấy token từ localStorage (nếu không có token, xử lý mềm: log để debug)
+            const token = localStorage.getItem('jwtToken');
+            if (!token) console.debug('No jwtToken found in localStorage (this may be expected in dev).');
 
-        /**
-         * Hàm 1: Lấy danh sách Claims từ API (ko dùng mock data nữa)
-         */
-        async function fetchClaims(status = 'PENDING') {
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Đang tải dữ liệu...</td></tr>';
-            console.log(`Gọi API để lấy Claims với trạng thái: ${status}`);
+            /* Helper: an empty table placeholder */
+            function setLoadingRow(message = 'Đang tải dữ liệu...') {
+                if (!tableBody) return;
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px;">${message}</td></tr>`;
+            }
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/claims?status=${status}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+            async function fetchClaims(status = 'PENDING') {
+                setLoadingRow('Đang tải dữ liệu...');
+                console.log(`Gọi API để lấy Claims với trạng thái: ${status}`);
 
-                if (!response.ok) {
-                    throw new Error(`API lỗi: ${response.statusText}`);
+                if (!tableBody) return;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/claims?status=${status}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) throw new Error(`API lỗi: ${response.status} ${response.statusText}`);
+                    const data = await response.json();
+                    populateTable(data);
+
+                } catch (error) {
+                    console.error('Lỗi khi fetch dữ liệu:', error);
+                    setLoadingRow(`Lỗi khi tải dữ liệu: ${error.message}`);
+                }
+            }
+
+            function populateTable(data) {
+                if (!tableBody) return;
+                tableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Không tìm thấy Claim nào.</td></tr>';
+                    return;
                 }
 
-                const data = await response.json();
-                populateTable(data);
-
-            } catch (error) {
-                console.error("Lỗi khi fetch dữ liệu:", error);
-                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red; padding: 40px;">Lỗi khi tải dữ liệu: ${error.message}</td></tr>`;
-            }
-        }
-
-        /**
-         * Hàm 2: Hiển thị dữ liệu lên bảng
-         */
-        function populateTable(data) {
-            tableBody.innerHTML = '';
-
-            if (!data || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Không tìm thấy Claim nào.</td></tr>';
-                return;
-            }
-
-            data.forEach(item => {
-                const row = document.createElement('tr');
-                const formattedDate = new Date(item.dateCreated).toLocaleDateString('vi-VN');
-
-                row.innerHTML = `
-                <td>
-                    <span class="primary-text">${item.claimCode}</span>
-                    <span class="secondary-text">VIN: ${item.vin}</span>
-                </td>
-                <td>
-                    <span class="primary-text">${item.model}</span>
-                    <span class="secondary-text">KH: ${item.customerName}</span>
-                </td>
-                <td>
-                    <span class="primary-text">${item.scName}</span>
-                </td>
-                <td>
-                    <span class="status-badge status-${item.status}">${item.status}</span>
-                </td>
-                <td>${formattedDate}</td>
-                <td>
-                    <a href="approve-claim-detail.html?id=${item.id}" class="action-link" data-id="${item.id}">
-                        [Xem chi tiết]
-                    </a>
-                    <a href="#" class="action-link action-link-danger" data-id="${item.id}">
-                        [Từ chối]
-                    </a>
-                </td>
-            `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        statusFilter.addEventListener('change', (e) => {
-            fetchClaims(e.target.value);
-        });
-
-        tableBody.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = e.target;
-
-            if (target.classList.contains('action-link-danger')) {
-                const claimId = target.getAttribute('data-id');
-                const reason = prompt(`Nhập lý do từ chối cho Claim ID: ${claimId}`);
-                if (reason) handleRejectClaim(claimId, reason);
-            }
-
-            if (target.classList.contains('action-link') && !target.classList.contains('action-link-danger')) {
-                const claimId = target.getAttribute('data-id');
-                window.location.href = `approve-claim-detail.html?id=${claimId}`;
-            }
-        });
-
-        fetchClaims('PENDING');
-
-        // Modal
-        function openModal() {
-            claimErrorMessage.style.display = 'none';
-            createClaimForm.reset();
-            modal.classList.add('show');
-        }
-        function closeModal() {
-            modal.classList.remove('show');
-        }
-        openModalBtn.addEventListener('click', openModal);
-        closeModalBtn.addEventListener('click', closeModal);
-        cancelModalBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-
-        // Tạo Claim mới
-        async function handleCreateClaim(event) {
-            event.preventDefault();
-            setButtonLoading(true, "Đang lưu...");
-            claimErrorMessage.style.display = 'none';
-
-            const formData = new FormData(createClaimForm);
-            const requestedPartsList = formData.get('requestedParts').split(',')
-                .map(p => p.trim()).filter(p => p).map(p => ({ partNumber: p, quantity: 1 }));
-
-            const claimData = {
-                vin: formData.get('vin'),
-                description: formData.get('description'),
-                technicianId: formData.get('technicianId') ? parseInt(formData.get('technicianId')) : null,
-                isRecall: formData.get('isRecall') === 'on',
-                requestedParts: requestedPartsList,
-                attachedDocuments: []
-            };
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/claims`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(claimData)
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    const formattedDate = item.dateCreated ? new Date(item.dateCreated).toLocaleDateString('vi-VN') : '-';
+                    row.innerHTML = `
+                    <td>
+                        <span class="primary-text">${item.claimCode || '-'}</span>
+                        <span class="secondary-text">VIN: ${item.vin || '-'}</span>
+                    </td>
+                    <td>
+                        <span class="primary-text">${item.model || '-'}</span>
+                        <span class="secondary-text">KH: ${item.customerName || '-'}</span>
+                    </td>
+                    <td>
+                        <span class="primary-text">${item.scName || '-'}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${item.status || 'PENDING'}">${item.status || 'PENDING'}</span>
+                    </td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <a href="approve-claim-detail.html?id=${item.id}" class="action-link" data-id="${item.id}">[Xem chi tiết]</a>
+                        <a href="#" class="action-link action-link-danger" data-id="${item.id}">[Từ chối]</a>
+                    </td>
+                `;
+                    tableBody.appendChild(row);
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Lỗi khi tạo Claim');
-                }
-
-                const newClaimId = await response.json();
-                alert(`Tạo Claim thành công! Mã Claim ID: ${newClaimId}`);
-                closeModal();
-                fetchClaims(statusFilter.value);
-
-            } catch (error) {
-                console.error("Lỗi khi tạo Claim:", error);
-                claimErrorMessage.textContent = `Lỗi: ${error.message}`;
-                claimErrorMessage.classList.add('show');
-            } finally {
-                setButtonLoading(false, "Lưu Claim");
             }
-        }
 
-        createClaimForm.addEventListener('submit', handleCreateClaim);
+            if (statusFilter) {
+                statusFilter.addEventListener('change', (e) => fetchClaims(e.target.value));
+            }
 
-        async function handleRejectClaim(claimId, reason) {
-            try {
-                const url = `${API_BASE_URL}/api/v1/claims/${claimId}/reject?reason=${encodeURIComponent(reason)}`;
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+            if (tableBody) {
+                tableBody.addEventListener('click', (e) => {
+                    const target = e.target;
+                    if (!target) return;
+                    // handle reject
+                    if (target.classList.contains('action-link-danger')) {
+                        e.preventDefault();
+                        const claimId = target.getAttribute('data-id');
+                        const reason = prompt(`Nhập lý do từ chối cho Claim ID: ${claimId}`);
+                        if (reason) handleRejectClaim(claimId, reason);
+                    }
+                    // handle view
+                    if (target.classList.contains('action-link') && !target.classList.contains('action-link-danger')) {
+                        e.preventDefault();
+                        const claimId = target.getAttribute('data-id');
+                        if (claimId) window.location.href = `approve-claim-detail.html?id=${claimId}`;
                     }
                 });
-
-                if (!response.ok) throw new Error("Lỗi khi gửi yêu cầu từ chối.");
-
-                alert("Đã từ chối Claim thành công!");
-                fetchClaims(statusFilter.value);
-
-            } catch (error) {
-                alert(`Lỗi: ${error.message}`);
             }
-        }
 
-        function setButtonLoading(isLoading, text = "Lưu Claim") {
-            submitClaimBtn.disabled = isLoading;
-            submitClaimBtn.textContent = isLoading ? "Đang lưu..." : text;
+            // initial load
+            fetchClaims('PENDING');
+
+            // Modal helpers
+            function openModal() {
+                if (claimErrorMessage) {
+                    claimErrorMessage.style.display = 'none';
+                    claimErrorMessage.classList.remove('show');
+                }
+                if (createClaimForm) createClaimForm.reset();
+                if (modal) modal.classList.add('show');
+            }
+            function closeModal() {
+                if (modal) modal.classList.remove('show');
+            }
+
+            if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+            if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+            if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+            if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+            // safer form parsing and submit
+            async function handleCreateClaim(event) {
+                event.preventDefault();
+                if (submitClaimBtn) setButtonLoading(true, 'Đang lưu...');
+                if (claimErrorMessage) { claimErrorMessage.style.display = 'none'; claimErrorMessage.classList.remove('show'); }
+
+                const formData = createClaimForm ? new FormData(createClaimForm) : new FormData();
+                const partsRaw = formData.get('requestedParts') || '';
+                const requestedPartsList = partsRaw.split(',')
+                    .map(p => p.trim())
+                    .filter(p => p)
+                    .map(p => ({ partNumber: p, quantity: 1 }));
+
+                const claimData = {
+                    vin: formData.get('vin') || '',
+                    description: formData.get('description') || '',
+                    technicianId: formData.get('technicianId') ? parseInt(formData.get('technicianId')) : null,
+                    isRecall: formData.get('isRecall') === 'on',
+                    requestedParts: requestedPartsList,
+                    attachedDocuments: []
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/claims`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(claimData)
+                    });
+
+                    if (!response.ok) {
+                        let errorText = response.statusText;
+                        try { const ed = await response.json(); if (ed && ed.message) errorText = ed.message; } catch (e) {}
+                        throw new Error(errorText || 'Lỗi khi tạo Claim');
+                    }
+
+                    const newClaimId = await response.json();
+                    alert(`Tạo Claim thành công! Mã Claim ID: ${newClaimId}`);
+                    closeModal();
+                    fetchClaims(statusFilter ? statusFilter.value : 'PENDING');
+
+                } catch (error) {
+                    console.error('Lỗi khi tạo Claim:', error);
+                    if (claimErrorMessage) {
+                        claimErrorMessage.textContent = `Lỗi: ${error.message}`;
+                        claimErrorMessage.classList.add('show');
+                        claimErrorMessage.style.display = 'block';
+                    }
+                } finally {
+                    if (submitClaimBtn) setButtonLoading(false, 'Lưu Claim');
+                }
+            }
+
+            if (createClaimForm) createClaimForm.addEventListener('submit', handleCreateClaim);
+
+            async function handleRejectClaim(claimId, reason) {
+                try {
+                    const url = `${API_BASE_URL}/api/v1/claims/${claimId}/reject?reason=${encodeURIComponent(reason)}`;
+                    const response = await fetch(url, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) throw new Error('Lỗi khi gửi yêu cầu từ chối.');
+                    alert('Đã từ chối Claim thành công!');
+                    if (statusFilter) fetchClaims(statusFilter.value);
+
+                } catch (error) {
+                    alert(`Lỗi: ${error.message}`);
+                }
+            }
+
+            function setButtonLoading(isLoading, text = 'Lưu Claim') {
+                if (!submitClaimBtn) return;
+                submitClaimBtn.disabled = isLoading;
+                submitClaimBtn.textContent = isLoading ? 'Đang lưu...' : text;
+            }
+
+        } catch (err) {
+            console.error('Runtime error in approve-claim page script:', err);
         }
 
     });
