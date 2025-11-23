@@ -85,18 +85,18 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
-    // 🚀 CACHE: Tìm kiếm chiến dịch (Cache theo tham số tìm kiếm)
-    @Cacheable(value = "campaigns_search", key = "{#code, #status, #type, #pageable.pageNumber, #pageable.pageSize}")
-    public Page<CampaignResponse> search(String code, CampaignStatus status,
-                                         CampaignType type,
+    // Cache kết quả tìm kiếm (chỉ cache trang đầu tiên để tối ưu)
+    @Cacheable(value = "campaign_search", key = "{#code, #status, #type, #pageable.pageNumber}", condition = "#pageable.pageNumber == 0")
+    public Page<CampaignResponse> search(String code,
+                                         CampaignStatus status, // 1. Xóa đoạn com.oem... đi
+                                         CampaignType type,     // 2. Xóa đoạn com.oem... đi
                                          Pageable pageable) {
-        String kw = (code == null) ? "" : code;
-        if (status != null && type != null) {
-            return campaignRepo
-                    .findByCodeContainingIgnoreCaseAndStatusAndType(kw, status, type, pageable)
-                    .map(CampaignMapper::toResponse);
-        }
-        return campaignRepo.findByCodeContainingIgnoreCase(kw, pageable)
+
+        // Xử lý keyword: nếu null thì truyền rỗng để query vẫn chạy đúng
+        String keyword = (code != null) ? code.trim() : "";
+
+        // Gọi hàm search thông minh bên Repository
+        return campaignRepo.search(keyword, status, type, pageable)
                 .map(CampaignMapper::toResponse);
     }
 }
