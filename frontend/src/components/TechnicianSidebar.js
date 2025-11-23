@@ -1,35 +1,42 @@
-// Import hàm lấy thông tin user đã đăng nhập
+// src/components/TechnicianSidebar.js
 import { getUser } from '../utils/storage.js';
 
-export function renderTechnicianSidebar() {
-    const placeholder = document.getElementById('sidebar-placeholder');
-    if (!placeholder) return;
-
-    // Lấy thông tin user (từ auth.js/storage.js)
+export function renderTechnicianSidebar(placeholderId = 'sidebar-placeholder') {
     const user = getUser();
-    const username = user ? user.username : 'Technician'; // Lấy tên thật
+    const username = user ? user.username : 'Technician';
     const avatarInitial = username.charAt(0).toUpperCase();
 
-    // Đây là HTML sidebar Kỹ thuật viên
-    placeholder.innerHTML = `
-        <nav class="sidebar">
+    const sidebarHTML = `
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="avatar">${avatarInitial}</div>
                 <div class="user-info">
                     <strong>${username}</strong>
-                    <span>Technician Role</span>
+                    <span>Kỹ thuật viên</span>
                 </div>
             </div>
-            <ul class="sidebar-nav">
-                <li><a href="#"><i class="fa-solid fa-tachometer-alt"></i>Dashboard</a></li>
 
-                <li><a href="/pages/technician/technician.html" class="active" id="nav-my-jobs">
-                    <i class="fa-solid fa-wrench"></i>Công việc của tôi
-                </a></li>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" id="nav-my-jobs">
+                    <i class="fa-solid fa-wrench"></i>
+                    <span>Công việc của tôi</span>
+                </a>
 
-                <li><a href="#"><i class="fa-solid fa-file-invoice"></i>Claims (Tất cả)</a></li>
-                <li><a href="#"><i class="fa-solid fa-cogs"></i>Parts</a></li>
-            </ul>
-        </nav>
+                <a href="#" class="nav-item" id="nav-history">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Lịch sử sửa chữa</span>
+                </a>
+
+                <a href="#" class="nav-item" id="nav-profile">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Hồ sơ cá nhân</span>
+                </a>
+            </nav>
+        </aside>
     `;
+
+    const placeholder = document.getElementById(placeholderId);
+    if (placeholder) {
+        placeholder.innerHTML = sidebarHTML;
+    }
 }

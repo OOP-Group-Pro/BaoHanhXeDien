@@ -2,6 +2,7 @@ package com.oem.evvehicle.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -33,4 +34,12 @@ public class Vehicle {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
+
+    // QUAN TRỌNG: Ngày bắt đầu tính bảo hành (Ngày bán cho khách)
+    @Column(name = "warranty_start_date")
+    private LocalDate warrantyStartDate;
+
+    // QUAN TRỌNG: Số Km hiện tại (Cập nhật mỗi lần vào xưởng)
+    @Column(name = "current_odometer")
+    private Long currentOdometer;
 }

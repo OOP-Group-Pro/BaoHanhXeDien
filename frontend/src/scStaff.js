@@ -9,6 +9,9 @@ import { getCustomerNameByVin } from './services/vehicleService.js';
 import { searchParts } from "./services/partService.js";
 import { getUsersByRole } from "./services/userService.js";
 import { api } from './services/apiClient.js';
+import { setupVehicleLookup } from './JS/vehicle-lookup.js';
+import { setupAppointmentsPage } from './JS/sc-appointments.js';
+
 
 
 // --- BIẾN TOÀN CỤC ---
@@ -128,6 +131,8 @@ function main() {
     const path = window.location.pathname;
     console.log("LOG: Đang ở path:", path);
 
+    const bodyId = document.body.id;  // Lay body id de nhan dien trang
+
     // NẾU LÀ TRANG DASHBOARD / LIST
     if (path.endsWith('/scStaff/') || path.endsWith('/scStaff/index.html')) {
         console.log("LOG: Chạy logic trang Dashboard/List.");
@@ -141,6 +146,16 @@ function main() {
         console.log("LOG: Chạy logic trang Tạo Claim.");
         setupCreateClaimForm();
     }
+
+    // 3. ⬇️ TRANG TRA CỨU XE (SỬ DỤNG MODULE) ⬇️
+    // Kiểm tra ID body hoặc đường dẫn
+    if (bodyId === 'sc-vehicle-lookup-page' || path.includes('vehicle-lookup')) {
+        setupVehicleLookup(); // Gọi hàm từ file vehicleLookup.js
+    }
+
+    if (bodyId === 'sc-appointments-page' || path.includes('appointments.html')) {
+            setupAppointmentsPage();
+        }
 }
 
 
@@ -236,6 +251,8 @@ async function setupCreateClaimForm() {
             if (!selectedParts.find(p => p.partNumber === partNumber)) {
                 selectedParts.push({ partNumber: partNumber, partName: partName, quantity: 1 });
             }
+            console.log(`🤔 PartNumber=${partNumber}  and PartName=${partName}`);
+            console.log("⁉️⁉️ Selected parts:", selectedParts);
             renderSelectedPartsTable();
             partModalInstance.hide();
         }
@@ -282,7 +299,8 @@ async function setupCreateClaimForm() {
         e.preventDefault();
 
         // 1. Lấy dữ liệu DTO
-        const requestedPartsDTO = selectedParts.map(p => ({ partNumber: p.partNumber, quantity: p.quantity }));
+        const requestedPartsDTO = selectedParts.map(p => ({ partNumber: p.partNumber, quantity: p.quantity, partName: p.partName }));
+        console.log("⁉️⁉️⁉️ Check requestedPartsDTO: ", requestedPartsDTO);
         if (requestedPartsDTO.length === 0) {
             errorEl.textContent = 'Lỗi: Bạn phải thêm ít nhất 1 phụ tùng.';
             return;
@@ -302,6 +320,7 @@ async function setupCreateClaimForm() {
                 technicianId: null,
                 isRecall: false,
                 requestedParts: requestedPartsDTO
+
                 // Không cần 'attachedDocuments' ở đây, backend sẽ xử lý từ 'files'
             };
 

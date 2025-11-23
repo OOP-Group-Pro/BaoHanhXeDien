@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Chi tiết xe / Lịch sử (SC Staff)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="/src/styles/dashboard.css" >
+    <!-- sau dashboard.css (nếu có), để file này override được -->
+    <link rel="stylesheet" href="/src/styles/vehicle-history.css">
+</head>
+<body id="sc-vehicle-history-page">
+<div class="main-content container-fluid p-4">
+    <!-- Info + bộ lọc -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Thông tin xe & chủ xe -->
+        <div class="card">
+            <h3 class="card-title">Thông tin Xe & Chủ xe</h3>
+            <div class="form-row">
+                <label>VIN</label>
+                <div class="row-inline">
+                    <select id="vh-vin-prefix" class="input w-20">
+                        <option value="VIN">VIN</option>
+                    </select>
+                    <input id="vh-vin-input" class="input flex-1" placeholder="Nhập VIN" />
+                    <button id="vh-search-btn" class="btn">Tìm</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-3">
+                <div>
+                    <div>Model xe: <b id="vh-model">--</b></div>
+                    <div>Năm sản xuất: <b id="vh-year">--</b></div>
+                    <div>Loại pin: <b id="vh-battery">--</b></div>
+                    <div>Số ODO hiện tại: <b id="vh-odo">--</b></div>
+                    <div>Địa chỉ: <b id="vh-address">--</b></div>
+                </div>
+                <div>
+                    <div>Tên Khách hàng: <b id="vh-owner">--</b></div>
+                    <div>Số điện thoại: <b id="vh-phone">--</b></div>
+                    <div>Email: <b id="vh-email">--</b></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bộ lọc lịch sử -->
+        <div class="card">
+            <h3 class="card-title">Bộ lọc Lịch sử</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label>Loại dịch vụ</label>
+                    <select id="vh-type" class="input">
+                        <option value="">Tất cả</option>
+                        <option value="MAINTENANCE">Bảo dưỡng</option>
+                        <option value="RECALL">Chiến dịch/Recall</option>
+                        <option value="REPAIR">Sửa chữa</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Trung tâm</label>
+                    <input id="vh-center" class="input" placeholder="Tên trung tâm (tùy chọn)" />
+                </div>
+                <div>
+                    <label>Từ ngày</label>
+                    <input id="vh-from" type="date" class="input" />
+                </div>
+                <div>
+                    <label>Đến ngày</label>
+                    <input id="vh-to" type="date" class="input" />
+                </div>
+            </div>
+            <div class="mt-3">
+                <button id="vh-filter-btn" class="btn">Áp dụng</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bảng lịch sử -->
+    <section class="card mt-4">
+        <div class="flex-between">
+            <h3 class="card-title">Lịch sử Dịch vụ & Bảo hành</h3>
+            <small id="vh-score" class="muted"></small>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th style="width:120px">Ngày</th>
+                    <th>Loại dịch vụ</th>
+                    <th>Trung tâm</th>
+                    <th style="width:120px">Trạng thái</th>
+                </tr>
+                </thead>
+                <tbody id="vh-tbody"></tbody>
+            </table>
+        </div>
+        <div id="vh-empty" class="empty d-none">Chưa có lịch sử.</div>
+    </section>
+</div>
+
+<!-- JS chính của SC Staff -->
+<script type="module" src="/src/scStaff.js"></script>
+</body>
+</html>

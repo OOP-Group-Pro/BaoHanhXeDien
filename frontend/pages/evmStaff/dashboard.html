@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>EVM Staff • Dashboard</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="../../src/styles/dashboard.css" />
+    <link rel="stylesheet" href="../../src/styles/evm-dashboard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body id="evm-dashboard-page">
+<div class="main-content container-fluid p-4">
+    <h2 class="page-title">EVM Staff</h2>
+    <div class="muted mb-3">Màn hình • Nhân viên Hãng</div>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card">
+            <h3 class="card-title">Tổng Chi phí Bảo hành</h3>
+            <div class="kpi-row">
+                <div>
+                    <div class="muted sm">Tổng Chi phí Bảo hành</div>
+                    <div class="kpi" id="kpi-total-cost">—</div>
+                </div>
+                <div class="kpi-right">
+                    <div class="kpi-small muted">Số claim</div>
+                    <div class="kpi-small" id="kpi-total-claims">—</div>
+                </div>
+            </div>
+            <div class="progress mt-2"><div id="kpi-progress" style="width:0%"></div></div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Claims Chờ Duyệt</h3>
+            <div class="kpi-row">
+                <div class="kpi-big" id="kpi-approve">—</div>
+                <div class="kpi-split">/</div>
+                <div class="kpi-big" id="kpi-review">—</div>
+                <div class="kpi-split">/</div>
+                <div class="kpi-big" id="kpi-reject">—</div>
+            </div>
+            <div class="muted sm">Tỉ lệ Duyệt / Đang xử lý / Từ chối</div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="card">
+            <h3 class="card-title">Tỉ lệ Claim theo Trạng thái</h3>
+            <canvas id="chart-status" height="200"></canvas>
+        </div>
+        <div class="card">
+            <h3 class="card-title">Chi phí Bảo hành theo Tháng</h3>
+            <canvas id="chart-monthly" height="200"></canvas>
+        </div>
+    </section>
+</div>
+
+<script type="module" src="/src/evmStaff.js"></script>
+
+</body>
+</html>

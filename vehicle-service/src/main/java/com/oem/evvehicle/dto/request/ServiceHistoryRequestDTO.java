@@ -18,4 +18,6 @@ public class ServiceHistoryRequestDTO {
     private Long technicianId;
     //Có thể rỗng vì có thể ko lắp gì.
     private List<Long> partIds; // Danh sách ID của các linh kiện liên quan
+    @NotNull(message = "Phải nhập số ODO tại thời điểm sửa chữa")
+    private Long odometerReading;
 }

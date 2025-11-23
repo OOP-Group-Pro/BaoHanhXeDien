@@ -1,4 +1,5 @@
-import { api } from './apiClient.js';
+/* src/services/warrantyService.js */
+import { api } from './apiClient.js'; // Import hàm fetch đã có auth
 
 /**
  * Lấy danh sách claims
@@ -18,6 +19,8 @@ export const createClaim = (claimData) => {
     return api.post('/claims', claimData);
 };
 
+// --- BỔ SUNG HÀM MỚI ---
+
 /**
  * Từ chối một Claim
  * API: PUT /api/v1/claims/{claimId}/reject?reason=...
@@ -28,11 +31,15 @@ export const rejectClaim = (claimId, reason) => {
 };
 
 /**
- * Phê duyệt một Claim
- * API: PUT /api/v1/claims/{claimId}/approve?approvalNotes=...
+ * Phê duyệt một Claim (Cập nhật)
+ * API: PUT /api/v1/claims/{claimId}/approve
+ * Body: { approvalNotes: "...", technicianId: 123 }
  */
-export const approveClaim = (claimId, approvalNotes = '') => {
-    return api.put(`/claims/${claimId}/approve?approvalNotes=${encodeURIComponent(approvalNotes)}`);
+export const approveClaim = (claimId, approvalNotes, technicianId) => {
+    return api.put(`/claims/${claimId}/approve`, {
+        approvalNotes: approvalNotes,
+        technicianId: parseInt(technicianId)
+    });
 };
 
 /**
@@ -49,14 +56,17 @@ export const getClaimDetails = (claimId) => {
  */
 export const getClaimHistory = (claimId) => {
     return api.get(`/claims/${claimId}/history`);
-};
+}
+
 
 /**
- * SC Staff nhập kết quả sửa chữa (Giai đoạn 3)
- * API: PUT /api/v1/claims/{id}/repair-result
- * @param {string} claimId ID của Claim
- * @param {object} repairData Dữ liệu form (notes, partRemovedSerial, partInstalledSerial)
+ * Cập nhật kết quả sửa chữa (dành cho Kỹ thuật viên)
+ * API: PUT /api/v1/claims/{claimId}/repair-result
+ * @param {string} claimId - ID của claim
+ * @param {object} repairData - Dữ liệu DTO (ClaimRepairResultDto)
  */
 export const updateRepairResult = (claimId, repairData) => {
+    // API này cần gửi kèm 1 body (khác với approve/reject)
     return api.put(`/claims/${claimId}/repair-result`, repairData);
+
 };

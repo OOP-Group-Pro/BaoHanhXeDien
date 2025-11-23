@@ -7,7 +7,7 @@ public class DocumentMapper {
     public static AttachedDocumentDto mapToAttachedDocumentDto(AttachedDocument document) {
         return AttachedDocumentDto.builder()
                 .id(document.getId())
-                .url("/api/v1/claims/download-file/" + document.getId())
+                .url("/claims/download-file/" + document.getId())
                 .fileName(document.getFileName())
                 .fileType(document.getFileType())
                 .build();

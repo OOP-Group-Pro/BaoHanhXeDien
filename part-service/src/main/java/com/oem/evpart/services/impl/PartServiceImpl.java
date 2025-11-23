@@ -35,10 +35,10 @@ public class PartServiceImpl implements PartService {
     @Transactional
     @CacheEvict(value = "parts_list", allEntries = true)
     public PartResponse createPart(PartRequest partRequest) {
-        if (partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
-            log.warn("Attempt to create duplicate serialNumber: {}", partRequest.getSerialNumber());
-            throw new RuntimeException("Serial number already exists");
-        }
+        // Có thể thêm logic kiểm tra serial number đã tồn tại chưa
+         if(partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
+             throw new RuntimeException("Serial number already exists");
+         }
         Part newPart = partMapper.toPart(partRequest);
         Part savedPart = partRepository.save(newPart);
         log.info("Created new Part with ID: {}", savedPart.getPartId());
@@ -97,17 +97,29 @@ public class PartServiceImpl implements PartService {
             log.warn("Attempt to delete non-existent Part ID {}", partId);
             throw new ResourceNotFoundException("Part not found with id: " + partId);
         }
+        // Lưu ý: Do có ràng buộc ON DELETE RESTRICT,
+        // nếu Part này đang được tham chiếu ở bảng khác, câu lệnh này sẽ lỗi.
+        // Cần xử lý logic phức tạp hơn nếu muốn xóa (ví dụ: chỉ cho xóa khi không còn liên kết)
         partRepository.deleteById(partId);
         log.info("Deleted Part ID {}", partId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, PartResponse> getPartDetailsByNumbers(List<String> partNumbers) {
+        // ⚠️ LƯU Ý: Nếu partNumbers là danh sách serialNumber (ví dụ PN-123), dùng method này
+        // Nếu partNumbers là partType (ví dụ MOTOR), bạn cần sửa lại repository call tương ứng.
+        // Ở đây tôi giả định bạn tìm theo serialNumber (SKU)
+        //log.info("🤔🤔 getPartDetailsByNumbers received partNumbers : {} ", partNumbers);
         List<Part> parts = partRepository.findAllByPartTypeIn(partNumbers);
+        parts.forEach(part -> {
+           // log.info("🤔🤔 partRepository.findAllByPartTypeIn : {}", part);
+        });
 
         Map<String, PartResponse> partDetails = new HashMap<>();
         for (Part part : parts) {
-            partDetails.put(part.getSerialNumber(), partMapper.toPartResponse(part));
+            // Key là serialNumber, Value là Response (đã có thông tin bảo hành nhờ Mapper)
+            partDetails.put(part.getPartType(), partMapper.toPartResponse(part));
         }
 
         return partDetails;

@@ -59,10 +59,10 @@ public class PartController {
      * Nhận yêu cầu cấp phát dựa trên thông tin claim (tự động tìm kho).
      */
     @PostMapping("/allocate-claim")
-    public ResponseEntity<PartAllocationResponse> requestPartAllocationForClaim(
+    public ResponseEntity<List<PartAllocationResponse>> requestPartAllocationForClaim(
             @Valid @RequestBody ClaimAllocationRequest request) {
 
-        PartAllocationResponse response = allocationService.allocateForClaim(request);
+        List<PartAllocationResponse> response = allocationService.allocateForClaim(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 

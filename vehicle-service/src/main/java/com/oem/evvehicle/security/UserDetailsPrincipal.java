@@ -1,5 +1,8 @@
 package com.oem.evvehicle.security;
 
+import lombok.Getter;
+
+@Getter
 public class UserDetailsPrincipal {
     private Long userId;
     private Long centerId;
@@ -9,11 +12,4 @@ public class UserDetailsPrincipal {
         this.centerId = centerId;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public Long getCenterId() {
-        return centerId;
-    }
 }

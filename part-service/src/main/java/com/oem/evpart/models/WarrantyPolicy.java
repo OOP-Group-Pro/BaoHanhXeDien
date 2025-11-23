@@ -4,6 +4,7 @@ import com.oem.evpart.models.Part;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -18,9 +19,8 @@ public class WarrantyPolicy {
     @Column(name = "policy_id")
     private Long policyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "part_id", nullable = false)
-    private Part part;
+    @OneToMany(mappedBy = "warrantyPolicy")
+    private List<Part> parts;
 
     @Column(name = "duration_months")
     private Integer durationMonths;

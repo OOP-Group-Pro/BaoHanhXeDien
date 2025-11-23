@@ -57,16 +57,16 @@ public class PartAllocationController {
 
 
     /**
-     * GET /api/v1/allocations/status-by-claim/{claimId}
+     * GET /api/v1/allocations/status-by-claim/{claimCode}
      * Chức năng: Lấy trạng thái cấp phát phụ tùng cho một Claim ID cụ thể.
      * API này được gọi bởi Giao diện Kỹ thuật viên để hiển thị cột trạng thái.
      */
-    @GetMapping("/status-by-claim/{claimId}")
+    @GetMapping("/status-by-claim/{claimCode}")
     public ResponseEntity<PartAllocationStatusDto> getAllocationStatusForClaim(
-            @PathVariable Long claimId
+            @PathVariable String claimCode
     ) {
-        // Service sẽ chứa logic tìm kiếm allocation theo claimId và trả về DTO
-        PartAllocationStatusDto statusDto = allocationService.getStatusByClaimId(claimId);
+        // Service sẽ chứa logic tìm kiếm allocation theo claimCode và trả về DTO
+        PartAllocationStatusDto statusDto = allocationService.getStatusByClaimCode(claimCode);
         return ResponseEntity.ok(statusDto);
     }
 }

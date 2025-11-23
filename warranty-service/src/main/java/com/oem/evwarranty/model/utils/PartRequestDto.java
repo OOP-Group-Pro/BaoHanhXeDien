@@ -10,5 +10,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PartRequestDto {
     private String partNumber;
+    private String partName;
     private Integer quantity;
 }

@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
-@Order(1) // ⬅️ Đảm bảo filter này chạy đầu tiên
+@Order(1) //  Đảm bảo filter này chạy đầu tiên
 public class InternalAuthFilter extends OncePerRequestFilter {
 
     @Value("${INTERNAL_SERVICE_SECRET}")

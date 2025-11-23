@@ -1,13 +1,11 @@
 package com.oem.evvehicle.service;
 
-import com.oem.evvehicle.dto.event.VehicleCreatedEvent;
 import com.oem.evvehicle.dto.response.CustomerResponseDTO;
 import com.oem.evvehicle.dto.request.VehicleRequestDTO;
 import com.oem.evvehicle.dto.response.VehicleResponseDTO;
 import com.oem.evvehicle.entity.Customer;
 import com.oem.evvehicle.entity.Vehicle;
 import com.oem.evvehicle.exception.ResourceNotFoundException;
-import com.oem.evvehicle.rabbitmq.VehicleProducer;
 import com.oem.evvehicle.repository.CustomerRepository;
 import com.oem.evvehicle.repository.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +16,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,47 +32,62 @@ public class VehicleService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    @Autowired
-    private VehicleProducer vehicleProducer;
     // CREATE: Tạo một Vehicle mới
-    @Transactional // [NÊN THÊM] Để đảm bảo lưu DB thành công rồi mới gửi tin
     public VehicleResponseDTO createVehicle(VehicleRequestDTO vehicleRequest) {
-        // ... (Giữ nguyên logic kiểm tra VIN và tìm Customer cũ của bạn) ...
+        // Kiểm tra xem VIN đã tồn tại chưa
         if (vehicleRepository.findByVehicleVin(vehicleRequest.getVehicleVin()).isPresent()) {
             throw new DataIntegrityViolationException("VIN '" + vehicleRequest.getVehicleVin() + "' already exists.");
         }
-        Customer owner = customerRepository.findById(vehicleRequest.getCustomerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + vehicleRequest.getCustomerId()));
 
-        // ... (Giữ nguyên logic lưu Vehicle) ...
+        Customer owner = customerRepository.findById(vehicleRequest.getCustomerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+
         Vehicle newVehicle = new Vehicle();
         newVehicle.setVehicleVin(vehicleRequest.getVehicleVin());
         newVehicle.setLicensePlate(vehicleRequest.getLicensePlate());
         newVehicle.setModel(vehicleRequest.getModel());
         newVehicle.setCustomer(owner);
-        // Giả sử manufacturedDate là ngày mua/kích hoạt
-        newVehicle.setManufacturedDate(java.time.LocalDateTime.now());
+
+        // --- UPDATE MỚI CHO LOGIC BẢO HÀNH ---
+        // Mặc định nếu không nhập ngày bán thì lấy ngày hiện tại
+        newVehicle.setWarrantyStartDate(
+                vehicleRequest.getWarrantyStartDate() != null ? vehicleRequest.getWarrantyStartDate() : LocalDate.now()
+        );
+        // Mặc định ODO ban đầu là 0 nếu không nhập
+        newVehicle.setCurrentOdometer(
+                vehicleRequest.getCurrentOdometer() != null ? vehicleRequest.getCurrentOdometer() : 0L
+        );
+        // -------------------------------------
 
         Vehicle savedVehicle = vehicleRepository.save(newVehicle);
-
-        // 2. [THÊM] Gửi Event sang RabbitMQ (Side Effect)
-        try {
-            VehicleCreatedEvent event = new VehicleCreatedEvent(
-                    savedVehicle.getVehicleId(),
-                    savedVehicle.getVehicleVin(),
-                    savedVehicle.getLicensePlate(),
-                    owner.getCustomerId(), // Hoặc owner.getUserId() tùy logic bên Warranty cần gì
-                    savedVehicle.getManufacturedDate().toString() // Chuyển date sang string
-            );
-
-            vehicleProducer.sendVehicleCreatedEvent(event);
-
-        } catch (Exception e) {
-            // Log lỗi RabbitMQ nhưng KHÔNG rollback transaction DB (xe vẫn được tạo)
-            System.err.println("⚠️ Error sending RabbitMQ event: " + e.getMessage());
-        }
-
         return convertToDTO(savedVehicle);
+    }
+
+    // 2. HÀM UPDATE
+    public VehicleResponseDTO updateVehicle(Long id, VehicleRequestDTO vehicleRequest) {
+        Vehicle vehicleToUpdate = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with ID: " + id));
+
+        Customer owner = customerRepository.findById(vehicleRequest.getCustomerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+
+        vehicleToUpdate.setModel(vehicleRequest.getModel());
+        vehicleToUpdate.setLicensePlate(vehicleRequest.getLicensePlate());
+        vehicleToUpdate.setCustomer(owner);
+
+        // --- UPDATE MỚI ---
+        // Cho phép sửa ngày bảo hành nếu nhập sai (Admin operation)
+        if (vehicleRequest.getWarrantyStartDate() != null) {
+            vehicleToUpdate.setWarrantyStartDate(vehicleRequest.getWarrantyStartDate());
+        }
+        // Cho phép cập nhật ODO thủ công (tuy nhiên thường sẽ update qua Service History)
+        if (vehicleRequest.getCurrentOdometer() != null) {
+            vehicleToUpdate.setCurrentOdometer(vehicleRequest.getCurrentOdometer());
+        }
+        // ------------------
+
+        Vehicle updatedVehicle = vehicleRepository.save(vehicleToUpdate);
+        return convertToDTO(updatedVehicle);
     }
 
     // READ: Lấy Vehicle theo ID
@@ -152,6 +167,10 @@ public class VehicleService {
         vehicleDTO.setManufacturedDate(vehicle.getManufacturedDate());
         vehicleDTO.setStatus(vehicle.getStatus());
         vehicleDTO.setCustomer(customerDTO);
+        // --- UPDATE MỚI: Mapping thêm dữ liệu quan trọng ---
+        vehicleDTO.setWarrantyStartDate(vehicle.getWarrantyStartDate());
+        vehicleDTO.setCurrentOdometer(vehicle.getCurrentOdometer());
+        // --------------------------------------------------
 
         return vehicleDTO;
     }
