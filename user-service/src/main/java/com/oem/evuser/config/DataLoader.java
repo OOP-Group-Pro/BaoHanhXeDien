@@ -67,6 +67,7 @@ public class DataLoader {
             user.setPassword(passwordEncoder.encode(rawPassword));
             user.setStatus(UserStatus.ACTIVE);
             user.setRoles(roles);
+
             if (centerId != null)
                 user.setServiceCenterId(centerId);
 

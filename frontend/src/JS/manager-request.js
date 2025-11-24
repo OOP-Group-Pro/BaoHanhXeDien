@@ -1,6 +1,6 @@
 // src/request.js
-import { checkAuth, logout } from './utils/auth.js';
-import { api } from './services/apiClient.js';
+import { checkAuth, logout } from '../utils/auth.js';
+import { api } from '../services/apiClient.js';
 
 async function initRequestPage() {
     // Kiểm tra quyền ADMIN

@@ -2,6 +2,7 @@ package com.oem.evpart.services.impl;
 
 import com.oem.evpart.dto.request.DecrementStockRequest;
 import com.oem.evpart.dto.request.PartInventoryRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartInventoryResponse;
 import com.oem.evpart.exceptions.ResourceNotFoundException;
 import com.oem.evpart.mappers.PartInventoryMapper;
@@ -16,6 +17,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -29,29 +32,44 @@ public class PartInventoryServiceImpl implements PartInventoryService {
 
     private final PartInventoryRepository inventoryRepository;
     private final PartRepository partRepository;
-    private final PartInventoryMapper inventoryMapper;
 
     @Override
     @Transactional
     @CacheEvict(value = { "inventory_part", "inventory_location" }, allEntries = true)
     public PartInventoryResponse addOrUpdateStock(PartInventoryRequest request) {
-        Part part = partRepository.findById(request.getPartId())
-                .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + request.getPartId()));
 
-        Optional<PartInventory> existingInventoryOpt = inventoryRepository.findByPart_PartIdAndLocation(request.getPartId(), request.getLocation());
+        // 1. Tìm phụ tùng (Bắt buộc phải có mới nhập kho được)
+        Part part = partRepository.findById(request.getPartId())
+                .orElseThrow(() -> new ResourceNotFoundException("Part not found with ID: " + request.getPartId()));
+
+        // 2. Tìm xem phụ tùng này ĐÃ CÓ ở kho (location) này chưa?
+        // Ví dụ: Tìm "PIN" ở "101"
+        Optional<PartInventory> existingInventory = inventoryRepository.findByPartAndLocation(part, request.getLocation());
 
         PartInventory inventory;
-        if (existingInventoryOpt.isPresent()) {
-            inventory = existingInventoryOpt.get();
-            inventory.setQuantity(inventory.getQuantity() + request.getQuantity());
+
+        if (existingInventory.isPresent()) {
+            // TRƯỜNG HỢP A: Đã có hàng -> Cộng dồn số lượng
+            inventory = existingInventory.get();
+            Long newQty = inventory.getQuantity() + request.getQuantity();
+            inventory.setQuantity(newQty);
+            // Cập nhật thời gian
+            inventory.setUpdatedAt(java.time.LocalDateTime.now());
         } else {
-            inventory = inventoryMapper.toPartInventory(request);
-            inventory.setPart(part);
+            // TRƯỜNG HỢP B: Chưa có hàng ở kho này -> Tạo dòng mới
+            inventory = PartInventory.builder()
+                    .part(part)
+                    .location(request.getLocation())
+                    .quantity(request.getQuantity())
+                    .status(PartInventory.Status.Available)
+                    .updatedAt(java.time.LocalDateTime.now())
+                    .build();
         }
 
-        PartInventory savedInventory = inventoryRepository.save(inventory);
-        log.info("addOrUpdateStock - partId={}, location={}, qty={}", request.getPartId(), request.getLocation(), request.getQuantity());
-        return inventoryMapper.toPartInventoryResponse(savedInventory);
+        // 3. LƯU XUỐNG DB (Lệnh này sẽ sinh ra INSERT hoặc UPDATE)
+        PartInventory saved = inventoryRepository.save(inventory);
+
+        return PartInventoryMapper.toPartInventoryResponse(saved);
     }
 
     @Override
@@ -77,7 +95,7 @@ public class PartInventoryServiceImpl implements PartInventoryService {
         inventory.setQuantity(currentQuantity - requestedQuantity);
         PartInventory updatedInventory = inventoryRepository.save(inventory);
         log.info("decrementStock - partId={}, location={}, deducted={}", request.getPartId(), request.getLocation(), requestedQuantity);
-        return inventoryMapper.toPartInventoryResponse(updatedInventory);
+        return PartInventoryMapper.toPartInventoryResponse(updatedInventory);
     }
 
     @Override
@@ -85,7 +103,7 @@ public class PartInventoryServiceImpl implements PartInventoryService {
     @Cacheable(value = "inventory_part", key = "#partId")
     public List<PartInventoryResponse> getInventoryByPartId(Long partId) {
         return inventoryRepository.findByPart_PartId(partId).stream()
-                .map(inventoryMapper::toPartInventoryResponse)
+                .map(PartInventoryMapper::toPartInventoryResponse)
                 .collect(Collectors.toList());
     }
 
@@ -94,7 +112,7 @@ public class PartInventoryServiceImpl implements PartInventoryService {
     @Cacheable(value = "inventory_location", key = "#location")
     public List<PartInventoryResponse> getInventoryByLocation(String location) {
         return inventoryRepository.findByLocation(location).stream()
-                .map(inventoryMapper::toPartInventoryResponse)
+                .map(PartInventoryMapper::toPartInventoryResponse)
                 .collect(Collectors.toList());
     }
 
@@ -115,7 +133,7 @@ public class PartInventoryServiceImpl implements PartInventoryService {
 
         PartInventory updatedInventory = inventoryRepository.save(inventory);
         log.info("updateInventoryStatus - inventoryId={}, newStatus={}", inventoryId, status);
-        return inventoryMapper.toPartInventoryResponse(updatedInventory);
+        return PartInventoryMapper.toPartInventoryResponse(updatedInventory);
     }
 
     @Override
@@ -124,5 +142,15 @@ public class PartInventoryServiceImpl implements PartInventoryService {
         return inventoryRepository.findByPart_PartIdAndLocation(partId, location)
                 .map(inv -> inv.getQuantity() >= requiredQuantity && PartInventory.Status.Available.name().equals(inv.getStatus().name()))
                 .orElse(false);
+    }
+
+    // com.oem.evpart.services.impl.PartInventoryServiceImpl
+
+    @Override
+    @Transactional(readOnly = true)
+    // Cache danh sách kho (ngắn hạn hoặc xóa khi có nhập xuất)
+    public PageCacheDto<PartInventoryResponse> getAllInventories(Pageable pageable) {
+        Page<PartInventory> page = inventoryRepository.findAll(pageable);
+        return PageCacheDto.from(page.map(PartInventoryMapper::toPartInventoryResponse));
     }
 }

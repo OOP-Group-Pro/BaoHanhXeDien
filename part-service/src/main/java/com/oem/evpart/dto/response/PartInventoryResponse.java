@@ -12,6 +12,9 @@ public class PartInventoryResponse {
     private Long inventoryId;
     private Long partId;
     private String partName;
+    private String serialNumber;
+    private Double price;
+    private String partType;
     private Long quantity;
     private String location;
     private String status;

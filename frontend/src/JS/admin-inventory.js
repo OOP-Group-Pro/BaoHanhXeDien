@@ -1,165 +1,295 @@
-// src/js/admin-inventory.js
-import {
-    getAllInventory,
-    addOrUpdateStock,
-    addOrUpdateStock as addStock, // có thể dùng addStock
-    updateInventoryQuantity
-} from '../services/userService.js'; // lấy từ userService.js
+import { checkAuth } from '../utils/auth.js';
+import { renderAdminSidebar } from '../components/AdminSidebar.js';
+import { api } from '../services/apiClient.js';
+import { getAllInventory, getParts } from '../services/partService.js'; // Import từ file service của bạn
 
-document.addEventListener('DOMContentLoaded', () => {
-    const tableBody = document.getElementById('inventory-table-body');
+// --- API SERVICE ---
+const InventoryService = {
+    getAll: (page = 0, size = 10) => api.get(`/inventory/all-stock?page=${page}&size=${size}`),
+    addStock: (data) => api.post('/inventory/stock', data)
+};
 
-    // MODALS
-    const addStockModal = document.getElementById('add-stock-modal');
-    const addStockBtn = document.getElementById('add-stock-btn');
-    const closeStockModalBtn = document.getElementById('close-stock-modal');
-    const cancelStockModalBtn = document.getElementById('cancel-stock-modal');
-    const addStockForm = document.getElementById('add-stock-form');
-    const stockErrorMessage = document.getElementById('stock-error-message');
+let currentPage = 0;
+let allPartsList = []; // Cache danh sách phụ tùng để tìm kiếm trong Modal
+let allInventoryData = []; // Khai báo biến toàn cục ở đầu file
 
-    const addPartModal = document.getElementById('add-part-modal');
-    const addPartBtn = document.getElementById('add-new-part-btn');
-    const closePartModalBtn = document.getElementById('close-part-modal');
-    const cancelPartModalBtn = document.getElementById('cancel-part-modal');
-    const addPartForm = document.getElementById('add-part-form');
-    const partErrorMessage = document.getElementById('part-error-message');
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Init
+    if (!checkAuth('ROLE_ADMIN')) return;
+    renderAdminSidebar();
 
-    // ================= LOAD DATA =================
-    async function loadInventory() {
-        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:40px;">Đang tải dữ liệu...</td></tr>`;
-        try {
-            const { data } = await getAllInventory();
-            populateTable(data);
-        } catch (err) {
-            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:red;padding:40px;">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
-        }
+    // 2. Load dữ liệu
+    loadInventoryTable();
+    loadPartsForDropdown(); // Tải trước danh sách Part để nhét vào Modal
+
+    // 3. Setup Event
+    setupModalEvents();
+});
+
+// --- LOAD BẢNG TỒN KHO ---
+async function loadInventoryTable() {
+    const tbody = document.getElementById('inventory-tbody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+
+    try {
+        // Gọi API /inventory/all-stock
+        // Lưu ý: Backend của bạn cần hỗ trợ Pageable
+        const response = await api.get(`/inventory/all-stock?page=${currentPage}&size=10`);
+        const data = response.content || [];
+
+        allInventoryData = data; // 🔥 LƯU DỮ LIỆU GỐC VÀO BIẾN NÀY
+
+        renderKPIs(data); // Tính toán KPI giả lập từ trang hiện tại (hoặc gọi API KPI riêng)
+        renderTable(data);
+        updatePagination(response);
+
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Lỗi tải dữ liệu: ${error.message}</td></tr>`;
+    }
+}
+
+function renderTable(items) {
+    const tbody = document.getElementById('inventory-tbody');
+    tbody.innerHTML = '';
+
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Kho trống.</td></tr>';
+        return;
     }
 
-    function populateTable(data) {
-        if (!data || data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:40px;">Không có dữ liệu tồn kho.</td></tr>`;
-            return;
-        }
-        tableBody.innerHTML = '';
-        data.forEach(item => {
-            const row = document.createElement('tr');
-            row.setAttribute('data-id', item.inventoryId);
-            row.innerHTML = `
+    items.forEach(item => {
+        // Format ngày tháng
+        const date = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('vi-VN') : '-';
+
+        // Badge status
+        let badgeClass = 'badge-secondary';
+        if(item.status === 'Available') badgeClass = 'bg-success text-white';
+        if(item.status === 'Reserved') badgeClass = 'bg-warning text-dark';
+        if(item.status === 'Defective') badgeClass = 'bg-danger text-white';
+
+        tbody.innerHTML += `
+            <tr>
+                <td>#${item.inventoryId}</td>
+                <td><img src="/assets/part-placeholder.png" class="rounded border" width="40" height="40" alt="Part"></td>
                 <td>
-                    <span class="part-name">${item.partName}</span>
-                    <span class="part-id">ID: ${item.partId}</span>
-                </td>
-                <td>${item.location}</td>
-                <td>
-                    <div class="quantity-cell">
-                        <input type="number" class="quantity-input" value="${item.quantity}" readonly>
-                        <button class="edit-btn" title="Chỉnh sửa số lượng">
-                            <i class="fa-solid fa-pencil"></i>
-                        </button>
+                    <div class="fw-bold text-primary">${item.partName || 'Unknown'}</div>
+                    <div class="d-flex gap-2 small text-muted">
+                        <span>SKU: ${item.serialNumber}</span>
+                        <span>Type: ${item.partType}</span>
                     </div>
                 </td>
-            `;
-            tableBody.appendChild(row);
+                <td><span class="badge bg-light text-dark border"><i class="fa-solid fa-warehouse"></i> ${item.location}</span></td>
+                <td class="fw-bold fs-6">${item.quantity}</td>
+                <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                <td class="small text-muted">${date}</td>
+                <td>
+                    <button class="btn-icon btn-edit" title="Điều chỉnh số lượng"><i class="fa-solid fa-pen-to-square"></i></button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// --- LOAD DROPDOWN CHO MODAL ---
+async function loadPartsForDropdown() {
+    try {
+        // Lấy 100 phụ tùng đầu tiên để demo (Thực tế nên dùng API Search Select2)
+        const res = await getParts(0, 100);
+        const parts = res.content || [];
+        allPartsList = parts; // Lưu cache
+
+        const select = document.getElementById('import-part-select');
+        parts.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.partId;
+            option.text = `${p.name} (SKU: ${p.serialNumber})`;
+            select.appendChild(option);
         });
+
+        // Kích hoạt Select2 (Thư viện tìm kiếm đẹp)
+        $(select).select2({
+            dropdownParent: $('#import-modal') // Fix lỗi không gõ được trong modal
+        });
+
+        // Sự kiện khi chọn Part -> Hiển thị Preview
+        $(select).on('change', function() {
+            const selectedId = $(this).val();
+            const part = allPartsList.find(p => p.partId == selectedId);
+            if(part) {
+                document.getElementById('part-preview').classList.remove('d-none');
+                document.getElementById('preview-name').textContent = part.partName;
+                document.getElementById('preview-sku').textContent = part.serialNumber;
+                document.getElementById('preview-type').textContent = part.partType;
+            }
+        });
+
+    } catch (e) { console.warn("Lỗi tải danh sách part:", e); }
+}
+
+// --- MODAL EVENTS ---
+function setupModalEvents() {
+    const modal = document.getElementById('import-modal');
+
+    document.getElementById('btn-import-stock').addEventListener('click', () => {
+        modal.classList.add('show');
+    });
+
+    document.getElementById('close-import-modal').addEventListener('click', () => {
+        modal.classList.remove('show');
+    });
+
+    // Logic nút Lưu Nhập kho
+    const btnSave = document.getElementById('btn-save-import'); // Đảm bảo lấy đúng ID
+
+    btnSave.addEventListener('click', async () => {
+        // 1. Lấy giá trị từ giao diện
+        // Lưu ý: Với Select2, đôi khi cần dùng jQuery để lấy value chuẩn nếu DOM chưa cập nhật
+        // Nhưng thử DOM chuẩn trước:
+        const partId = document.getElementById('import-part-select').value;
+        const location = document.getElementById('import-location').value;
+        const quantity = document.getElementById('import-quantity').value;
+
+        // Log ra để kiểm tra xem lấy đúng chưa
+        console.log("📦 Dữ liệu chuẩn bị gửi:", { partId, location, quantity });
+
+        // 2. Validate
+        if (!partId || !location || !quantity) {
+            alert("Vui lòng chọn Phụ tùng, Vị trí và nhập Số lượng!");
+            return;
+        }
+
+        // Hiệu ứng loading
+        const originalText = btnSave.innerHTML;
+        btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+        btnSave.disabled = true;
+
+        try {
+            // 3. GỌI API (QUAN TRỌNG NHẤT)
+            await InventoryService.addStock({
+                partId: Number(partId),      // Chuyển thành số Long
+                quantity: Number(quantity),  // Chuyển thành số Long
+                location: String(location)   // Chuỗi mã trạm (VD: "101")
+            });
+
+            // 4. Nếu thành công
+            alert("✅ Nhập kho thành công!");
+            document.getElementById('import-modal').classList.remove('show');
+
+            // Load lại bảng để thấy số lượng mới
+            loadInventoryTable();
+
+        } catch (error) {
+            console.error("Lỗi nhập kho:", error);
+            alert("❌ Lỗi: " + (error.message || "Không thể kết nối Server"));
+        } finally {
+            // Trả lại nút như cũ
+            btnSave.innerHTML = originalText;
+            btnSave.disabled = false;
+        }
+    });
+}
+
+function renderKPIs(data) {
+    // data là danh sách PartInventoryResponse
+
+    let totalQty = 0;
+    let totalValue = 0;
+    let lowStockCount = 0;
+    let defectiveCount = 0;
+
+    // Ngưỡng cảnh báo sắp hết hàng (Ví dụ: dưới 10 cái)
+    const LOW_STOCK_THRESHOLD = 10;
+
+    data.forEach(item => {
+        // 1. Tổng số lượng
+        const qty = item.quantity || 0;
+        totalQty += qty;
+
+        // 2. Tổng giá trị (Số lượng * Giá đơn vị)
+        // Lưu ý: item.part có thể null nếu data lỗi, cần check an toàn
+        const price = item.price ? (item.price || 0) : 0;
+        totalValue += (qty * price);
+
+        // 3. Đếm hàng sắp hết (Chỉ tính hàng tốt Available)
+        if (item.status === 'Available' && qty < LOW_STOCK_THRESHOLD) {
+            lowStockCount++;
+        }
+
+        // 4. Đếm hàng lỗi (Status là Defective)
+        // Cần check đúng chính tả Enum trả về từ Backend (thường là viết hoa chữ đầu hoặc full hoa)
+        // Code cũ bạn map là 'Defective', hãy chắc chắn DB lưu đúng như vậy
+        if (item.status === 'Defective' || item.status === 'DEFECTIVE') {
+            defectiveCount++;
+        }
+    });
+
+    // --- Render ra HTML ---
+
+    // 1. Tổng Tồn
+    document.getElementById('kpi-total-qty').textContent = totalQty.toLocaleString();
+
+    // 2. Giá Trị Tồn (Format tiền tệ VNĐ)
+    document.getElementById('kpi-total-value').textContent = totalValue.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+    // 3. Sắp Hết Hàng
+    document.getElementById('kpi-low-stock').textContent = lowStockCount;
+    // Tô màu đỏ nếu có hàng sắp hết
+    if (lowStockCount > 0) {
+        document.getElementById('kpi-low-stock').classList.add('text-danger');
     }
 
-    // ================= EDIT QUANTITY =================
-    tableBody.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.edit-btn');
-        if (!btn) return;
+    // 4. Hàng Lỗi
+    document.getElementById('kpi-defective').textContent = defectiveCount;
+    if (defectiveCount > 0) {
+        document.getElementById('kpi-defective').classList.add('text-danger');
+    }
+}
 
-        const row = btn.closest('tr');
-        const input = row.querySelector('.quantity-input');
-        const icon = btn.querySelector('i');
-        const inventoryId = row.getAttribute('data-id');
+function updatePagination(pageData) {
+    document.getElementById('page-info').textContent = `Trang ${pageData.number + 1} / ${pageData.totalPages}`;
+    document.getElementById('prev-page').disabled = pageData.first;
+    document.getElementById('next-page').disabled = pageData.last;
+}
 
-        if (input.hasAttribute('readonly')) {
-            input.removeAttribute('readonly');
-            input.focus();
-            input.select();
-            icon.classList.replace('fa-pencil', 'fa-check');
-            btn.title = 'Lưu thay đổi';
-        } else {
-            const newQuantity = parseInt(input.value);
-            try {
-                await updateInventoryQuantity(inventoryId, newQuantity);
-                input.setAttribute('readonly', true);
-                icon.classList.replace('fa-check', 'fa-pencil');
-                btn.title = 'Chỉnh sửa số lượng';
-            } catch (err) {
-                alert('Cập nhật thất bại: ' + err.message);
-                loadInventory();
-            }
-        }
+// --- LOGIC BỘ LỌC (CLIENT-SIDE) ---
+const searchInput = document.getElementById('search-part'); // Ô tìm kiếm
+const locationInput = document.getElementById('filter-location'); // Dropdown kho
+const statusSelect = document.getElementById('filter-status'); // Dropdown trạng thái (đang bị lỗi tên ID, bạn check lại HTML xem ID là filter-status hay gì)
+
+function applyFilter() {
+    // 1. Lấy giá trị từ các ô input
+    const keyword = searchInput.value.toLowerCase();
+    const loc = locationInput.value; // Giá trị kho (101, 102...)
+    // Lưu ý: Trong HTML bạn gửi ảnh, dropdown trạng thái có text là "Lỗi",
+    // bạn cần kiểm tra xem <option value="..."> của nó là gì.
+    // Giả sử value="Defective" cho Lỗi, "Available" cho Sẵn sàng.
+    const st = statusSelect.value;
+
+    console.log("🔍 Đang lọc:", { keyword, loc, st });
+
+    // 2. Lọc trên dữ liệu gốc (allInventoryData)
+    // Lưu ý: Biến allInventoryData phải được gán giá trị lúc load API đầu tiên
+    // (Trong hàm loadInventoryTable, nhớ thêm dòng: allInventoryData = data;)
+
+    const filtered = allInventoryData.filter(item => {
+        const pName = (item.partName || '').toLowerCase();
+        const pSku = (item.serialNumber || '').toLowerCase();
+        const iLoc = (item.location || '').toString(); // Chuyển location thành chuỗi để so sánh
+
+        const matchName = !keyword || pName.includes(keyword) || pSku.includes(keyword);
+        const matchLoc = !loc || iLoc.includes(loc);
+        const matchStatus = !st || item.status === st;
+
+        return matchName && matchLoc && matchStatus;
     });
 
-    // ================= ADD STOCK =================
-    const openAddStockModal = () => {
-        if (stockErrorMessage) stockErrorMessage.style.display = 'none';
-        addStockModal.classList.add('show');
-    };
-    addStockBtn?.addEventListener('click', openAddStockModal);
-    closeStockModalBtn?.addEventListener('click', () => addStockModal.classList.remove('show'));
-    cancelStockModalBtn?.addEventListener('click', () => addStockModal.classList.remove('show'));
-    window.addEventListener('click', e => { if (e.target === addStockModal) addStockModal.classList.remove('show'); });
+    // 3. Render lại bảng với dữ liệu đã lọc
+    renderTable(filtered);
+}
 
-    addStockForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (stockErrorMessage) stockErrorMessage.style.display = 'none';
-
-        const formData = new FormData(addStockForm);
-        const stockData = Object.fromEntries(formData.entries());
-        stockData.partId = parseInt(stockData.partId);
-        stockData.quantity = parseInt(stockData.quantity);
-
-        try {
-            await addOrUpdateStock(stockData);
-            addStockModal.classList.remove('show');
-            addStockForm.reset();
-            loadInventory();
-            alert('Nhập kho thành công!');
-        } catch (err) {
-            if (stockErrorMessage) {
-                stockErrorMessage.textContent = `Lỗi: ${err.message}`;
-                stockErrorMessage.style.display = 'block';
-            }
-        }
-    });
-
-    // ================= ADD PART =================
-    const openAddPartModal = () => {
-        if (partErrorMessage) partErrorMessage.style.display = 'none';
-        addPartModal.classList.add('show');
-    };
-    addPartBtn?.addEventListener('click', openAddPartModal);
-    closePartModalBtn?.addEventListener('click', () => addPartModal.classList.remove('show'));
-    cancelPartModalBtn?.addEventListener('click', () => addPartModal.classList.remove('show'));
-    window.addEventListener('click', e => { if (e.target === addPartModal) addPartModal.classList.remove('show'); });
-
-    addPartForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (partErrorMessage) partErrorMessage.style.display = 'none';
-
-        const formData = new FormData(addPartForm);
-        const partData = Object.fromEntries(formData.entries());
-
-        try {
-            await fetch('/api/v1/parts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(partData)
-            });
-            addPartModal.classList.remove('show');
-            addPartForm.reset();
-            alert(`Thêm Part "${partData.name}" thành công!`);
-        } catch (err) {
-            if (partErrorMessage) {
-                partErrorMessage.textContent = `Lỗi: ${err.message}`;
-                partErrorMessage.style.display = 'block';
-            }
-        }
-    });
-
-    // ================= INITIAL LOAD =================
-    loadInventory();
-});
+// Gắn sự kiện
+searchInput.addEventListener('input', applyFilter);
+// Với thẻ <select>, dùng sự kiện 'change'
+if(locationInput) locationInput.addEventListener('change', applyFilter);
+if(statusSelect) statusSelect.addEventListener('change', applyFilter);

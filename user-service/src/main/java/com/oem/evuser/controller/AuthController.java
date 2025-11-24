@@ -1,5 +1,7 @@
 package com.oem.evuser.controller;
 
+import com.oem.evuser.entity.User;
+import com.oem.evuser.repository.UserRepository;
 import com.oem.evuser.security.JwtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -17,26 +20,37 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
     private final JwtService jwtService;
 
     public AuthController(AuthenticationManager authenticationManager,
                           UserDetailsService userDetailsService,
-                          JwtService jwtService) {
+                          JwtService jwtService,
+                          UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
         try {
-            // Xác thực username + password
+            // 1. Xác thực username + password
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.get("username"),
                             request.get("password")
                     )
             );
+
+            // 2. Lấy User từ DB ra
+            User userEntity = userRepository.findByUsername(request.get("username")).orElseThrow();
+
+            // 🔥 3. CẬP NHẬT LAST LOGIN (MỚI THÊM)
+            userEntity.setLastLogin(LocalDateTime.now());
+
+            userRepository.save(userEntity);
 
             // Lấy thông tin user (có roles)
             UserDetails user = userDetailsService.loadUserByUsername(request.get("username"));

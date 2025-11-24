@@ -1,5 +1,7 @@
 package com.oem.evuser.service;
 
+import com.oem.evuser.dto.UserDto;
+import com.oem.evuser.dto.response.PageCacheDto;
 import com.oem.evuser.entity.Role;
 import com.oem.evuser.entity.User;
 import com.oem.evuser.mapper.UserMapper;
@@ -8,6 +10,8 @@ import com.oem.evuser.repository.UserRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -86,8 +90,14 @@ public class UserService {
     // READ - Lấy tất cả user
     @Transactional(readOnly = true)
    @Cacheable(value = "users_list") // Cache danh sách user (cẩn thận nếu list quá lớn)
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public PageCacheDto<UserDto> getAllUsers(Pageable pageable) {
+        Page<User> page = userRepository.findAll(pageable);
+
+        List<UserDto> dtoList = page.getContent().stream()
+                .map(UserMapper::mapToUserDto)
+                .toList();
+
+        return PageCacheDto.from(page.map(UserMapper::mapToUserDto));
     }
 
     // UPDATE

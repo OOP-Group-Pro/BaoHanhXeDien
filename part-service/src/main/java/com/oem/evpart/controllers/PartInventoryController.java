@@ -2,10 +2,12 @@ package com.oem.evpart.controllers;
 
 import com.oem.evpart.dto.request.PartInventoryRequest;
 import com.oem.evpart.dto.request.UpdateInventoryStatusRequest; // Bạn cần tạo DTO này
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartInventoryResponse;
 import com.oem.evpart.services.PartInventoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,13 @@ public class PartInventoryController {
     @PatchMapping("/{inventoryId}/status")
     public ResponseEntity<PartInventoryResponse> updateStatus(@PathVariable Long inventoryId, @Valid @RequestBody UpdateInventoryStatusRequest request) {
         return ResponseEntity.ok(inventoryService.updateInventoryStatus(inventoryId, request.getStatus()));
+    }
+
+    // com.oem.evpart.controllers.PartInventoryController
+
+    @GetMapping("/all-stock")
+    public ResponseEntity<PageCacheDto<PartInventoryResponse>> getAllInventories(Pageable pageable) {
+        return ResponseEntity.ok(inventoryService.getAllInventories(pageable));
     }
 }
 
