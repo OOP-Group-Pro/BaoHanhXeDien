@@ -6,11 +6,12 @@ import { renderHeader } from '../components/Header.js';
 import { renderTechnicianSidebar } from '../components/TechnicianSidebar.js';
 import { getUser } from "../utils/storage.js";
 import { api } from '../services/apiClient.js';
-import '../styles/technician.css';
+import '../styles/dashboard.css';
 
 // --- BIẾN TRẠNG THÁI ---
 let currentClaimData = null;
 let currentTechnicianId = null;
+let claimModalInstance = null;
 
 // --- HÀM "ROUTER" CHÍNH - CHẠY NGAY KHI LOAD ---
 (function main() {
@@ -126,57 +127,43 @@ function initJobListPage() {
 
             // 2. Lặp qua danh sách Claim
             for (const claim of claimsList) {
-                let statusHtml = `<span class="status-tag status-pending"><i class="fa-solid fa-spinner fa-spin"></i> Đang kiểm tra...</span>`;
-                let actionHtml = `<span style="color: var(--text-secondary); font-size: 0.875rem;">Đang kiểm tra...</span>`;
+                const claimIdentifier = claim.claimCode;
+                if (!claimIdentifier) continue;
+                const statusHtml = `<span class="status-tag status-ready"><i class="fa-solid fa-check-circle"></i> Sẵn sàng</span>`;
 
-                // Tạo hàng trước, sau đó cập nhật
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${claim.claimCode}</strong></td>
-                    <td>${claim.vin}</td>
-                    <td>${claim.description.substring(0, 50)}...</td>
-                    <td data-status-cell-for="${claim.id}">${statusHtml}</td>
-                    <td data-action-cell-for="${claim.id}">${actionHtml}</td>
-                `;
-                jobTableBody.appendChild(row);
+                            const actionHtml = `
+                                <button class="btn btn-sm btn-outline-secondary btn-view-modal-details" data-id="${claimIdentifier}">
+                                    <i class="fa-solid fa-eye"></i> Chi tiết
+                                </button>
+                                <a class="btn btn-sm btn-dark view-claim" data-claim-id="${claimIdentifier}">
+                                    <i class="fa-solid fa-play"></i> Bắt đầu sửa
+                                </a>
+                            `;
 
-                // API: GET /api/v1/allocations/status-by-claim/{claimId}
-                try {
-                    const partStatusDto = await api.get(`/allocations/status-by-claim/${claim.id}`);
+                            // Tạo hàng và chèn dữ liệu trực tiếp
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><strong>${claim.claimCode}</strong></td>
+                                <td>${claim.vin}</td>
+                                <td>${claim.description ? claim.description.substring(0, 50) + '...' : ''}</td>
+                                <td>${statusHtml}</td>
+                                <td>${actionHtml}</td>
+                            `;
+                            jobTableBody.appendChild(row);
+                        }
 
-                    // Cập nhật cell trạng thái và hành động
-                    const statusCell = document.querySelector(`[data-status-cell-for="${claim.id}"]`);
-                    const actionCell = document.querySelector(`[data-action-cell-for="${claim.id}"]`);
-
-                    // Dựa trên PartAllocationStatusDto.AllocationStatus
-                    if (partStatusDto.status === 'READY_TO_INSTALL' || partStatusDto.status === 'NOT_REQUIRED') {
-                        statusHtml = `<span class="status-tag status-ready"><i class="fa-solid fa-check-circle"></i> Sẵn sàng</span>`;
-                        actionHtml = `<a class="view-claim" data-claim-id="${claim.id}">Bắt đầu sửa</a>`;
-                    } else {
-                        statusHtml = `<span class="status-tag status-pending"><i class="fa-solid fa-clock"></i> Chờ phụ tùng</span>`;
-                        actionHtml = `<span style="color: var(--text-secondary); font-size: 0.875rem;">Không thể bắt đầu</span>`;
+                    } catch (error) {
+                        console.error('❌ Lỗi tải danh sách:', error);
+                        showError(jobTableBody, error.message);
                     }
-
-                    if (statusCell) statusCell.innerHTML = statusHtml;
-                    if (actionCell) actionCell.innerHTML = actionHtml;
-
-                } catch (partError) {
-                    console.error('⚠️ Lỗi kiểm tra phụ tùng:', partError);
-                    const statusCell = document.querySelector(`[data-status-cell-for="${claim.id}"]`);
-                    const actionCell = document.querySelector(`[data-action-cell-for="${claim.id}"]`);
-                    if (statusCell) statusCell.innerHTML = `<span style="color: var(--danger-color);">Lỗi</span>`;
-                    if (actionCell) actionCell.innerHTML = `Lỗi kiểm tra P.Tùng`;
-                }
-            }
-
-        } catch (error) {
-            console.error('❌ Lỗi tải danh sách:', error);
-            showError(jobTableBody, error.message);
-        }
     }
 
     // --- HÀM TÍCH HỢP CHO MÀN HÌNH 2: Chi tiết sửa chữa ---
     async function loadClaimDetails(claimId) {
+        if (!claimId) {
+            console.error("Lỗi gọi loadClaimDetails: Claim ID bị thiếu.");
+            return;
+        }
         showScreen('screen-repair-details');
         document.getElementById('detail-loading').style.display = 'block';
         document.getElementById('detail-content').style.display = 'none';
@@ -240,6 +227,27 @@ function initJobListPage() {
                 <strong>Đã xảy ra lỗi:</strong> ${error.message}`;
         }
     }
+    async function getClaimDetails(claimId) {
+        // API lấy chi tiết Claim
+        return api.get(`/claims/${claimId}`);
+    }
+
+    /**
+     * Lấy lịch sử trạng thái (dùng trong Modal)
+     */
+    async function getClaimHistory(claimId) {
+        // API lấy lịch sử trạng thái
+        return api.get(`/claims/${claimId}/status-history`);
+    }
+    window.downloadFile = async (url, fileName) => {
+        try {
+            const fullUrl = `${api.getBaseUrl()}${url}`; // Giả định api có getBaseUrl()
+            window.open(fullUrl, '_blank');
+        } catch (error) {
+            console.error("Lỗi tải/xem tài liệu:", error);
+            alert("Không thể tải/xem file. Vui lòng thử lại.");
+        }
+    };
 
     // --- HÀM TÍCH HỢP CHO MÀN HÌNH 3: Báo cáo kết quả ---
     async function submitRepairReport(e) {
@@ -321,11 +329,9 @@ async function loadHistory() {
 
         // Render dữ liệu ra bảng
         claims.forEach(claim => {
-            // 🛠️ SỬA QUAN TRỌNG: Lấy status đúng tên biến
-            // Backend có thể trả về 'status' hoặc 'currentStatus' tùy DTO
+
             const rawStatus = claim.status || claim.currentStatus;
 
-            // Log để kiểm tra (bạn có thể xóa sau này)
             console.log(`Claim: ${claim.claimCode}, Status lấy được: ${rawStatus}`);
 
             // LỌC: Chỉ ẩn những xe đang chờ/mới/đang sửa
@@ -440,9 +446,14 @@ async function loadProfile() {
     // --- XỬ LÝ SỰ KIỆN ---
 
     jobTableBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('view-claim')) {
-            const claimId = e.target.dataset.claimId;
-            loadClaimDetails(claimId);
+        const link = e.target.closest('.view-claim');
+        if (link) {
+            const claimId = link.dataset.claimId;
+            if (claimId) {
+                loadClaimDetails(claimId);
+            } else {
+                console.error("Lỗi: Không tìm thấy Claim ID hợp lệ.");
+            }
         }
     });
 
@@ -516,20 +527,19 @@ async function loadProfile() {
 
         // Sự kiện xem chi tiết trong bảng Lịch sử
         const historyTableBody = document.getElementById('history-table-body');
-        if(historyTableBody) {
-            historyTableBody.addEventListener('click', (e) => {
-                // Tìm nút bấm (hoặc icon bên trong nút)
-                const btn = e.target.closest('.view-history-detail');
-                if (btn) {
-                    const claimId = btn.dataset.claimId;
-                    // Tái sử dụng hàm loadClaimDetails cũ nhưng cần ẩn nút "Báo cáo" đi
-                    loadClaimDetails(claimId);
 
-                    // Ẩn nút chuyển sang màn hình báo cáo vì đây là xem lịch sử
-                    setTimeout(() => {
-                        const btnFinish = document.getElementById('btn-finish-repair');
-                        if(btnFinish) btnFinish.style.display = 'none';
-                    }, 100);
+        if (historyTableBody) {
+            historyTableBody.addEventListener('click', async (e) => {
+                // Tìm nút xem chi tiết (hoặc icon bên trong)
+                const viewBtn = e.target.closest('.view-history-detail');
+                if (viewBtn) {
+                    e.preventDefault();
+                    const claimIdentifier = viewBtn.dataset.claimId;
+                    if (claimIdentifier) {
+                        console.log("Xem chi tiết lịch sử cho:", claimIdentifier);
+                        // Gọi hàm mở Modal chung
+                        await openClaimModal(claimIdentifier);
+                    }
                 }
             });
         }
@@ -558,6 +568,171 @@ async function loadProfile() {
                 }
             });
         }
+
+        function initClaimDetailsModal() {
+            const tableBody = document.getElementById('job-table-body'); // ID của bảng Technician
+            const modalEl = document.getElementById('claimDetailsModal');
+
+            if (!tableBody || !modalEl) return;
+
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap JS chưa được tải!');
+                return;
+            }
+
+            // Khởi tạo Bootstrap Modal
+            window.claimModalInstance = new bootstrap.Modal(modalEl);
+
+            // Lắng nghe sự kiện click
+            tableBody.addEventListener('click', async (e) => {
+                const viewButton = e.target.closest('.btn-view-modal-details');
+                if (viewButton) {
+                    e.preventDefault();
+                    const claimCode = viewButton.dataset.id;
+                    await openClaimModal(claimCode);
+                }
+            });
+        }
+
+        // --- 2. MỞ MODAL & TẢI DỮ LIỆU (Có Lịch sử) ---
+        async function openClaimModal(claimCode) {
+            const modalTitle = document.getElementById('claimModalTitle');
+            const modalBody = document.getElementById('claimModalBody');
+
+            modalTitle.textContent = `Chi tiết Claim: ${claimCode}`;
+            // Hiện Loading
+            modalBody.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-2">Đang tải dữ liệu...</p></div>';
+
+            window.claimModalInstance.show();
+
+            try {
+                // Gọi song song 2 API: Chi tiết và Lịch sử (Giống SC Staff)
+                const [details, history] = await Promise.all([
+                    api.get(`/claims/${claimCode}`),
+                    api.get(`/claims/${claimCode}/history`) // Đảm bảo endpoint này đúng
+                ]);
+
+                renderModalContent(details, history.content);
+
+            } catch (error) {
+                console.error("Lỗi tải modal:", error);
+                modalBody.innerHTML = `<div class="alert alert-danger m-3">Lỗi tải dữ liệu: ${error.message}</div>`;
+            }
+        }
+
+        // --- 3. RENDER NỘI DUNG (STYLE TABS CỦA SC STAFF) ---
+        function renderModalContent(details, history) {
+            const modalBody = document.getElementById('claimModalBody');
+
+            // 1. Xác định trạng thái và màu sắc
+            const statusClass = details.currentStatus === 'APPROVED' ? 'badge bg-success' : 'badge bg-info text-dark';
+
+            // 2. TÌM "MÔ TẢ CÔNG VIỆC" TỪ KTV (Logic mới)
+            // Tìm log có trạng thái COMPLETED hoặc REPAIRED để lấy ghi chú kết quả
+            let technicianResult = "Chưa có báo cáo kết quả.";
+
+            if (history && history.length > 0) {
+                // Tìm log mới nhất có trạng thái hoàn thành
+                const completionLog = history
+                    .filter(log => log.status === 'COMPLETED' || log.status === 'REPAIRED')
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]; // Lấy cái mới nhất
+
+                if (completionLog && completionLog.notes) {
+                    technicianResult = completionLog.notes;
+                }
+            }
+
+            // 3. Tạo HTML cho các Tab con (Phụ tùng, Lịch sử, Tài liệu)
+
+            // A. Phụ tùng (Có hiển thị Serial mới nếu có)
+            let partsHtml = '';
+            if (!details.partList || details.partList.length === 0) {
+                partsHtml = '<li class="list-group-item text-muted">Không có phụ tùng nào được yêu cầu.</li>';
+            } else {
+                partsHtml = details.partList.map(part => `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${part.partName || part.partNumber}</strong>
+                            <div class="text-muted small">Mã: ${part.partNumber}</div>
+                            ${part.serialNumberReplace ? `<div class="text-success small"><i class="fa-solid fa-barcode"></i> Serial mới: ${part.serialNumberReplace}</div>` : ''}
+                        </div>
+                        <span class="badge bg-primary rounded-pill">SL: ${part.quantity}</span>
+                    </li>
+                `).join('');
+            }
+
+            // B. Lịch sử
+            let historyHtml = (history || []).map(log => `
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>${log.status}</strong>
+                        <small class="text-muted">${new Date(log.timestamp).toLocaleString('vi-VN')}</small>
+                    </div>
+                    <p class="mb-0 small mt-1 text-secondary">${log.notes || ''}</p>
+                    <small class="text-muted fst-italic" style="font-size: 0.75rem">Bởi: ${log.processorName || 'Hệ thống'}</small>
+                </li>
+            `).join('') || '<li class="list-group-item text-muted">Chưa có lịch sử.</li>';
+
+            // C. Tài liệu
+            let documentsHtml = (details.documents || []).map(doc => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="text-truncate" style="max-width: 200px;">
+                        <i class="fa-solid fa-file"></i> ${doc.fileName}
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="window.downloadFile('${doc.url}', '${doc.fileName}')">
+                        <i class="fa-solid fa-download"></i> Tải
+                    </button>
+                </li>
+            `).join('') || '<li class="list-group-item text-muted">Không có tài liệu.</li>';
+
+            // 4. RENDER HTML CUỐI CÙNG (Giao diện 2 cột cho Tab Thông tin)
+            modalBody.innerHTML = `
+                <ul class="nav nav-tabs px-3 pt-3" id="claimTab" role="tablist">
+                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#info-tab-pane">Thông tin & Kết quả</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#parts-tab-pane">Phụ tùng (${details.partList ? details.partList.length : 0})</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#history-tab-pane">Lịch sử</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#docs-tab-pane">Tài liệu</button></li>
+                </ul>
+
+                <div class="tab-content p-4">
+                    <div class="tab-pane fade show active" id="info-tab-pane">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Mã Claim:</strong> ${details.claimCode}</p>
+                                <p><strong>Trạng thái:</strong> <span class="${statusClass}">${details.currentStatus}</span></p>
+                                <p><strong>Số VIN:</strong> ${details.vin}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Khách hàng:</strong> ${details.customerName || '---'}</p>
+                                <p><strong>Ngày tạo:</strong> ${new Date(details.dateCreated).toLocaleDateString('vi-VN')}</p>
+                                <p><strong>KTV thực hiện:</strong> ${details.technicalName || 'Chưa gán'}</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="fw-bold mb-2 text-secondary"><i class="fa-solid fa-circle-exclamation"></i> Mô tả lỗi (Khách hàng):</label>
+                                <div class="bg-light p-3 rounded border" style="height: 100%; min-height: 120px;">
+                                    ${details.description}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="fw-bold mb-2 text-success"><i class="fa-solid fa-screwdriver-wrench"></i> Kết quả xử lý (KTV):</label>
+                                <div class="bg-white p-3 rounded border border-success" style="height: 100%; min-height: 120px;">
+                                    ${technicianResult}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="parts-tab-pane"><ul class="list-group list-group-flush">${partsHtml}</ul></div>
+                    <div class="tab-pane fade" id="history-tab-pane"><ul class="list-group list-group-flush">${historyHtml}</ul></div>
+                    <div class="tab-pane fade" id="docs-tab-pane"><ul class="list-group list-group-flush">${documentsHtml}</ul></div>
+                </div>
+            `;
+        }
     // --- Khởi chạy lần đầu ---
     renderJobList();
+    initClaimDetailsModal();
 }

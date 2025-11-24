@@ -23,7 +23,8 @@ public class NewStaffRequest {
     private Long serviceCenterId;
     private String email;
     private String phone;
-
+    @Column(name = "role_proposed")
+    private String role;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

@@ -41,8 +41,6 @@ public class PartInventoryServiceImpl implements PartInventoryService {
     @Transactional
     @CacheEvict(value = { "inventory_part", "inventory_location" }, allEntries = true)
     public PartInventoryResponse addOrUpdateStock(PartInventoryRequest request) {
-
-        // 1. Tìm phụ tùng (Bắt buộc phải có mới nhập kho được)
         Part part = partRepository.findById(request.getPartId())
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with ID: " + request.getPartId()));
 
@@ -83,11 +81,13 @@ public class PartInventoryServiceImpl implements PartInventoryService {
             @CacheEvict(value = "inventory_location", key = "#request.location")
     })
     public PartInventoryResponse decrementStock(DecrementStockRequest request) {
+        // 1. Tìm Inventory
         PartInventory inventory = inventoryRepository
                 .findByPart_PartIdAndLocation(request.getPartId(), request.getLocation())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tồn kho cho Part ID "
                         + request.getPartId() + " tại địa điểm '" + request.getLocation() + "'."));
 
+        // 2. Kiểm tra số lượng tồn
         Long currentQuantity = inventory.getQuantity();
         Long requestedQuantity = request.getQuantity();
         if (currentQuantity < requestedQuantity) {
@@ -95,6 +95,7 @@ public class PartInventoryServiceImpl implements PartInventoryService {
                     "'. Còn lại: " + currentQuantity + ", Yêu cầu trừ: " + requestedQuantity);
         }
 
+        // 3. Trừ số lượng và lưu lại
         inventory.setQuantity(currentQuantity - requestedQuantity);
         PartInventory updatedInventory = inventoryRepository.save(inventory);
         log.info("decrementStock - partId={}, location={}, deducted={}", request.getPartId(), request.getLocation(), requestedQuantity);

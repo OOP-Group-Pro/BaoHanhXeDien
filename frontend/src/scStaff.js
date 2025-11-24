@@ -718,7 +718,7 @@ async function openClaimModal(claimId) {
             getClaimDetails(claimId),
             getClaimHistory(claimId)
         ]);
-        renderModalContent(details, history);
+        renderModalContent(details, history.content);
     } catch (error) {
         console.error("Lỗi tải chi tiết claim:", error);
         modalBody.innerHTML = `<div class="alert alert-danger">Lỗi tải dữ liệu: ${error.message}</div>`;

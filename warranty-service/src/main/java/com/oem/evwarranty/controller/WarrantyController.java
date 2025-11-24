@@ -123,9 +123,12 @@ public class WarrantyController {
     @PutMapping("/{claimId}/repair-result")
     // @PreAuthorize("hasRole('TECHNICAL_STAFF')")
     public ResponseEntity<Void> updateRepairResult(@PathVariable Long claimId,
-                                                   @Valid @RequestBody ClaimRepairResultDto resultDto) {
+                                                   @Valid @RequestBody ClaimRepairResultDto resultDto,
+                                                   Authentication authentication) {
         // Logic service sẽ tự kiểm tra trạng thái Claim
-        warrantyService.updateRepairResult(claimId, resultDto);
+        UserDetailsPrincipal userPrincipal = (UserDetailsPrincipal) authentication.getPrincipal();
+        Long currentTechnicianId = userPrincipal.getUserId();
+        warrantyService.updateRepairResult(claimId, resultDto, currentTechnicianId);
         return ResponseEntity.ok().build();
     }
 
@@ -134,9 +137,9 @@ public class WarrantyController {
      * Chức năng: Xem lịch sử trạng thái của Claim
      */
     @GetMapping("/{claimCode}/history")
-    public ResponseEntity<?> getClaimStatusHistory(@PathVariable String claimCode) {
+    public PageCacheDto<ClaimStatusLogDto> getClaimStatusHistory(@PathVariable String claimCode) {
         // Thay vì trả về List<ClaimStatusLogDto>, bạn có thể trả về một đối tượng Response có List bên trong
-        return ResponseEntity.ok(warrantyService.getClaimStatusHistory(claimCode));
+        return warrantyService.getClaimStatusHistory(claimCode);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SC_STAFF', 'EVM_STAFF', 'SC_TECHNICIAN')")

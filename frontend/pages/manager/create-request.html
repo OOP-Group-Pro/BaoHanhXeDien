@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="../../src/styles/style-admin.css">
 </head>
-
 <body>
 
 <nav class="sidebar">
@@ -19,11 +18,17 @@
             <span>Manager Thwi</span>
         </div>
     </div>
-    <ul class="sidebar-nav">
+    <ul class="sidebar-nav" style="display: flex; flex-direction: column; min-height: 80vh;">
+
         <li><a href="#" class="active"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
-        <button class="btn-logout" id="logout-btn" style="margin-left:10px; background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer;">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </button>
+
+        <li style="margin-top: auto;"></li>
+
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; padding-top: 10px;">
+            <a href="#" id="logout-btn" style="color: #ff6b6b; font-weight: bold;">
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </a>
+        </li>
     </ul>
 </nav>
 
@@ -76,15 +81,14 @@
         <label>Role đề xuất</label>
         <select id="role" style="width:100%; margin:5px 0; padding:6px;">
             <option value="ROLE_USER">SC Staff</option>
-            <option value="ROLE_TECHNICIAN">Technician Staff</option>
+            <option value="ROLE_SC_TECHNICIAN">Technician Staff</option>
             <option value="ROLE_EVM_STAFF">EVM Staff</option>
         </select>
         <button id="save-request-btn" class="btn-primary" style="margin-top:10px;">Gửi Phiếu</button>
     </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/src/manager.js" type="module"></script>
+<script type="module" src="../../src/JS/script-admin.js"></script>
 
 
 </body>

@@ -59,7 +59,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
             List<String> roles = claims.get("roles", List.class);
             Object centerIdObject = claims.get("centerId");
             String centerId = centerIdObject == null ? null : String.valueOf(centerIdObject);
-
+            String username = claims.getSubject();
             // 4. Thêm thông tin người dùng vào Header
             ServerHttpRequest modifiedRequest = request.mutate()
                     .headers(httpHeaders -> {
@@ -69,6 +69,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                     .header("X-User-ID", userId)
                     .header("X-User-Role", String.join(",", roles)) // Truyền Roles qua Header
                     .header("X-USER-CENTER-ID", centerId)
+                    .header("X-USER-SUB", username)
                     .build();
 
             // 5. Chuyển tiếp Request đã được xác thực

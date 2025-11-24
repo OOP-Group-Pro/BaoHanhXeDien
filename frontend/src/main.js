@@ -21,7 +21,11 @@ function redirectToDashboard(roles) {
     } else if (roles.includes('ROLE_SC_TECHNICIAN') || roles.includes('ROLE_TECHNICIAN')) {
         // Đảm bảo bạn đã tạo thư mục pages/technician
         window.location.href = '/pages/technician/index.html';
-    } else {
+    }
+    else if (roles.includes('ROLE_MANAGER')) {
+            // Đảm bảo bạn đã tạo thư mục pages/technician
+            window.location.href = '/pages/manager/create-request.html';
+    }else {
         alert('Tài khoản của bạn chưa được phân quyền truy cập dashboard nào.');
         logout(); // Đăng xuất nếu không có quyền hợp lệ
     }
@@ -32,12 +36,23 @@ function redirectToDashboard(roles) {
  */
 function main() {
     // 1. KIỂM TRA TỰ ĐỘNG CHUYỂN HƯỚNG
-    const userInfo = decodeToken();
+    // Lấy token thô từ storage trước
+    const token = localStorage.getItem('accessToken');
 
-    if (userInfo) {
-        // Nếu đã login, gọi hàm điều hướng và DỪNG LẠI
-        redirectToDashboard(userInfo.roles);
-        return; // ⬅️ Quan trọng: Dừng code tại đây để tránh chạy tiếp
+    if (token) {
+        // Nếu có token, thử giải mã xem còn hạn không
+        const userInfo = decodeToken();
+
+        if (userInfo) {
+            // ✅ Token ngon -> Cho vào Dashboard
+            console.log("Phát hiện Token cũ, đang chuyển hướng...");
+            redirectToDashboard(userInfo.roles);
+            return; // Dừng code
+        } else {
+            // ❌ Token có tồn tại nhưng bị lỗi hoặc hết hạn -> Xóa đi để tránh lặp
+            console.warn("Token không hợp lệ, đang xóa...");
+            localStorage.clear();
+        }
     }
 
     // 2. LOGIC XỬ LÝ FORM
@@ -59,12 +74,8 @@ function main() {
 
         try {
             const user = await login(username, password);
-
             alert('Đăng nhập thành công!');
-
-            // Gọi hàm điều hướng sau khi login thành công
             redirectToDashboard(user.roles);
-
         } catch (error) {
             errorMessage.textContent = 'Lỗi: ' + error.message;
             loginButton.disabled = false;

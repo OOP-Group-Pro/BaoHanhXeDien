@@ -308,11 +308,7 @@ public class WarrantyService {
             @CacheEvict(value = "claim_history", allEntries = true),
             @CacheEvict(value = "claim_list", allEntries = true)
     })
-    public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto) {
-        // [Logic chính]:
-        // 1. Kiểm tra trạng thái Claim (Phải là APPROVED/IN_PROGRESS).
-        // 2. Cập nhật số seri mới lắp/hỏng cho ClaimPartDetail.
-        // 3. Cập nhật trạng thái Claim thành COMPLETED (nếu tất cả serial được điền).
+    public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto, Long currentTechnicianId) {
 
         WarrantyClaim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
@@ -433,28 +429,43 @@ public class WarrantyService {
     // 5. Chức năng: XEM LỊCH SỬ TRẠNG THÁI
     @Transactional(readOnly = true)
     @Cacheable(value = "claim_history", key = "#claimCode")
-    public List<ClaimStatusLogDto> getClaimStatusHistory(String claimCode) {
+    public PageCacheDto<ClaimStatusLogDto> getClaimStatusHistory(String claimCode) {
         // Sử dụng phương thức findByClaimId trong LogRepo
         List<ClaimStatusLog> logs = logRepo.findByClaim_ClaimCodeOrderByTimestampAsc(claimCode);
-
-        // map sang DTO trước khi trả về
-        return logs.stream()
-                // Chuyển từng ClaimStatusLog thành Dto
+        // Chuyen thanh Dto:
+        List<ClaimStatusLogDto> logsDto = logs.stream()
                 .map(ClaimMapper::mapToLogDto)
-                // Dùng user client gửi ProcessorId để lấy tên Processor và lưu vào Dto
-                .map(logDto -> {
-                    if(logDto.getProcessorId() != null) {
-                        try {
-                            UserResponseDto proccessorDetails = userClient.getScStaffById(logDto.getProcessorId());
-                            logDto.setProcessorName(proccessorDetails.getFullName());
-                        }catch (Exception e) {
-                            logDto.setProcessorName("ID: " + logDto.getProcessorId() + " (Không tìm thấy)");
-                        }
-                    }else logDto.setProcessorName("Hệ thống");
-
-                    return logDto;
-                })
                 .toList();
+        // Lay danh sach processorId
+        Set<Long> proIdList = logs.stream().map(ClaimStatusLog::getId).collect(Collectors.toSet());
+        // Tao Map cho UserResponse den processorId:
+        Map<Long, UserResponseDto> proDetailsMapId = new HashMap<>();
+
+        if (!proIdList.isEmpty()) {
+            try {
+                // *** Tối ưu: gọi userClient 1 lần (assume userClient.getUserDetailsMap(List<Long>) returns Map<Long, UserResponseDto>)
+                proDetailsMapId = userClient.getUserDetailsMap(new ArrayList<>(proIdList));
+                if (proDetailsMapId == null) proDetailsMapId = Collections.emptyMap();
+            } catch (Exception ex) {
+                // nếu feign lỗi, đừng ném, chỉ log — ta vẫn trả dữ liệu cơ bản
+                log.warn("Failed to fetch processor details for claim {}: {}", claimCode, ex.toString());
+                proDetailsMapId = Collections.emptyMap();
+            }
+        }
+
+        final Map<Long, UserResponseDto> proDetailsMapIdFinal = proDetailsMapId;
+        logsDto.forEach(d -> {
+            if (d.getProcessorId() != null) {
+                UserResponseDto u = proDetailsMapIdFinal.get(d.getProcessorId());
+                d.setProcessorName(u != null ? u.getFullName() : "ID: " + d.getProcessorId() + " (Không tìm thấy)");
+            } else {
+                d.setProcessorName("Hệ thống");
+            }
+        });
+
+        // 5) Wrap vào Page (unpaged) và chuyển sang PageCacheDto
+        Page<ClaimStatusLogDto> page = new PageImpl<>(logsDto); // unpaged: page number = 0, size = dtos.size()
+        return PageCacheDto.from(page);
     }
 
     // --- PRIVATE UTILS ---
@@ -516,12 +527,15 @@ public class WarrantyService {
                     .toList();
 
             if (!roles.contains("ROLE_ADMIN") &&
-                    !roles.contains("ROLE_SC_TECHNICIAN") &&
                     !roles.contains("ROLE_EVM_STAFF")) {
 
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
-                } else {
+                }if (roles.contains("ROLE_SC_TECHNICIAN")) {
+                    Specification<WarrantyClaim> assignedToMe = (root, query, cb) ->
+                        cb.equal(root.get("technicalStaffId"), currentUserId);
+                    specification = specification.and(assignedToMe);}
+                else {
                     specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
                 }
             }
