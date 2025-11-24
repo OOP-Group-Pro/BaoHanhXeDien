@@ -1,7 +1,7 @@
 package com.oem.evwarranty.rabbitmq;
 
 import com.oem.evwarranty.dto.event.ClaimApprovedEvent;
-import com.oem.evpart.services.PartService;
+//import com.oem.evpart.services.PartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ClaimEventListener {
 
-    private final PartService partService;
+    //private final PartService partService;
 
     @RabbitListener(queues = "${app.rabbitmq.consumer.queue:part.claim.approved.queue}")
     @Transactional
@@ -32,7 +32,7 @@ public class ClaimEventListener {
 
                 // Gọi hàm trừ kho (Hàm này đã bao gồm logic check tồn kho thấp -> bắn campaign)
                 // Lưu ý: Hàm deductStock của bạn hiện nhận 'serialNumber' làm partNumber
-                partService.deductStock(item.getPartNumber(), item.getQuantity());
+               // partService.deductStock(item.getPartNumber(), item.getQuantity());
 
             } catch (Exception e) {
                 log.error("❌ Lỗi xuất kho phụ tùng {} cho Claim {}: {}",
