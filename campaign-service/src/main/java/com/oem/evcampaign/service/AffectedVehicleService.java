@@ -1,9 +1,5 @@
 package com.oem.evcampaign.service;
 
-import com.oem.evcampaign.dto.request.AffectedVehicleCompleteRequest;
-import com.oem.evcampaign.dto.request.AffectedVehicleCreateRequest;
-import com.oem.evcampaign.dto.request.AffectedVehicleScheduleRequest;
-import com.oem.evcampaign.dto.request.AffectedVehicleUpdateRequest;
 import com.oem.evcampaign.dto.request.*;
 import com.oem.evcampaign.dto.response.AffectedVehicleResponse;
 import com.oem.evcampaign.dto.response.PageCacheDto;

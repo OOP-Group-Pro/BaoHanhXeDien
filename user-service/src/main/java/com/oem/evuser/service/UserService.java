@@ -2,11 +2,14 @@ package com.oem.evuser.service;
 
 import com.oem.evuser.dto.UserDto;
 import com.oem.evuser.dto.response.PageCacheDto;
+import com.oem.evuser.dto.event.UserCreatedEvent;
 import com.oem.evuser.entity.Role;
 import com.oem.evuser.entity.User;
 import com.oem.evuser.mapper.UserMapper;
+import com.oem.evuser.rabbitmq.UserProducer;
 import com.oem.evuser.repository.RoleRepository;
 import com.oem.evuser.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -21,23 +24,29 @@ import org.springframework.security.access.AccessDeniedException;
 import com.oem.evuser.dto.response.UserResponseDto;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.oem.evuser.mapper.UserMapper.mapToUserResponseDto;
 
 @Service
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
+    //new
+    private final UserProducer userProducer;
+
     public UserService(UserRepository userRepository,
                        RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder, UserProducer userProducer) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userProducer = userProducer;
     }
 
     // ... giữ nguyên hàm isAdmin ...
@@ -49,6 +58,7 @@ public class UserService {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role -> role.equals("ROLE_ADMIN"));
     }
+
 
     @Transactional(readOnly = true)
     // 🚀 CACHE: API này hay được các service khác gọi để lấy info hiển thị
@@ -66,9 +76,9 @@ public class UserService {
     }
 
 
-    // CREATE USER
+    // CREATE USER new
     @Transactional
-    @CacheEvict(value = "users_list", allEntries = true) // Xóa cache danh sách khi có user mới
+    @CacheEvict(value = "users_list", allEntries = true)
     public User createUser(User user, String roleName) {
         if (!isAdmin()) {
             throw new AccessDeniedException("Chỉ ADMIN mới được phép tạo user!");
@@ -77,7 +87,28 @@ public class UserService {
                 .orElseGet(() -> roleRepository.save(new Role(roleName)));
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.addRole(role);
-        return userRepository.save(user);
+
+        // 2. Lưu vào DB (MySQL)
+        User savedUser = userRepository.save(user);
+
+        // 3. Gửi tin nhắn sang RabbitMQ
+        try {
+            UserCreatedEvent event = new UserCreatedEvent(
+                    savedUser.getUserId(),
+                    savedUser.getEmail(),
+                    roleName,
+                    savedUser.getUsername(),
+                    LocalDateTime.now().toString()
+            );
+
+            userProducer.sendUserCreatedEvent(event);
+
+        } catch (Exception e) {
+            // Log lỗi nhưng KHÔNG rollback transaction DB
+            log.error("⚠️ Không thể gửi RabbitMQ cho user {}: {}", savedUser.getUsername(), e.getMessage());
+        }
+
+        return savedUser;
     }
 
     // READ - Lấy user theo ID
@@ -102,7 +133,7 @@ public class UserService {
 
     // UPDATE
     @Transactional
-  @Caching(evict = {
+    @Caching(evict = {
             @CacheEvict(value = "users", key = "#id"),      // Xóa cache user cũ
             @CacheEvict(value = "users_dto", key = "#id"),  // Xóa cache DTO cũ
             @CacheEvict(value = "users_list", allEntries = true) // Reset list

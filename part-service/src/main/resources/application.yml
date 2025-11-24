@@ -47,6 +47,14 @@ spring:
     redis:
       time-to-live: 600000
       cache-null-values: false
+    # Kết nối RabbitMQ
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: password123
+    publisher-confirm-type: correlated
+    publisher-returns: true
 
   main:
     allow-bean-definition-overriding: true
@@ -70,6 +78,12 @@ feign:
 
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+  inventory:
+    default-min-threshold: 5 # Vì trong DB không có cột này, ta dùng cấu hình chung
+  rabbitmq:
+    exchange: oem.internal.exchange
+    routing-keys:
+      inventory-low: inventory.low
 
 management:
   endpoints:

@@ -39,7 +39,14 @@ spring:
     redis:
       time-to-live: 600000
       cache-null-values: false
-
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: password123
+    listener:
+      simple:
+        acknowledge-mode: auto
   sql:
     init:
       mode: always
@@ -88,5 +95,9 @@ error:
 
 app:
   internal-secret: ${INTERNAL_SERVICE_SECRET}
+  rabbitmq:
+    exchange: oem.internal.exchange
+    queue: vehicle.user.created.queue # Tên hàng đợi riêng cho Vehicle Service
+    routing-key: user.created
 jwt:
   secret: ${JWT_SECRET}

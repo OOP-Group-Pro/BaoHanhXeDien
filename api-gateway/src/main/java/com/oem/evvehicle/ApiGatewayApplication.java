@@ -1,4 +1,4 @@
-package com.oem.evwarranty;
+package com.oem.evvehicle;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.cors.CorsConfiguration;

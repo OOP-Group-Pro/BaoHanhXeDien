@@ -11,6 +11,7 @@ import com.oem.evpart.models.PartInventory;
 import com.oem.evpart.repositories.PartInventoryRepository;
 import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartInventoryService;
+import com.oem.evpart.services.PartService; // [MỚI] Import PartService
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -32,6 +33,9 @@ public class PartInventoryServiceImpl implements PartInventoryService {
 
     private final PartInventoryRepository inventoryRepository;
     private final PartRepository partRepository;
+
+    // [MỚI] Inject PartService để gọi logic kiểm tra RabbitMQ
+    private final PartService partService;
 
     @Override
     @Transactional
@@ -74,10 +78,9 @@ public class PartInventoryServiceImpl implements PartInventoryService {
 
     @Override
     @Transactional
-// SỬA: Không dùng CachePut cho List. Phải Evict cache theo location để reload lại list mới
     @Caching(evict = {
-            @CacheEvict(value = "inventory_part", key = "#request.partId"), // Xóa cache list theo part
-            @CacheEvict(value = "inventory_location", key = "#request.location") // Xóa cache list theo location
+            @CacheEvict(value = "inventory_part", key = "#request.partId"),
+            @CacheEvict(value = "inventory_location", key = "#request.location")
     })
     public PartInventoryResponse decrementStock(DecrementStockRequest request) {
         PartInventory inventory = inventoryRepository
@@ -95,6 +98,20 @@ public class PartInventoryServiceImpl implements PartInventoryService {
         inventory.setQuantity(currentQuantity - requestedQuantity);
         PartInventory updatedInventory = inventoryRepository.save(inventory);
         log.info("decrementStock - partId={}, location={}, deducted={}", request.getPartId(), request.getLocation(), requestedQuantity);
+
+        // [MỚI - QUAN TRỌNG] 4. Gọi PartService để kiểm tra tổng tồn kho và bắn RabbitMQ
+        try {
+            // Lấy Serial Number từ Part liên kết
+            String serialNumber = updatedInventory.getPart().getSerialNumber();
+
+            // Gọi hàm check (Fire & Forget logic bên trong)
+            partService.checkStockAndNotify(serialNumber);
+
+        } catch (Exception e) {
+            // Log lỗi nhưng KHÔNG rollback transaction DB (Vì trừ kho đã thành công)
+            log.error("⚠️ Lỗi khi kiểm tra cảnh báo tồn kho RabbitMQ: {}", e.getMessage());
+        }
+
         return PartInventoryMapper.toPartInventoryResponse(updatedInventory);
     }
 

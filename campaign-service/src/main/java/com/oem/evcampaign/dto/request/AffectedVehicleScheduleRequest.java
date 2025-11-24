@@ -1,6 +1,5 @@
 package com.oem.evcampaign.dto.request;
 
-import java.util.UUID;
 import java.time.LocalDateTime;
 import jakarta.validation.constraints.NotNull;
 
