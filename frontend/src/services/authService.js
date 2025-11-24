@@ -36,6 +36,7 @@ export async function login(username, password) {
         console.error('Lỗi đăng nhập:', error);
         throw error; // Ném lỗi ra để main.js bắt
     }
+
 }
 
 /**

@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tồn kho - EVM Staff</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
+
+</head>
+<body>
+
+<!-- =======================
+     BÊN TRÁI: SIDEBAR MENU
+======================== -->
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <div class="avatar">T</div>
+        <div class="user-info">
+            <strong>Admin</strong>
+            <span>Admin Thùy</span>
+        </div>
+    </div>
+
+    <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+        <li><a href="index.html" class="active"><i class="fa-solid fa-file-invoice"></i>Quản lí người dùng</a></li>
+        <li><a href="#"><i class="fa-solid fa-shield-halved"></i> Chính sách BH</a></li>
+        <li><a href="inventory1.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
+        <li><a href="request.html"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+
+        <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+    </ul>
+</nav>
+
+<!-- ==========================
+     BÊN PHẢI: NỘI DUNG CHÍNH
+=========================== -->
+<main class="main-content">
+    <header class="main-header">
+        <h1>Quản lý Tồn kho</h1>
+        <div class="header-actions">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Tìm theo tên, mã...">
+            </div>
+            <!-- Sửa: Nút này sẽ mở modal "Thêm Kho" -->
+            <button class="btn-primary" id="add-stock-btn">
+                <i class="fa-solid fa-plus"></i> Add Stock (Nhập kho)
+            </button>
+            <!-- Sửa: Nút này sẽ mở modal "Thêm Part" -->
+            <button class="btn-secondary" id="add-new-part-btn">
+                <i class="fa-solid fa-cog"></i> Add New Part (Thêm Part mới)
+            </button>
+        </div>
+    </header>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>Part (Phụ tùng)</th>
+                <th>Location (Kho)</th>
+                <th>Quantity (Số lượng)</th>
+            </tr>
+            </thead>
+            <tbody id="inventory-table-body">
+            <!-- Dữ liệu sẽ được chèn vào đây bằng JavaScript -->
+            <tr><td colspan="3" style="text-align: center; padding: 40px;">Đang tải dữ liệu...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- =======================
+     MODAL ĐỂ "ADD NEW PART"
+======================== -->
+<div class="modal-overlay" id="add-part-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Part (Thêm Loại Phụ tùng Mới)</h2>
+            <button class="modal-close-btn" id="close-part-modal">&times;</button>
+        </div>
+        <form id="add-part-form">
+            <div class="form-group">
+                <label for="partName">Part Name (Tên phụ tùng)</label>
+                <input type="text" id="partName" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="serialNumber">Part Number / Serial (Mã phụ tùng)</label>
+                <input type="text" id="serialNumber" name="serialNumber" required>
+            </div>
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer (Nhà sản xuất)</label>
+                <input type="text" id="manufacturer" name="manufacturer">
+            </div>
+            <div class="form-group">
+                <label for="partType">Part Type (Loại phụ tùng, vd: PIN, MOTOR)</label>
+                <input type="text" id="partType" name="partType">
+            </div>
+            <div id="part-error-message" class="error-message" style="display: none;"></div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="cancel-part-modal">Hủy</button>
+                <button type="submit" class="btn-primary">Lưu Part</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =======================
+     MODAL ĐỂ "ADD STOCK"
+======================== -->
+<div class="modal-overlay" id="add-stock-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Stock (Nhập kho)</h2>
+            <button class="modal-close-btn" id="close-stock-modal">&times;</button>
+        </div>
+        <form id="add-stock-form">
+            <div class="form-group">
+                <label for="partId">Part ID (ID của Phụ tùng)</label>
+                <input type="number" id="partId" name="partId" required placeholder="Nhập Part ID (ví dụ: 1, 2...)">
+            </div>
+            <div class="form-group">
+                <label for="location">Location (Kho)</label>
+                <input type="text" id="location" name="location" required placeholder="Ví dụ: Kho Hà Nội, SC Mỹ Đình">
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantity (Số lượng nhập)</label>
+                <input type="number" id="quantity" name="quantity" required min="1">
+            </div>
+            <div id="stock-error-message" class="error-message" style="display: none;"></div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="cancel-stock-modal">Hủy</button>
+                <button type="submit" class="btn-primary">Nhập kho</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script type="module" src="../../src/JS/admin-inventory1.js"></script>
+
+
+
+</body>
+</html>

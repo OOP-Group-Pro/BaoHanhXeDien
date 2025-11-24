@@ -8,12 +8,20 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    // Sửa lại method đầu tiên trong GlobalExceptionHandler
     @ExceptionHandler(value = Exception.class)
-    public ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException e) {
+    public ResponseEntity<ApiResponse> handlingRuntimeException(Exception e) { // Sửa tham số thành Exception cho bao quát
+
+        // 1. QUAN TRỌNG: In lỗi ra Console Server để bạn đọc được stack trace
+        e.printStackTrace();
 
         ApiResponse response = new ApiResponse();
         response.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-        response.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+
+        // 2. QUAN TRỌNG: Gửi kèm tin nhắn lỗi thật về Frontend
+        // Thay vì chỉ "Lỗi không xác định", hãy nối thêm e.getMessage()
+        response.setMessage("Lỗi hệ thống (999): " + e.getMessage());
+
         return ResponseEntity.badRequest().body(response);
     }
 

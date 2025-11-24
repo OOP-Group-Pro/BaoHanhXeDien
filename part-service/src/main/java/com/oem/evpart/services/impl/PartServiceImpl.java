@@ -1,6 +1,7 @@
 package com.oem.evpart.services.impl;
 
 import com.oem.evpart.dto.request.PartRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartResponse;
 import com.oem.evpart.exceptions.ResourceNotFoundException;
 import com.oem.evpart.mappers.PartMapper;
@@ -9,6 +10,10 @@ import com.oem.evpart.repositories.PartRepository;
 import com.oem.evpart.services.PartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +33,7 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "parts_list", allEntries = true)
     public PartResponse createPart(PartRequest partRequest) {
         if(partRepository.existsBySerialNumber(partRequest.getSerialNumber())) {
             throw new RuntimeException("Serial number already exists");
@@ -40,6 +46,7 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "parts", key = "#partId")
     public PartResponse getPartById(Long partId) {
         Part part = partRepository.findById(partId)
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + partId));
@@ -48,22 +55,30 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PartResponse> getAllParts(String keyword, Pageable pageable) {
+    // Lưu cache dưới dạng PageCacheDto (Serializable & POJO) => An toàn tuyệt đối
+    @Cacheable(value = "parts_list", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #keyword")
+    public PageCacheDto<PartResponse> getAllParts(String keyword, Pageable pageable) {
         Page<Part> partPage;
 
-        if (keyword != null && !keyword.isBlank()) {
-            // Nếu có từ khóa, tìm theo Tên hoặc Mã
-            partPage = partRepository.findByNameContainingIgnoreCaseOrSerialNumberContainingIgnoreCase(keyword, keyword, pageable);
+        // Logic tìm kiếm giữ nguyên
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            partPage = partRepository.searchParts(keyword.trim(), pageable);
         } else {
-            // Nếu không, lấy tất cả
             partPage = partRepository.findAll(pageable);
         }
 
-        return partPage.map(partMapper::toPartResponse);
-    }
+        // CHUYỂN ĐỔI TỪ PAGE -> PAGECACHEDTO
 
-    @Override
+            return PageCacheDto.from(partPage.map(partMapper::toPartResponse));
+        }
+
+
+        @Override
     @Transactional
+    @Caching(
+            put = { @CachePut(value = "parts", key = "#partId") },
+            evict = { @CacheEvict(value = "parts_list", allEntries = true) }
+    )
     public PartResponse updatePart(Long partId, PartRequest partRequest) {
         Part existingPart = partRepository.findById(partId)
                 .orElseThrow(() -> new ResourceNotFoundException("Part not found with id: " + partId));
@@ -75,6 +90,12 @@ public class PartServiceImpl implements PartService {
 
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "parts", key = "#partId"),
+                    @CacheEvict(value = "parts_list", allEntries = true)
+            }
+    )
     public void deletePart(Long partId) {
         if (!partRepository.existsById(partId)) {
             throw new ResourceNotFoundException("Part not found with id: " + partId);
