@@ -1,10 +1,9 @@
 package com.oem.evwarranty.dto;
 
-import com.oem.evwarranty.model.ClaimPartDetail;
 import com.oem.evwarranty.model.utils.PartRequestDto;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 /**
  * DTO chứa dữ liệu tạo một Warranty Claim mới
  */

@@ -1,5 +1,6 @@
 package com.oem.evcampaign.service.impl;
 
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.model.enums.CampaignStatus;
 import com.oem.evcampaign.model.enums.CampaignType;
 import com.oem.evcampaign.dto.request.CampaignCreateRequest;
@@ -87,16 +88,19 @@ public class CampaignServiceImpl implements CampaignService {
     @Override
     // Cache kết quả tìm kiếm (chỉ cache trang đầu tiên để tối ưu)
     @Cacheable(value = "campaign_search", key = "{#code, #status, #type, #pageable.pageNumber}", condition = "#pageable.pageNumber == 0")
-    public Page<CampaignResponse> search(String code,
-                                         CampaignStatus status, // 1. Xóa đoạn com.oem... đi
-                                         CampaignType type,     // 2. Xóa đoạn com.oem... đi
-                                         Pageable pageable) {
+    public PageCacheDto<CampaignResponse> search(String code,
+                                                 CampaignStatus status,
+                                                 CampaignType type,
+                                                 Pageable pageable) {
 
         // Xử lý keyword: nếu null thì truyền rỗng để query vẫn chạy đúng
         String keyword = (code != null) ? code.trim() : "";
 
-        // Gọi hàm search thông minh bên Repository
-        return campaignRepo.search(keyword, status, type, pageable)
+        // 1. Gọi hàm search và map sang Response (Kết quả là Page của Spring)
+        Page<CampaignResponse> pageResult = campaignRepo.search(keyword, status, type, pageable)
                 .map(CampaignMapper::toResponse);
+
+        // 2. Đóng gói Page vào PageCacheDto để trả về (Đây là bước fix lỗi)
+        return PageCacheDto.from(pageResult);
     }
 }

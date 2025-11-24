@@ -1,5 +1,6 @@
 package com.oem.evcampaign.service.mapper;
 
+
 import com.oem.evcampaign.dto.response.AffectedVehicleResponse;
 import com.oem.evcampaign.model.AffectedVehicle;
 

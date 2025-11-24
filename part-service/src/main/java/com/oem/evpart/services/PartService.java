@@ -12,7 +12,7 @@ import java.util.Map;
 public interface PartService {
     PartResponse createPart(PartRequest partRequest);
     PartResponse getPartById(Long partId);
-
+     void checkStockAndNotify(String serialNumber);
     // SỬA DÒNG NÀY:thành Page->page cache dto
     PageCacheDto<PartResponse> getAllParts(String keyword, Pageable pageable);
 

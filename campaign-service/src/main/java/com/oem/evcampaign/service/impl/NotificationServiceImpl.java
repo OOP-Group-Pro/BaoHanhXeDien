@@ -2,6 +2,7 @@ package com.oem.evcampaign.service.impl;
 
 import com.oem.evcampaign.dto.request.NotificationCreateRequest;
 import com.oem.evcampaign.dto.response.NotificationResponse;
+import com.oem.evcampaign.dto.response.PageCacheDto;
 import com.oem.evcampaign.exception.NotFoundException;
 import com.oem.evcampaign.model.AffectedVehicle;
 import com.oem.evcampaign.model.Campaign;
@@ -69,12 +70,12 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public Page<NotificationResponse> listByCampaign(Long campaignId, Pageable pageable) {
-        return notiRepo.findByCampaignId(campaignId, pageable).map(NotificationMapper::toResponse);
+    public PageCacheDto<NotificationResponse> listByCampaign(Long campaignId, Pageable pageable) {
+        return PageCacheDto.from(notiRepo.findByCampaignId(campaignId, pageable).map(NotificationMapper::toResponse));
     }
 
     @Override
-    public Page<NotificationResponse> listByAffected(Long affectedId, Pageable pageable) {
-        return notiRepo.findByAffectedId(affectedId, pageable).map(NotificationMapper::toResponse);
+    public PageCacheDto<NotificationResponse> listByAffected(Long affectedId, Pageable pageable) {
+        return PageCacheDto.from(notiRepo.findByAffectedId(affectedId, pageable).map(NotificationMapper::toResponse));
     }
 }

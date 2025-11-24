@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.oem.evwarranty.client")
+@EnableFeignClients(basePackages = "com.oem.evvehicle.client")
 public class UserServiceApplication {
 
     public static void main(String[] args) {
