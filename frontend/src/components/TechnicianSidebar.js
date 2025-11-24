@@ -1,42 +1,87 @@
 // src/components/TechnicianSidebar.js
-import { getUser } from '../utils/storage.js';
+import { logout } from '../utils/auth.js';
 
-export function renderTechnicianSidebar(placeholderId = 'sidebar-placeholder') {
-    const user = getUser();
-    const username = user ? user.username : 'Technician';
-    const avatarInitial = username.charAt(0).toUpperCase();
+export function renderTechnicianSidebar() {
+    const placeholder = document.getElementById('sidebar-placeholder');
+    if (!placeholder) return;
 
-    const sidebarHTML = `
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="avatar">${avatarInitial}</div>
-                <div class="user-info">
-                    <strong>${username}</strong>
-                    <span>Kỹ thuật viên</span>
-                </div>
+    // Lấy thông tin user từ localStorage (giống StaffSidebar)
+    const userJson = localStorage.getItem('user');
+    const user = userJson ? JSON.parse(userJson) : { username: 'Technician' };
+    const avatarInitial = user.username ? user.username.charAt(0).toUpperCase() : 'T';
+
+    // HTML cấu trúc giống hệt StaffSidebar
+    placeholder.innerHTML = `
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-bolt logo-icon" style="color: #3B82F6;"></i>
+                <h2 style="color: white; margin-bottom: 0;">OEM EV</h2>
             </div>
 
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" id="nav-my-jobs">
-                    <i class="fa-solid fa-wrench"></i>
-                    <span>Công việc của tôi</span>
-                </a>
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="#" id="nav-my-jobs" class="active">
+                        <i class="fa-solid fa-wrench"></i>
+                        Công việc của tôi
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-history">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Lịch sử sửa chữa
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-profile">
+                        <i class="fa-solid fa-user"></i>
+                        Hồ sơ cá nhân
+                    </a>
+                </li>
+            </ul>
 
-                <a href="#" class="nav-item" id="nav-history">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>Lịch sử sửa chữa</span>
-                </a>
-
-                <a href="#" class="nav-item" id="nav-profile">
-                    <i class="fa-solid fa-user"></i>
-                    <span>Hồ sơ cá nhân</span>
-                </a>
-            </nav>
-        </aside>
+            <div class="sidebar-user">
+                <div class="avatar-sm" style="background-color: #3B82F6; color: white;">
+                    ${avatarInitial}
+                </div>
+                <div style="flex-grow: 1;">
+                    <span class="user-name" style="display: block; font-size: 0.9rem;">${user.username}</span>
+                    <span style="font-size: 0.75rem; color: #9CA3AF;">Kỹ thuật viên</span>
+                </div>
+                <button id="sidebar-logout-btn" style="background: none; border: none; color: #EF4444; cursor: pointer;" title="Đăng xuất">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </nav>
     `;
+        const menuLinks = placeholder.querySelectorAll('.sidebar-nav a');
+        menuLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault(); // Ngăn thẻ a load lại trang
 
-    const placeholder = document.getElementById(placeholderId);
-    if (placeholder) {
-        placeholder.innerHTML = sidebarHTML;
+                // Bước 1: Xóa class 'active' khỏi TẤT CẢ các link
+                menuLinks.forEach(item => item.classList.remove('active'));
+
+                // Bước 2: Thêm class 'active' cho link VỪA BẤM
+                link.classList.add('active');
+
+                // Bước 3: (Tùy chọn) Gọi hàm chuyển đổi nội dung
+                // Ví dụ: Bạn có thể bắt sự kiện này ở file technician.js để ẩn hiện bảng
+                const section = link.getAttribute('data-section');
+                triggerSectionChange(section);
+            });
+        });
+    function triggerSectionChange(sectionName) {
+        const event = new CustomEvent('switchSection', { detail: sectionName });
+        document.dispatchEvent(event);
+    }
+    // Gắn sự kiện Logout (Giống StaffSidebar)
+    const logoutBtn = document.getElementById('sidebar-logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                logout();
+            }
+        });
     }
 }

@@ -1,258 +1,303 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Warranty Pro - Cổng Kỹ thuật viên</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Technician Dashboard - EV Warranty</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../../src/styles/technician.css">
+    <link rel="stylesheet" href="../../src/styles/dashboard.css">
+
+    <style>
+        /* Ẩn các màn hình chưa active */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Style cho bảng công việc giống SC Staff */
+        .table th { font-weight: 600; background-color: #f8f9fa; }
+        .status-badge { font-size: 0.85em; padding: 5px 10px; border-radius: 20px; font-weight: 500; }
+    </style>
 </head>
-<body>
 
-<div id="sidebar-placeholder"></div>
-<div id="header-placeholder"></div>
+<body id="technician-dashboard-page">
+
+<aside class="sidebar" id="sidebar-placeholder"></aside>
 
 
-<main class="main-content" id="main-content">
-    <div id="screen-history" class="screen">
-        <header class="main-header">
-            <h1>Lịch sử sửa chữa</h1>
-        </header>
+<div class="main-content">
 
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-body" style="display: flex; gap: 15px; align-items: flex-end;">
-                <div class="form-group" style="flex: 1;">
-                    <label>Từ ngày</label>
-                    <input type="date" id="history-from-date" class="form-control">
-                </div>
-                <div class="form-group" style="flex: 1;">
-                    <label>Đến ngày</label>
-                    <input type="date" id="history-to-date" class="form-control">
-                </div>
-                <div class="form-group" style="flex: 1;">
-                    <label>Trạng thái</label>
-                    <select id="history-status" class="form-control">
-                        <option value="">Tất cả</option>
-                        <option value="REPAIRED">Đã sửa xong (Chờ trả)</option>
-                        <option value="COMPLETED">Hoàn tất (Đã giao khách)</option>
-                    </select>
-                </div>
-                <button id="btn-filter-history" class="btn btn-primary" style="height: 42px;">
-                    <i class="fa-solid fa-filter"></i> Lọc
+    <header class="header" id="header-placeholder"></header>
+
+    <main class="container-fluid p-4">
+
+        <div id="screen-job-list" class="screen active">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3 text-primary"><i class="fa-solid fa-screwdriver-wrench"></i> Công việc của tôi</h1>
+                <button class="btn btn-outline-primary" id="reload-jobs-btn">
+                    <i class="fa-solid fa-sync-alt"></i> Tải lại
                 </button>
             </div>
-        </div>
 
-        <div class="card">
-            <div class="card-body" style="padding: 0;">
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Mã Claim</th>
-                        <th>Số VIN / Model</th>
-                        <th>Ngày tạo</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                    </thead>
-                    <tbody id="history-table-body">
-                    </tbody>
-                </table>
-                <div id="history-loading" style="text-align: center; padding: 20px; display: none;">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu...
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-muted">Danh sách Claims cần xử lý</h5>
                 </div>
-                <div id="history-empty" style="text-align: center; padding: 20px; color: #666; display: none;">
-                    Không tìm thấy dữ liệu lịch sử nào.
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="screen-profile" class="screen">
-        <header class="main-header">
-            <h1>Hồ sơ cá nhân</h1>
-        </header>
-
-        <div class="profile-container">
-            <div class="card profile-card">
-                <div class="card-body" style="text-align: center;">
-                    <div class="profile-avatar-large" id="profile-avatar-text">T</div>
-                    <h2 id="profile-name" style="margin-top: 15px; margin-bottom: 5px;">Đang tải...</h2>
-                    <p id="profile-role" class="text-secondary">Kỹ thuật viên</p>
-
-                    <div id="profile-status-badge" style="margin-top: 10px;">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="job-table">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Mã Claim</th>
+                                <th>Số VIN / Xe</th>
+                                <th style="width: 30%;">Mô tả lỗi</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                            </thead>
+                            <tbody id="job-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center p-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    Đang tải dữ liệu...
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="card profile-details-card">
-                <div class="card-header">
-                    <h3>Thông tin chi tiết</h3>
-                </div>
+        <div id="screen-history" class="screen">
+            <h1 class="h3 mb-3">Lịch sử sửa chữa</h1>
+
+            <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <div class="detail-grid-profile">
-                        <div class="form-group">
-                            <label>Mã Kỹ thuật viên (ID)</label>
-                            <input type="text" id="profile-id" class="form-control" readonly>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Từ ngày</label>
+                            <input type="date" id="history-from-date" class="form-control">
                         </div>
-                        <div class="form-group">
-                            <label>Họ và tên</label>
-                            <input type="text" id="profile-fullname" class="form-control" readonly>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Đến ngày</label>
+                            <input type="date" id="history-to-date" class="form-control">
                         </div>
-                        <div class="form-group">
-                            <label>Số điện thoại</label>
-                            <input type="text" id="profile-phone" class="form-control" readonly>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Trạng thái</label>
+                            <select id="history-status" class="form-select">
+                                <option value="">Tất cả</option>
+                                <option value="REPAIRED">Đã sửa xong</option>
+                                <option value="COMPLETED">Hoàn tất</option>
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label>Trình độ / Cấp bậc</label>
-                            <input type="text" id="profile-level" class="form-control" readonly>
+                        <div class="col-md-3">
+                            <button id="btn-filter-history" class="btn btn-primary w-100">
+                                <i class="fa-solid fa-filter"></i> Lọc dữ liệu
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div class="card-footer" style="text-align: right;">
-                    <button id="btn-logout" class="btn btn-danger">
-                        <i class="fa-solid fa-sign-out-alt"></i> Đăng xuất
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Mã Claim</th>
+                                <th>Số VIN / Model</th>
+                                <th>Ngày tạo</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody id="history-table-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="history-loading" class="text-center p-4 d-none">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                    <div id="history-empty" class="text-center p-4 text-muted d-none">
+                        Không tìm thấy dữ liệu lịch sử nào.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-profile" class="screen">
+            <h1 class="h3 mb-3">Hồ sơ cá nhân</h1>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card shadow-sm text-center p-4 h-100">
+                        <div class="mx-auto bg-primary text-white d-flex align-items-center justify-content-center rounded-circle mb-3"
+                             style="width: 80px; height: 80px; font-size: 2rem; font-weight: bold;" id="profile-avatar-text">T</div>
+                        <h4 id="profile-name">Đang tải...</h4>
+                        <p class="text-muted" id="profile-role">Kỹ thuật viên</p>
+                        <div id="profile-status-badge"></div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Thông tin chi tiết</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Mã Kỹ thuật viên (ID)</label>
+                                <input type="text" id="profile-id" class="form-control" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Họ và tên</label>
+                                <input type="text" id="profile-fullname" class="form-control" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Số điện thoại</label>
+                                <input type="text" id="profile-phone" class="form-control" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Cấp bậc</label>
+                                <input type="text" id="profile-level" class="form-control" readonly>
+                            </div>
+                        </div>
+                        <div class="card-footer text-end bg-white">
+                            <button id="btn-logout" class="btn btn-outline-danger">
+                                <i class="fa-solid fa-sign-out-alt"></i> Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-repair-details" class="screen">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3">Sửa chữa: <span id="detail-claim-id" class="text-primary">...</span></h1>
+                <button class="btn btn-secondary btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại
+                </button>
+            </div>
+
+            <div id="detail-loading" class="alert alert-info">
+                <i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu chi tiết...
+            </div>
+
+            <div id="detail-content" style="display: none;">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Thông tin xe & Lỗi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Số VIN:</strong> <span id="detail-vin"></span></div>
+                            <div class="col-md-4"><strong>Khách hàng:</strong> <span id="detail-customer"></span></div>
+                            <div class="col-md-4"><strong>Ngày nhận:</strong> <span id="detail-date"></span></div>
+                        </div>
+                        <div class="p-3 bg-light rounded border">
+                            <strong>Mô tả lỗi từ khách hàng:</strong>
+                            <p class="mb-0 mt-1" id="detail-description"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header"><h5>Phụ tùng cần thay thế</h5></div>
+                            <div class="card-body p-0">
+                                <table class="table table-striped mb-0" id="detail-parts-table">
+                                    <thead>
+                                    <tr><th>Tên Phụ tùng</th><th>Mã</th><th>SL</th></tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header"><h5>Quy trình sửa chữa (Hướng dẫn)</h5></div>
+                            <div class="card-body" id="detail-procedure-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button id="btn-finish-repair" class="btn btn-success btn-lg px-5">
+                        <i class="fa-solid fa-check-circle"></i> Hoàn thành sửa chữa
                     </button>
                 </div>
             </div>
         </div>
-    </div>
-    <div id="screen-job-list" class="screen active">
-        <header class="main-header">
-            <h1>Công việc của tôi</h1>
-            <div class="header-actions">
-                <button class="btn-secondary" id="reload-jobs-btn"><i class="fa-solid fa-sync-alt"></i> Tải lại</button>
+
+        <div id="screen-report-form" class="screen">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3">Báo cáo Kết quả: <span id="form-claim-id" class="text-success">...</span></h1>
+                <button class="btn btn-secondary btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> Hủy bỏ
+                </button>
             </div>
-        </header>
 
-        <div class="card">
-            <div class="card-body" style="padding: 0;">
-                <table class="data-table" id="job-table">
-                    <thead>
-                    <tr>
-                        <th>Mã Claim</th>
-                        <th>VIN</th>
-                        <th>Mô tả lỗi</th>
-                        <th>Trạng thái Phụ tùng</th>
-                        <th>Hành động</th>
-                    </tr>
-                    </thead>
-                    <tbody id="job-table-body">
-                    <tr>
-                        <td colspan="5" class="loading-placeholder">
-                            <i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách công việc...
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="screen-repair-details" class="screen">
-        <header class="main-header">
-            <h1>Chi tiết sửa chữa: <span id="detail-claim-id">...</span></h1>
-            <div class="header-actions">
-                <button class="btn btn-secondary btn-back"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</button>
-            </div>
-        </header>
-
-        <div id="detail-loading" class="card loading-placeholder">
-            <i class="fa-solid fa-spinner fa-spin"></i> Đang tải chi tiết...
-        </div>
-
-        <div id="detail-content" style="display: none;">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-body">
+                    <form id="report-form">
+                        <div id="form-error-message" class="alert alert-danger d-none"></div>
 
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <h3>Thông tin Chung</h3>
-                            <p><strong>Số VIN:</strong> <span id="detail-vin"></span></p>
-                            <p><strong>Khách hàng:</strong> <span id="detail-customer"></span></p>
-                            <p><strong>Ngày tạo:</strong> <span id="detail-date"></span></p>
+                        <h5 class="mb-3 border-bottom pb-2">1. Cập nhật Serial Phụ tùng mới</h5>
+                        <p class="text-muted small mb-3">Vui lòng quét hoặc nhập số serial của các phụ tùng mới đã lắp vào xe.</p>
+
+                        <div id="form-serial-inputs" class="mb-4">
                         </div>
 
-                        <div class="detail-item">
-                            <h3>Phụ tùng cần thay</h3>
-                            <table class="data-table" id="detail-parts-table">
-                                <thead>
-                                <tr>
-                                    <th>Tên Phụ tùng</th>
-                                    <th>Mã Phụ tùng</th>
-                                    <th>SL</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
+                        <h5 class="mb-3 border-bottom pb-2">2. Ghi chú kỹ thuật</h5>
+                        <div class="mb-4">
+                            <label for="repair-notes" class="form-label">Mô tả công việc đã làm & Kết quả kiểm tra:</label>
+                            <textarea id="repair-notes" class="form-control" rows="4" placeholder="Ví dụ: Đã thay thế mô-đun pin, kiểm tra điện áp ổn định..."></textarea>
                         </div>
-                    </div>
 
-                    <div class="detail-section">
-                        <h3>Mô tả lỗi (từ Khách hàng)</h3>
-                        <p id="detail-description"></p>
-                    </div>
-
-                    <div class="detail-section">
-                        <h3>Hướng dẫn Sửa chữa (Repair Procedure)</h3>
-                        <div id="detail-procedure-list">
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="confirm-checkbox">
+                            <label class="form-check-label" for="confirm-checkbox">
+                                Tôi xác nhận đã hoàn thành công việc sửa chữa theo đúng quy trình kỹ thuật.
+                            </label>
                         </div>
-                    </div>
 
-                </div>
-                <div class="card-footer">
-                    <button id="btn-finish-repair" class="btn btn-primary"><i class="fa-solid fa-check"></i> Đã sửa chữa xong</button>
+                        <div class="text-end">
+                            <button type="submit" id="btn-submit-report" class="btn btn-success px-4" disabled>
+                                <i class="fa-solid fa-paper-plane"></i> Gửi Báo cáo Hoàn tất
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="screen-report-form" class="screen">
-        <header class="main-header">
-            <h1>Báo cáo Kết quả: <span id="form-claim-id"></span></h1>
-            <div class="header-actions">
-                <button class="btn btn-secondary btn-back"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</button>
+    </main>
+</div>
+
+<div class="modal fade" id="claimDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="claimModalTitle"><i class="fa-solid fa-info-circle"></i> Chi tiết Yêu cầu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </header>
-
-        <div class="card">
-            <form id="report-form">
-                <div class="card-body">
-                    <div id="form-error-message" class="error-message"></div>
-
-                    <h3>Nhập Serial Phụ tùng đã thay</h3>
-                    <p class="text-secondary" style="font-size: 0.875rem; margin-bottom: 20px;">
-                        Quét hoặc nhập số serial của các phụ tùng mới đã được lắp đặt.
-                    </p>
-                    <div id="form-serial-inputs">
-                    </div>
-
-                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
-
-                    <div class="form-group">
-                        <label for="repair-notes">Ghi chú kết quả sửa chữa</label>
-                        <textarea id="repair-notes" class="form-control" placeholder="Ví dụ: Đã thay mô-đun pin số 3. Xe sạc bình thường, không còn báo lỗi..."></textarea>
-                    </div>
-
-                    <div class="form-confirm">
-                        <input type="checkbox" id="confirm-checkbox">
-                        <label for="confirm-checkbox">Tôi xác nhận đã hoàn thành công việc sửa chữa theo đúng quy trình.</label>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <button type="submit" id="btn-submit-report" class="btn btn-success" disabled>
-                        <i class="fa-solid fa-paper-plane"></i> Gửi Báo cáo
-                    </button>
-                </div>
-            </form>
+            <div class="modal-body p-0" id="claimModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
         </div>
     </div>
+</div>
 
-</main>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="module" src="../../src/js/technician.js"></script>
 
 </body>

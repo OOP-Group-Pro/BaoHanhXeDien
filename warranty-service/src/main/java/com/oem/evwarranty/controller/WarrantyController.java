@@ -123,9 +123,12 @@ public class WarrantyController {
     @PutMapping("/{claimId}/repair-result")
     // @PreAuthorize("hasRole('TECHNICAL_STAFF')")
     public ResponseEntity<Void> updateRepairResult(@PathVariable Long claimId,
-                                                   @Valid @RequestBody ClaimRepairResultDto resultDto) {
+                                                   @Valid @RequestBody ClaimRepairResultDto resultDto,
+                                                   Authentication authentication) {
         // Logic service sẽ tự kiểm tra trạng thái Claim
-        warrantyService.updateRepairResult(claimId, resultDto);
+        UserDetailsPrincipal userPrincipal = (UserDetailsPrincipal) authentication.getPrincipal();
+        Long currentTechnicianId = userPrincipal.getUserId();
+        warrantyService.updateRepairResult(claimId, resultDto, currentTechnicianId);
         return ResponseEntity.ok().build();
     }
 

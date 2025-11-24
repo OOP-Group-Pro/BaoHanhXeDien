@@ -23,6 +23,10 @@ spring:
           uri: http://user-service:8080
           predicates:
             - Path=/api/v1/auth/**
+        - id: user_service_request
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/v1/staff-requests/**
 
         # === PART-SERVICE (Sửa lỗi 404) ===
         # FIX: Tạo 4 route riêng, dùng cú pháp /** đã chạy

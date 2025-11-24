@@ -308,11 +308,7 @@ public class WarrantyService {
             @CacheEvict(value = "claim_history", allEntries = true),
             @CacheEvict(value = "claim_list", allEntries = true)
     })
-    public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto) {
-        // [Logic chính]:
-        // 1. Kiểm tra trạng thái Claim (Phải là APPROVED/IN_PROGRESS).
-        // 2. Cập nhật số seri mới lắp/hỏng cho ClaimPartDetail.
-        // 3. Cập nhật trạng thái Claim thành COMPLETED (nếu tất cả serial được điền).
+    public void updateRepairResult(Long claimId, ClaimRepairResultDto resultDto, Long currentTechnicianId) {
 
         WarrantyClaim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
@@ -516,12 +512,15 @@ public class WarrantyService {
                     .toList();
 
             if (!roles.contains("ROLE_ADMIN") &&
-                    !roles.contains("ROLE_SC_TECHNICIAN") &&
                     !roles.contains("ROLE_EVM_STAFF")) {
 
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
-                } else {
+                }if (roles.contains("ROLE_SC_TECHNICIAN")) {
+                    Specification<WarrantyClaim> assignedToMe = (root, query, cb) ->
+                        cb.equal(root.get("technicalStaffId"), currentUserId);
+                    specification = specification.and(assignedToMe);}
+                else {
                     specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
                 }
             }
