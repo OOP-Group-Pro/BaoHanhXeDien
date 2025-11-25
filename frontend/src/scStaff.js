@@ -11,6 +11,7 @@ import { getUsersByRole } from "./services/userService.js";
 import { api } from './services/apiClient.js';
 import { setupVehicleLookup } from './JS/vehicle-lookup.js';
 import { setupAppointmentsPage } from './JS/sc-appointments.js';
+import { registerNotification, listenInForeground } from './services/fcm.js';
 
 
 
@@ -118,7 +119,19 @@ function main() {
         return;
     }
     console.log("LOG: Gác cổng OK. User:", userInfo.roles);
+    // Firebase Notification
+    try {
+            console.log("🔔 SC Staff: Đang khởi động dịch vụ thông báo...");
 
+            // 1. Xin quyền & Gửi Token lên Server (để Backend biết đường gửi tin)
+            registerNotification();
+
+            // 2. Bật chế độ nghe tin nhắn khi đang mở web (để hiện Alert)
+            listenInForeground();
+
+        } catch (e) {
+            console.error("❌ Lỗi khởi động FCM:", e);
+        }
     // 2. Vẽ giao diện chung (Chạy 1 lần)
     try {
         renderHeader();

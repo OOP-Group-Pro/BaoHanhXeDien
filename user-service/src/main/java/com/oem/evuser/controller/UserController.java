@@ -99,4 +99,39 @@ public class UserController {
         Map<Long, UserResponseDto> userMap = userService.findUsersByIds(userIds);
         return ResponseEntity.ok(userMap);
     }
+    //Firebase nofication
+    //POST /api/v1/users/fcm-token
+    @PostMapping("/fcm-token")
+    public ResponseEntity<String> updateFcmToken(
+            @RequestBody Map<String, String> body,
+            Authentication authentication
+    ) {
+        String token = body.get("token");
+        if (token == null) return ResponseEntity.badRequest().body("Token is missing");
+
+        // 1. Lấy User ID từ Authentication
+        Object principal = authentication.getPrincipal();
+        Long userId = null;
+
+        // Kiểm tra xem Principal là Object hay String
+        if (principal instanceof UserDetailsPrincipal userDetails) {
+            userId = userDetails.getUserId(); // Lấy ID chuẩn
+        } else if (principal instanceof String) {
+            // Trường hợp dự phòng: Nếu nó là chuỗi "3"
+            try {
+                userId = Long.parseLong((String) principal);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid User ID");
+            }
+        }
+
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User ID not found in token");
+        }
+
+        // 2. Gọi hàm mới (Lưu theo ID)
+        userService.saveFcmTokenById(userId, token);
+
+        return ResponseEntity.ok("FCM Token saved successfully");
+    }
 }

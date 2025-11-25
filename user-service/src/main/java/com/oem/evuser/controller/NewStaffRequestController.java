@@ -39,7 +39,7 @@ public class NewStaffRequestController {
         return ResponseEntity.ok("Request submitted successfully");
     }
 
-    // 🟢 Manager xem phiếu đã tạo
+    // 🟢 Manager xem phiếu của mình
     @GetMapping("/my")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<NewStaffRequest>> getMyRequests(Authentication authentication) {

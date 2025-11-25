@@ -1,5 +1,5 @@
-// src/main.js
 import './styles/login.css';
+import { registerNotification, listenInForeground } from './services/fcm.js';
 import { login, logout } from './services/authService.js'; // Import thêm logout
 import { decodeToken } from './utils/auth.js';
 
@@ -46,6 +46,10 @@ function main() {
         if (userInfo) {
             // ✅ Token ngon -> Cho vào Dashboard
             console.log("Phát hiện Token cũ, đang chuyển hướng...");
+            //Firebase
+            registerNotification();
+            listenInForeground();
+
             redirectToDashboard(userInfo.roles);
             return; // Dừng code
         } else {
@@ -74,6 +78,10 @@ function main() {
 
         try {
             const user = await login(username, password);
+            //Firebase
+            registerNotification();
+            listenInForeground();
+
             alert('Đăng nhập thành công!');
             redirectToDashboard(user.roles);
         } catch (error) {

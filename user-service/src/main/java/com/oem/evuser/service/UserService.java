@@ -202,4 +202,13 @@ public class UserService {
         }
         return map;
     }
+    public void saveFcmTokenById(Long userId, String token) {
+        // 🔥 QUAN TRỌNG: Dùng findById thay vì findByUsername
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        user.setFcmToken(token);
+        userRepository.save(user);
+        System.out.println("✅ Đã lưu FCM Token cho User ID: " + userId);
+    }
 }
