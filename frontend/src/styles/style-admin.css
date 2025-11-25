@@ -1039,3 +1039,188 @@ body {
 }
 
 #btn-save-import:hover { background-color: #0056b3; }
+
+/* admin-request.css */
+
+/* ===== Table ===== */
+#request-table-body tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#request-table-body tr:hover {
+    background-color: #f1f1f1;
+}
+
+#request-table-body td, #request-table-body th {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+}
+
+/* ===== Badge Status ===== */
+.badge-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.badge-status.pending {
+    background-color: #f1c40f;
+}
+
+.badge-status.approved {
+    background-color: #27ae60;
+}
+
+.badge-status.rejected {
+    background-color: #e74c3c;
+}
+
+/* ===== Badge Role ===== */
+.badge-role {
+    display: inline-block;
+    background-color: #3498db;
+    color: white;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 3px;
+}
+
+/* ===== Action Buttons ===== */
+.action-cell button {
+    margin-right: 5px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.btn-approve {
+    background-color: #27ae60;
+    color: white;
+}
+
+.btn-approve:hover {
+    background-color: #219150;
+}
+
+.btn-reject {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-reject:hover {
+    background-color: #c0392b;
+}
+
+.btn-edit {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #2980b9;
+}
+
+.btn-view {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #7f8c8d;
+}
+
+/* ===== Modal Overlay ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* ===== Modal Content ===== */
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    text-align: left;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.modal-content h3 {
+    margin-bottom: 15px;
+}
+
+.modal-content textarea,
+.modal-content input.swal2-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* ===== Modal Buttons ===== */
+.modal-content .btn-cancel {
+    background-color: #bdc3c7;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    margin-right: 10px;
+}
+
+.modal-content .btn-cancel:hover {
+    background-color: #95a5a6;
+}
+
+.modal-content .btn-confirm {
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    color: white;
+}
+
+.modal-content .btn-confirm.approve {
+    background-color: #27ae60;
+}
+
+.modal-content .btn-confirm.approve:hover {
+    background-color: #219150;
+}
+
+.modal-content .btn-confirm.reject {
+    background-color: #e74c3c;
+}
+
+.modal-content .btn-confirm.reject:hover {
+    background-color: #c0392b;
+}
+
+.modal-content .btn-confirm.edit {
+    background-color: #3498db;
+}
+
+.modal-content .btn-confirm.edit:hover {
+    background-color: #2980b9;
+}

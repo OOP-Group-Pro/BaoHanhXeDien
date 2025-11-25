@@ -1,12 +1,4 @@
 // ==============================
-// API BACKEND
-// ==============================
-import { renderAdminSidebar } from '../components/AdminSidebar.js';
-
-const API_URL = "http://localhost:8080/api/v1/users"; // đổi cho đúng backend
-renderAdminSidebar();
-
-// ==============================
 // LẤY USER ĐĂNG NHẬP
 // ==============================
 const currentUser = JSON.parse(localStorage.getItem("user"));
@@ -17,6 +9,14 @@ if (!currentUser || !currentUser.id) {
 }
 
 // ==============================
+// API BACKEND
+// ==============================
+import { renderAdminSidebar } from '../components/AdminSidebar.js';
+const API_URL = '/api/v1/users';
+
+renderAdminSidebar();
+
+// ==============================
 // ELEMENTS
 // ==============================
 const nameEl = document.getElementById("profile-name");
@@ -24,7 +24,6 @@ const roleEl = document.getElementById("profile-role");
 const statusBadge = document.getElementById("profile-status-badge");
 const avatarEl = document.getElementById("profile-avatar-text");
 
-// Detail fields
 const idInput = document.getElementById("profile-id");
 const fullnameInput = document.getElementById("profile-fullname");
 const emailInput = document.getElementById("profile-email");
@@ -32,7 +31,6 @@ const phoneInput = document.getElementById("profile-phone");
 const roleDetail = document.getElementById("profile-role-detail");
 const branchInput = document.getElementById("profile-branch");
 
-// Modal fields
 const modalFullname = document.getElementById("modal-fullname");
 const modalEmail = document.getElementById("modal-email");
 const modalPhone = document.getElementById("modal-phone");
@@ -54,13 +52,11 @@ async function loadProfile() {
 
         const user = await response.json();
 
-        // ======= HIỂN THỊ LÊN UI =======
         nameEl.textContent = user.fullname;
         roleEl.textContent = user.roleName;
         statusBadge.textContent = user.status;
         avatarEl.textContent = user.fullname.charAt(0).toUpperCase();
 
-        // Chi tiết
         idInput.value = user.id;
         fullnameInput.value = user.fullname;
         emailInput.value = user.email;
@@ -68,7 +64,6 @@ async function loadProfile() {
         roleDetail.value = user.roleName;
         branchInput.value = user.centerName;
 
-        // Modal
         modalFullname.value = user.fullname;
         modalEmail.value = user.email;
         modalPhone.value = user.phone;
@@ -82,61 +77,56 @@ async function loadProfile() {
 }
 
 // ==============================
-// MỞ / ĐÓNG MODAL
+// MỞ / ĐÓNG MODAL & LOGOUT
 // ==============================
-document.getElementById("editProfileBtn").onclick = () => {
-    document.getElementById("profileModal").classList.add("show");
-};
+document.addEventListener("DOMContentLoaded", () => {
+    const editBtn = document.getElementById("editProfileBtn");
+    if (editBtn) editBtn.onclick = () => document.getElementById("profileModal")?.classList.add("show");
 
-document.getElementById("closeModal").onclick = () => {
-    document.getElementById("profileModal").classList.remove("show");
-};
+    const closeBtn = document.getElementById("closeModal");
+    if (closeBtn) closeBtn.onclick = () => document.getElementById("profileModal")?.classList.remove("show");
 
-// ==============================
-// LƯU HỒ SƠ (CHỈ ADMIN MỚI ĐƯỢC)
-// ==============================
-document.getElementById("saveProfileBtn").onclick = async () => {
-    const payload = {
-        fullname: modalFullname.value,
-        email: modalEmail.value,
-        phone: modalPhone.value,
-        roleName: modalRole.value,
-        centerName: modalBranch.value
+    const saveBtn = document.getElementById("saveProfileBtn");
+    if (saveBtn) saveBtn.onclick = async () => {
+        const payload = {
+            fullname: modalFullname.value,
+            email: modalEmail.value,
+            phone: modalPhone.value,
+            roleName: modalRole.value,
+            centerName: modalBranch.value
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/admin/${currentUser.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${currentUser.token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                alert("Bạn không có quyền chỉnh sửa hoặc dữ liệu lỗi!");
+                return;
+            }
+
+            alert("Cập nhật thành công!");
+            document.getElementById("profileModal").classList.remove("show");
+            loadProfile();
+
+        } catch (err) {
+            console.error(err);
+            alert("Lỗi khi cập nhật!");
+        }
     };
 
-    try {
-        const response = await fetch(`${API_URL}/admin/${currentUser.id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${currentUser.token}`
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            alert("Bạn không có quyền chỉnh sửa hoặc dữ liệu lỗi!");
-            return;
-        }
-
-        alert("Cập nhật thành công!");
-        document.getElementById("profileModal").classList.remove("show");
-
-        loadProfile();
-
-    } catch (err) {
-        console.error(err);
-        alert("Lỗi khi cập nhật!");
-    }
-};
-
-// ==============================
-// LOGOUT
-// ==============================
-document.getElementById("btn-logout").onclick = () => {
-    localStorage.removeItem("user");
-    window.location.href = "login.html";
-};
+    const logoutBtn = document.getElementById("btn-logout");
+    if (logoutBtn) logoutBtn.onclick = () => {
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
+    };
+});
 
 // ==============================
 // RUN
