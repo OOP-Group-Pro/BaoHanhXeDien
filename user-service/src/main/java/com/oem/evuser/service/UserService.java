@@ -1,6 +1,7 @@
 package com.oem.evuser.service;
 
 import com.oem.evuser.dto.UserDto;
+import com.oem.evuser.dto.request.UserUpdateRequest;
 import com.oem.evuser.dto.response.PageCacheDto;
 import com.oem.evuser.dto.event.UserCreatedEvent;
 import com.oem.evuser.entity.Role;
@@ -202,6 +203,48 @@ public class UserService {
         }
         return map;
     }
+
+    @Transactional
+    public User updateUserProfile(Long userId, UserUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+            user.setPhone(request.getPhone());
+        }
+        return userRepository.save(user);
+    }
+
+    public UserDto getUserInfoById1(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 🔥 TÁI SỬ DỤNG MAPPER CÓ SẴN CỦA BẠN
+        UserDto dto = UserMapper.mapToUserDto(user);
+
+        // Quan trọng: Xóa password trước khi trả về client
+        dto.setPassword(null);
+
+        return dto;
+    }
+
+    // --- LOGIC MỚI: MAPPER ---
+    public UserResponseDto mapToUserResponse(User user) {
+        if (user == null) return null;
+
+        // Map thủ công hoặc dùng Builder
+        return new UserResponseDto(
+                user.getUserId(),
+                user.getUsername(), // Giả sử fullName lấy từ username, hoặc user.getFullName() nếu có
+                user.getServiceCenterId(),
+                user.getLastLogin(),
+                user.getFcmToken()
+        );
+    }
+
     public void saveFcmTokenById(Long userId, String token) {
         // 🔥 QUAN TRỌNG: Dùng findById thay vì findByUsername
         User user = userRepository.findById(userId)

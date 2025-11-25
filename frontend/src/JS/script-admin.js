@@ -3,6 +3,8 @@ import { api as apiClient } from '../../src/services/apiClient.js';
 import { decodeToken } from '../utils/auth.js';
 
 
+import { renderManagerSidebar } from '../components/ManagerSidebar.js';
+renderManagerSidebar();
 document.addEventListener("DOMContentLoaded", () => {
     const path = location.pathname.toLowerCase();
     const currentPage = path.split('/').pop();
@@ -21,16 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (token === "manager123") return { username: "manager1", roles: ["ROLE_USER", "ROLE_MANAGER"] };
         return { username: "user1", roles: ["ROLE_USER"] };
     };
-
-    /*if (isRequestsPage) {
-        import("/src/JS/manager-request.js?t=1764098800831")
-            .then(module => {
-                console.log("Đã load module manager-request");
-                // Nếu file manager-request.js có hàm init, bạn có thể gọi ở đây
-                // module.init();
-            })
-            .catch(err => console.error("Lỗi load script:", err));
-    }*/
 
     const createBadge = (value, type = 'status') => {
         let className = '', text = value;

@@ -32,11 +32,6 @@ export function renderAdminSidebar() {
             </a>
         </li>
         <li>
-            <a href="/pages/admin/policies.html" class="${isActive('policies.html')}">
-                <i class="fa-solid fa-shield-halved"></i> Chính sách BH
-            </a>
-        </li>
-        <li>
             <a href="/pages/admin/inventory.html" class="${isActive('inventory.html')}">
                 <i class="fa-solid fa-box-open"></i> Quản lý Kho
             </a>
@@ -44,6 +39,11 @@ export function renderAdminSidebar() {
         <li>
             <a href="/pages/admin/request.html" class="${isActive('request.html')}">
                 <i class="fa-solid fa-file-signature"></i> Phiếu Đề xuất
+            </a>
+        </li>
+        <li>
+            <a href="/pages/admin/profile.html" class="${isActive('profile.html')}">
+                <i class="fa-solid fa-user"></i> Hồ sơ cá nhân
             </a>
         </li>
         <li>

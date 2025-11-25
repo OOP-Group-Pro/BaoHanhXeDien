@@ -1,8 +1,10 @@
 package com.oem.evuser.controller;
 
 import com.oem.evuser.dto.UserDto;
+import com.oem.evuser.dto.request.UserUpdateRequest;
 import com.oem.evuser.dto.response.PageCacheDto;
 import com.oem.evuser.entity.User;
+import com.oem.evuser.mapper.UserMapper;
 import com.oem.evuser.security.UserDetailsPrincipal;
 import com.oem.evuser.service.UserService;
 import com.oem.evuser.dto.response.UserResponseDto;
@@ -99,6 +101,33 @@ public class UserController {
         Map<Long, UserResponseDto> userMap = userService.findUsersByIds(userIds);
         return ResponseEntity.ok(userMap);
     }
+
+    // 1. Xem hồ sơ bản thân
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> getMyProfile(Authentication authentication) {
+        UserDetailsPrincipal principal = (UserDetailsPrincipal) authentication.getPrincipal();
+        // Gọi hàm trả về UserDto
+        return ResponseEntity.ok(userService.getUserInfoById1(principal.getUserId()));
+    }
+
+    // 2. Cập nhật hồ sơ bản thân
+    @PutMapping("/me")
+    public ResponseEntity<UserDto> updateMyProfile(
+            @RequestBody UserUpdateRequest request, // Dùng DTO request mới tạo
+            Authentication authentication
+    ) {
+        UserDetailsPrincipal principal = (UserDetailsPrincipal) authentication.getPrincipal();
+
+        // Update trong DB
+        User updatedUser = userService.updateUserProfile(principal.getUserId(), request);
+
+        // Map sang UserDto để trả về
+        UserDto responseDto = UserMapper.mapToUserDto(updatedUser);
+        responseDto.setPassword(null);
+
+        return ResponseEntity.ok(responseDto);
+    }
+
     //Firebase nofication
     //POST /api/v1/users/fcm-token
     @PostMapping("/fcm-token")

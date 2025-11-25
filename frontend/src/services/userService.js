@@ -4,6 +4,23 @@ import { api } from './apiClient.js'; // api client có sẵn auth
 // --- CÁC HÀM CỦA THÙY ---
 
 /**
+ * Lấy thông tin cá nhân (Tự động lấy theo Token)
+ * API: GET /api/v1/users/me
+ */
+export const getMyProfile = () => {
+    // Gọi API /me thay vì truyền ID (để Backend tự lấy ID từ Token -> Bảo mật hơn)
+    return api.get('/users/me');
+};
+
+/**
+ * Cập nhật thông tin cá nhân
+ * API: PUT /api/v1/users/me
+ */
+export const updateMyProfile = (data) => {
+    return api.put('/users/me', data);
+};
+
+/**
  * Lấy danh sách tất cả user (cho Admin)
  */
 export const getAllUsers = () => {

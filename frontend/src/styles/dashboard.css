@@ -259,3 +259,249 @@ body {
     padding-left: 3rem !important;
     padding-right: 3rem !important;
 }
+/* ============================
+   1. PROFILE PAGE SPECIFIC
+   ============================ */
+
+/* Container chính */
+.profile-container {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+/* Profile Card (avatar + info chính) */
+.profile-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.profile-card h2 {
+    margin: 0.5rem 0 0.25rem 0;
+    font-size: 1.5rem;
+    color: #111827;
+}
+
+.profile-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.status-badge {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25em 0.75em;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #D1FAE5; /* default */
+    color: #059669;
+}
+
+/* Profile Details Card */
+.profile-details-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    flex: 2;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.profile-details-card .card-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.profile-details-card .card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 2rem;
+}
+
+.profile-details-card label {
+    font-size: 0.875rem;
+    color: #6B7280;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.profile-details-card input {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: #F9FAFB;
+    font-size: 0.95rem;
+}
+
+/* Card Footer */
+.card-footer {
+    margin-top: 1.5rem;
+    text-align: right;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s all ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background-color: #2563EB;
+}
+
+.btn-danger {
+    background-color: #EF4444;
+    color: var(--white);
+}
+
+.btn-danger:hover {
+    background-color: #DC2626;
+}
+
+/* ============================
+   2. MODAL STYLE
+   ============================ */
+.modal-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    background-color: rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.modal-popup.show {
+    display: flex;
+}
+
+.modal-box {
+    background-color: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 400px;
+    max-width: 90%;
+    position: relative;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.modal-box h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-box label {
+    font-size: 0.85rem;
+    color: #6B7280;
+    margin-top: 0.75rem;
+    display: block;
+}
+
+.modal-box input {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    margin-top: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.modal-box button {
+    margin-top: 1.5rem;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.modal-box button:hover {
+    background-color: #2563EB;
+}
+
+/* Nút đóng modal */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #6B7280;
+    line-height: 1;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px; /* bo tròn nhẹ */
+    transition: background 0.2s, color 0.2s;
+}
+
+.close-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+    color: #111827;
+}
+
+
+/* ============================
+   3. RESPONSIVE
+   ============================ */
+@media (max-width: 1024px) {
+    body {
+        grid-template-columns: 1fr; /* sidebar biến mất */
+    }
+    .profile-container {
+        flex-direction: column;
+        padding: 1rem;
+    }
+    .profile-details-card .card-body {
+        grid-template-columns: 1fr;
+    }
+}
