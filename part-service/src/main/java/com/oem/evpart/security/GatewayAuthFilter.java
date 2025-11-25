@@ -24,11 +24,23 @@ import java.util.stream.Collectors;
 public class GatewayAuthFilter extends OncePerRequestFilter {
 
     @Override
-    protected void doFilterInternal (HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        // 🔥 1. THÊM ĐOẠN NÀY VÀO ĐẦU: Kiểm tra xem đã được InternalAuthFilter cấp quyền chưa?
+        // Nếu InternalAuthFilter đã chạy trước và cấp quyền ADMIN, thì GatewayFilter không cần làm gì cả.
+        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+        if (currentAuth != null && currentAuth.isAuthenticated()) {
+            System.out.println(">>> [GATEWAY FILTER] Skipped - Request already authenticated (Likely Internal Call)");
+            filterChain.doFilter(request, response);
+            return; // 🛑 Thoát ngay, không chạy logic bên dưới nữa
+        }
+        // -----------------------------------------------------------
+
         String userId = request.getHeader("X-USER-ID");
         String userRolesString = request.getHeader("X-USER-ROLE");
         String centerIdHeader = request.getHeader("X-USER-CENTER-ID");
 
+        // Logic cũ của bạn giữ nguyên
         if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             Collection<SimpleGrantedAuthority> authorities =
                     (userRolesString != null && !userRolesString.isEmpty())
@@ -38,24 +50,29 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
                             .collect(Collectors.toList())
                             : List.of();
 
-            Long parsedUserId = Long.parseLong(userId);
+            try {
+                Long parsedUserId = Long.parseLong(userId);
+                Long parsedCenterId = null;
 
-            Long parsedCenterId = null;
-            if (centerIdHeader != null && !centerIdHeader.isBlank() && !"null".equalsIgnoreCase(centerIdHeader)) {
-                try {
-                    parsedCenterId = Long.parseLong(centerIdHeader);
-                } catch (NumberFormatException e) {
-                    LoggerFactory.getLogger(this.getClass()).error("Error parsing center id header", e);
+                if (centerIdHeader != null && !centerIdHeader.isBlank() && !"null".equalsIgnoreCase(centerIdHeader)) {
+                    try {
+                        parsedCenterId = Long.parseLong(centerIdHeader);
+                    } catch (NumberFormatException e) {
+                        LoggerFactory.getLogger(this.getClass()).error("Error parsing center id header", e);
+                    }
                 }
+
+                UserDetailsPrincipal userDetails = new UserDetailsPrincipal(parsedUserId, parsedCenterId);
+                Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (NumberFormatException e) {
+                // Log lỗi nếu ID không phải số, tránh chết code
+                LoggerFactory.getLogger(this.getClass()).error("Invalid User ID format: " + userId);
             }
-
-            UserDetailsPrincipal userDetails = new UserDetailsPrincipal(parsedUserId, parsedCenterId);
-
-            // 4. Tạo đối tượng Authentication nhẹ
-            Authentication authentication =  new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
-            // 5. Thiết lập Security Context (Đây là bước quan trọng nhất cho @PreAuthorize)
-            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
+
         filterChain.doFilter(request, response);
     }
 }

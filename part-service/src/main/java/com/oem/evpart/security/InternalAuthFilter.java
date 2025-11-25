@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,17 +12,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
 @Component
-@Order(1) // ⬅️ Đảm bảo filter này chạy đầu tiên
+@Order(1) // Chạy đầu tiên để bắt Key sớm nhất
 public class InternalAuthFilter extends OncePerRequestFilter {
-
-    @Value("${INTERNAL_SERVICE_SECRET}")
-    private String internalSecretKey;
 
     private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
     private static final String USER_ID_HEADER = "X-User-ID";
+
+    // 🛠️ HARDCODE KEY Ở ĐÂY ĐỂ ĐẢM BẢO KHÔNG LỖI BIẾN MÔI TRƯỜNG
+    private final String internalSecretKey = "we_dont_talk_anymore";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -31,38 +30,48 @@ public class InternalAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1. Kiểm tra API công khai (Đăng nhập/Đăng ký)
+        // 1. Bỏ qua các API Auth (Login/Register)
         if (request.getRequestURI().contains("/api/v1/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Lấy Header Nội bộ và Header Người dùng
-        String internalSecretValue = request.getHeader(INTERNAL_SECRET_HEADER);
-        String userIdValue = request.getHeader(USER_ID_HEADER);
+        // 2. Lấy Header
+        String requestSecret = request.getHeader(INTERNAL_SECRET_HEADER);
+        String userId = request.getHeader(USER_ID_HEADER);
 
-        System.out.println(">>> internalSecretKey=" + internalSecretKey);
-        System.out.println(">>> X-Internal-Secret header=" + internalSecretValue);
+        // LOG DEBUG: Để xem Part Service nhận được cái gì
+        System.out.println(">>> [FILTER CHECK] URL: " + request.getRequestURI());
+        System.out.println(">>> [FILTER CHECK] Secret: " + requestSecret);
+        System.out.println(">>> [FILTER CHECK] UserID: " + userId);
 
-        // 3. LOGIC XÁC THỰC MỚI
-        // Yêu cầu (Request) là hợp lệ nếu:
-        // A. Nó là cuộc gọi nội bộ (Gateway/Service khác) VÀ có Khóa bí mật Nội bộ hợp lệ
-        // HOẶC
-        // B. Nó là cuộc gọi từ Client (đã qua Gateway) VÀ có Header X-User-ID (đã được Gateway xác thực)
+        // 3. LOGIC XÁC THỰC
 
-        if (internalSecretValue != null && internalSecretValue.equals(internalSecretKey) ) {
-            // Gán quyền ROLE_ADMIN cho secret, bypass PreAuthorize
+        // TRƯỜNG HỢP A: GỌI NỘI BỘ (Có Secret Key đúng)
+        if (requestSecret != null && requestSecret.equals(internalSecretKey)) {
+            // ✅ Cấp quyền ADMIN ngay lập tức
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    "internal-service", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                    "internal-service",
+                    null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"))
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
-        } else if (userIdValue == null) {
-            // 4. Nếu không thỏa mãn bất kỳ điều kiện nào (Bị gọi trực tiếp từ bên ngoài mà không qua Gateway)
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
+            System.out.println("✅ INTERNAL AUTH: Granted ROLE_ADMIN");
+        }
+        // TRƯỜNG HỢP B: GỌI TỪ NGƯỜI DÙNG (Không có Secret, nhưng có UserID từ Gateway)
+        else if (userId != null) {
+            // ✅ Cho qua, để GatewayAuthFilter xử lý tiếp việc lấy thông tin User
+            System.out.println("✅ USER AUTH: Passed to next filter");
+        }
+        // TRƯỜNG HỢP C: KHÔNG CÓ GÌ CẢ (Truy cập trái phép)
+        else {
+            System.err.println("❌ ACCESS DENIED: Missing both Secret Key and UserID");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write("Access Forbidden: Invalid Internal Key or Missing User Context.");
-            return;
+            return; // Dừng lại, không cho đi tiếp
         }
 
+        // 4. Cho phép đi tiếp (vào Controller hoặc Filter tiếp theo)
         filterChain.doFilter(request, response);
     }
 }

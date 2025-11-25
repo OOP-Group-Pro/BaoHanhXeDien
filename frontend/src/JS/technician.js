@@ -1,6 +1,7 @@
 // src/js/technician.js
 
 // Import các "linh kiện" và "tiện ích"
+import { registerNotification, listenInForeground } from '../services/fcm.js';
 import { checkAuth } from '../utils/auth.js';
 import { renderHeader } from '../components/Header.js';
 import { renderTechnicianSidebar } from '../components/TechnicianSidebar.js';
@@ -23,15 +24,18 @@ let claimModalInstance = null;
         console.error('❌ Không có quyền truy cập!');
         return;
     }
-
     console.log('✅ User authenticated:', user);
-
     // Lưu ID của technician hiện tại
     currentTechnicianId = user.id || user.sub;
-
     // 2. Render các component chung
     console.log('📌 Đang render Header và Sidebar...');
-
+    try {
+            console.log("🔔 Đang khởi động dịch vụ thông báo...");
+            registerNotification(); // Xin quyền + Lấy Token + Gửi về Server
+            listenInForeground();   // Lắng nghe tin nhắn khi đang mở web
+        } catch (e) {
+            console.error("❌ Lỗi khởi động FCM:", e);
+        }
     try {
         renderHeader();
         renderTechnicianSidebar();

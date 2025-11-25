@@ -15,7 +15,8 @@ public class UserMapper {
                 user.getUserId(),
                 user.getUsername(),
                 user.getServiceCenterId(),
-                user.getLastLogin()
+                user.getLastLogin(),
+                user.getFcmToken()
         );
     }
 

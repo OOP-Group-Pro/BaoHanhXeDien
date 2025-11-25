@@ -56,6 +56,8 @@ public class WarrantyService {
     private final VehicleServiceClient vehicleClient;
     private final PartServiceClient partClient;
     private final UserServiceClient userClient;
+    //Firebase nofication
+    private final FCMService fcmService;
 
     private final FileStorageService fileStorageService;
 
@@ -67,7 +69,7 @@ public class WarrantyService {
             AttachedDocumentRepository attachedDocRepo,
             VehicleServiceClient vehicleClient,
             PartServiceClient partClient,
-            UserServiceClient userClient,
+            UserServiceClient userClient, FCMService fcmService,
             FileStorageService fileStorageService) {
 
         this.claimRepo = claimRepo;
@@ -77,6 +79,7 @@ public class WarrantyService {
         this.vehicleClient = vehicleClient;
         this.partClient = partClient;
         this.userClient = userClient;
+        this.fcmService = fcmService;
         this.fileStorageService = fileStorageService;
     }
 
@@ -206,6 +209,7 @@ public class WarrantyService {
         // 4. Ghi Log.
         // 5. Yêu cầu cấp phát phụ tùng (Gọi Part-Service).
         /*  ### Chu y: O day,   */
+        log.info("DEBUG: approveClaim called with ClaimCode={}, TechID={}", claimCode, technicalStaffId);
         WarrantyClaim claim = claimRepo.findByClaimCode(claimCode)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
 
@@ -269,6 +273,33 @@ public class WarrantyService {
             log.error("❌ Lỗi cấp phát phụ tùng: {}", e.getMessage());
             // Tùy chọn: throw e nếu muốn rollback transaction khi lỗi
         }
+        // BƯỚC 6: Firebase Motification
+        try {
+            // Lấy ID của kỹ thuật viên vừa được gán (tham số đầu vào)
+            if (technicalStaffId != null) {
+
+                // 1. Gọi User Service lấy thông tin Kỹ thuật viên
+                UserResponseDto technician = userClient.getScStaffById(technicalStaffId);
+
+                // 2. In Log để kiểm tra xem có Token không (DEBUG)
+                log.info("🔍 CHECK TECHNICIAN TOKEN: {}", technician.getFcmToken());
+
+                // 3. Gửi thông báo
+                if (technician != null && technician.getFcmToken() != null) {
+                    fcmService.sendNotification(
+                            technician.getFcmToken(),
+                            "Nhiệm vụ mới! 🛠️",
+                            "Bạn được phân công xử lý phiếu: " + claimCode
+                    );
+                    log.info("🔔 Đã gửi thông báo cho Technician: {}", technician.getFullName());
+                } else {
+                    log.warn("⚠️ Technician chưa có Token hoặc User null");
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ Lỗi gửi thông báo FCM: {}", e.getMessage());
+        }
+
     }
 
     @Caching(evict = {
@@ -345,6 +376,29 @@ public class WarrantyService {
                 .processorId(claim.getTechnicalStaffId())
                 .notes("Công tác bảo hành đã hoàn thành.")
                 .build());
+        try {
+            Long scStaffId = claim.getScStaffId(); // 👈 Lấy ID người tạo phiếu
+
+            if (scStaffId != null) {
+
+                // 1. Gọi User Service để lấy Token của SC Staff
+                UserResponseDto scStaff = userClient.getScStaffById(scStaffId);
+
+                // 2. Gửi thông báo
+                if (scStaff != null && scStaff.getFcmToken() != null) {
+                    fcmService.sendNotification(
+                            scStaff.getFcmToken(),
+                            "Sửa chữa hoàn tất! ✅", // ✅ Tiêu đề phù hợp
+                            "KTV đã xử lý xong phiếu " + claim.getClaimCode() + ". Vui lòng kiểm tra." // ✅ Nội dung phù hợp
+                    );
+                    log.info("🔔 Đã gửi thông báo hoàn thành cho SC Staff: {}", scStaff.getFullName());
+                } else {
+                    log.warn("⚠️ SC Staff chưa có Token hoặc User null");
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ Lỗi gửi thông báo FCM (SC Staff): {}", e.getMessage());
+        }
     }
 
     // --- CÁC HÀM CƠ BẢN (READ/GET) ---

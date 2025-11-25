@@ -2,7 +2,6 @@ package com.oem.evpart.config;
 
 import com.oem.evpart.security.GatewayAuthFilter;
 import com.oem.evpart.security.InternalAuthFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,7 +20,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Cần thiết cho @PreAuthorize
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final InternalAuthFilter internalAuthFilter;
@@ -36,38 +35,43 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(withDefaults()) // Kích hoạt CORS
+                .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // SỬA LẠI LUẬT:
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Cho phép các đường dẫn public (như Swagger)
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // 2. BẮT BUỘC tất cả các request khác phải được xác thực
+                        // 🔥 QUAN TRỌNG: Cho phép API này nếu có quyền ADMIN (do InternalAuthFilter cấp)
+                        .requestMatchers("/api/v1/parts/allocate-claim").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
-                // 3. Thêm Filter của chúng ta vào trước
-                .addFilterBefore(internalAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // 🔥🔥🔥 SỬA LẠI THỨ TỰ FILTER TẠI ĐÂY 🔥🔥🔥
+
+                // 1. Đặt GatewayAuthFilter chạy trước UsernamePassword...
+                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+                // 2. Đặt InternalAuthFilter chạy TRƯỚC CẢ GatewayAuthFilter (Ưu tiên số 1)
+                // Logic: Kiểm tra Key nội bộ trước -> Nếu đúng thì cấp quyền -> GatewayFilter thấy có quyền rồi thì cho qua
+                .addFilterBefore(internalAuthFilter, GatewayAuthFilter.class);
+
         return http.build();
     }
 
-    // Bean CORS giữ nguyên như cũ
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:4200",
-                "http://localhost:5173",  // 1. Cho Vite (Dev)
+                "http://localhost:5173",
                 "http://oem.webhop.me"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-User-Id"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-User-Id", "X-Internal-Secret")); // Thêm header này vào CORS cho chắc
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

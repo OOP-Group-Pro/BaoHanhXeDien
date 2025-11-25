@@ -19,7 +19,10 @@ public class UserServiceClientFallback implements UserServiceClient {
         return new UserResponseDto(
                 userId,
                 "Lỗi hệ thống/User không xác định",
+                null,
+                null,
                 null
+
         );
     }
 

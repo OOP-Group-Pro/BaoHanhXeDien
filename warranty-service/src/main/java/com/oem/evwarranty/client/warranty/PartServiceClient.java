@@ -2,6 +2,7 @@ package com.oem.evwarranty.client.warranty;
 
 
 import com.oem.evwarranty.client.warranty.fallback.PartServiceClientFallback;
+import com.oem.evwarranty.config.FeignConfig;
 import com.oem.evwarranty.model.utils.PartAllocationRequest;
 import com.oem.evwarranty.model.utils.PartResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -19,6 +20,7 @@ import java.util.Map;
 @FeignClient(
         name = "part-service",
         url = "${part-service.url}",
+        configuration = FeignConfig.class,
         fallback = PartServiceClientFallback.class
 )
 public interface PartServiceClient {
