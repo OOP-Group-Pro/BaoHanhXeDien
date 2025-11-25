@@ -96,6 +96,10 @@ spring:
           uri: http://campaign-service:8080
           predicates:
             - Path=/api/v1/campaigns/**
+        - id: campaign_service_appointments
+          uri: http://campaign-service:8080
+          predicates:
+            - Path=/api/v1/appointments/**
 
   # 🔥 [THÊM ĐOẠN NÀY ĐỂ FIX LỖI 500 "UNKNOWN ERROR"] 🔥
   jackson:

@@ -96,22 +96,28 @@ public class AffectedVehicleServiceImpl implements AffectedVehicleService {
     }
 
     @Override
-    // 🚀 CACHE: Tìm kiếm xe bị ảnh hưởng (Rất quan trọng khi check VIN)
+    // 🚀 Đã bật lại CACHE an toàn với PageCacheDto
     @Cacheable(value = "affected_search", key = "{#campaignId, #vinKeyword, #status, #pageable.pageNumber}")
     public PageCacheDto<AffectedVehicleResponse> search(Long campaignId, String vinKeyword,
                                                         AffectedStatus status, Pageable pageable) {
+
         vinKeyword = (vinKeyword == null) ? "" : vinKeyword;
 
+        Page<AffectedVehicleResponse> pageResult;
+
         if (status != null) {
-            return PageCacheDto.from(avRepo.findByCampaignIdAndStatus(campaignId, status, pageable)
-                    .map(AffectedVehicleMapper::toResponse));
+            pageResult = avRepo.findByCampaignIdAndStatus(campaignId, status, pageable)
+                    .map(AffectedVehicleMapper::toResponse);
+        } else if (!vinKeyword.isEmpty()) {
+            pageResult = avRepo.findByCampaignIdAndVehicleVinContainingIgnoreCase(campaignId, vinKeyword, pageable)
+                    .map(AffectedVehicleMapper::toResponse);
+        } else {
+            pageResult = avRepo.findByCampaignId(campaignId, pageable)
+                    .map(AffectedVehicleMapper::toResponse);
         }
-        if (!vinKeyword.isEmpty()) {
-            return PageCacheDto.from(avRepo.findByCampaignIdAndVehicleVinContainingIgnoreCase(campaignId, vinKeyword, pageable)
-                    .map(AffectedVehicleMapper::toResponse));
-        }
-        return PageCacheDto.from(avRepo.findByCampaignId(campaignId, pageable)
-                .map(AffectedVehicleMapper::toResponse));
+
+        // Bọc kết quả vào DTO để Cache không bị lỗi ClassCastException
+        return PageCacheDto.from(pageResult);
     }
 
 

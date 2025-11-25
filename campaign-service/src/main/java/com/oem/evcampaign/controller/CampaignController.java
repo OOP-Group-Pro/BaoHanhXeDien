@@ -54,4 +54,12 @@ public class CampaignController {
                                                  Pageable pageable) {
         return service.search(code, status, type, pageable);
     }
+
+    // ... (các API cũ giữ nguyên) ...
+
+    // ⬇️ MỚI: API kiểm tra chiến dịch cho xe (Eligibility Check)
+    @GetMapping("/eligibility/{vin}")
+    public ResponseEntity<java.util.List<CampaignResponse>> checkEligibility(@PathVariable String vin) {
+        return ResponseEntity.ok(service.checkEligibility(vin));
+    }
 }

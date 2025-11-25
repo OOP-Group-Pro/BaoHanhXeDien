@@ -3,6 +3,7 @@ package com.oem.evcampaign.dto.response;
 import com.oem.evcampaign.model.enums.CampaignStatus;
 import com.oem.evcampaign.model.enums.CampaignType;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class CampaignResponse {
     private Long id;
@@ -12,6 +13,9 @@ public class CampaignResponse {
     private CampaignStatus status;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
+
+    // MỚI
+    private List<CampaignPartResponse> parts;
 
     // getters/setters
     public Long getId() { return id; }
@@ -28,4 +32,7 @@ public class CampaignResponse {
     public void setStartAt(LocalDateTime startAt) { this.startAt = startAt; }
     public LocalDateTime getEndAt() { return endAt; }
     public void setEndAt(LocalDateTime endAt) { this.endAt = endAt; }
+
+    public List<CampaignPartResponse> getParts() { return parts; }
+    public void setParts(List<CampaignPartResponse> parts) { this.parts = parts; }
 }

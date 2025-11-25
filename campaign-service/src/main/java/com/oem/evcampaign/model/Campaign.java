@@ -49,6 +49,16 @@ public class Campaign {
     @OneToMany(mappedBy = "campaign", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> notifications = new ArrayList<>();
 
+    // ... (Giữ nguyên các relations cũ) ...
+
+    // MỚI: Quan hệ 1-N với CampaignPart
+    @OneToMany(mappedBy = "campaign", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CampaignPart> campaignParts = new ArrayList<>();
+
+    // Getter cho list mới
+    public List<CampaignPart> getCampaignParts() { return campaignParts; }
+    public void setCampaignParts(List<CampaignPart> campaignParts) { this.campaignParts = campaignParts; }
+
     // getters/setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

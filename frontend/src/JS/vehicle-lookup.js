@@ -7,6 +7,8 @@ import {
 } from '../services/vehicleService.js';
 // (Xóa import renderStaffSidebar vì scStaff.js sẽ lo việc render layout)
 
+import { checkCampaignEligibility } from '../services/campaignService.js';
+
 // --- CẤU HÌNH CHÍNH SÁCH BẢO HÀNH (GIỮ NGUYÊN) ---
 const WARRANTY_POLICY = {
     maxYears: 3,
@@ -38,17 +40,16 @@ export function setupVehicleLookup() {
     searchForm.addEventListener('submit', handleSearch);
 }
 
-// --- LOGIC XỬ LÝ TÌM KIẾM (GIỮ NGUYÊN 100%) ---
+// --- LOGIC XỬ LÝ TÌM KIẾM (ĐÃ SỬA LỖI) ---
 async function handleSearch(e) {
     e.preventDefault();
     const vinInput = document.getElementById('vinInput').value.trim();
-    // ... (Code lấy button, resultSection, errorEl để update UI)
+
     const searchBtn = document.getElementById('searchBtn');
     const resultSection = document.getElementById('resultSection');
     const errorEl = document.getElementById('searchError');
 
     if (!vinInput || vinInput.length !== 17) {
-        // (Sửa nhẹ: hiển thị lỗi vào div thay vì alert để UX tốt hơn, hoặc giữ alert tùy bạn)
         if(errorEl) errorEl.textContent = 'Vui lòng nhập đúng 17 ký tự VIN.';
         else alert('Vui lòng nhập đúng 17 ký tự VIN.');
         return;
@@ -61,27 +62,54 @@ async function handleSearch(e) {
     resultSection.classList.add('d-none');
 
     try {
-        // 1. Gọi API lấy thông tin xe
-        const vehicleData = await getVehicleByVin(vinInput);
+        // ---------------------------------------------------------
+        // BƯỚC 1: Gọi API lấy thông tin xe (QUAN TRỌNG: Phải await xong cái này trước)
+        // ---------------------------------------------------------
+        const vehicleResponse = await getVehicleByVin(vinInput);
+        console.log("Vehicle response: ", vehicleResponse);
 
-        // (Kiểm tra xem vehicleData có hợp lệ không)
-        if (!vehicleData || !vehicleData.data) {
-            throw new Error("Không tìm thấy xe.");
+        // Kiểm tra dữ liệu trả về
+        if (!vehicleResponse || !vehicleResponse.data) {
+            throw new Error("Không tìm thấy xe trong hệ thống.");
         }
 
-        // 2. Gọi API lấy các dữ liệu phụ
-        const [historyData, partsData] = await Promise.all([
-            getHistoryByVehicleId(vehicleData.data.vehicleId),
-            getPartsByVehicleId(vehicleData.data.vehicleId)
-        ]);
+        const vehicleData = vehicleResponse.data; // Đây chính là biến vehicleData mà code cũ bị thiếu
 
-        // 3. Render giao diện
-        renderVehicleInfo(vehicleData.data);
-        renderWarrantyStatus(vehicleData.data);
+        // ---------------------------------------------------------
+        // BƯỚC 2: Gọi các API phụ thuộc (Lịch sử, Phụ tùng, Chiến dịch)
+        // Bây giờ biến vehicleData đã tồn tại nên không bị lỗi nữa
+        // ---------------------------------------------------------
+        const [historyData, partsData, campaignData] = await Promise.all([
+            getHistoryByVehicleId(vehicleData.vehicleId),
+            getPartsByVehicleId(vehicleData.vehicleId),
+            checkCampaignEligibility(vinInput).catch(() => ({ data: [] })) // Catch lỗi riêng cho campaign để không chặn luồng chính
+        ]);
+        console.log("CampaignData: ", campaignData);
+
+        // ---------------------------------------------------------
+        // BƯỚC 3: Render giao diện
+        // ---------------------------------------------------------
+        renderVehicleInfo(vehicleData);
+        renderWarrantyStatus(vehicleData);
+
+        // Render các bảng phụ
         renderHistoryTable(historyData.data);
         renderPartsTable(partsData.data);
 
-        // 4. Hiển thị vùng kết quả
+        // --- SỬA LỖI HIỂN THỊ CHIẾN DỊCH ---
+        // Vì API trả về List trực tiếp (Array), không bọc trong .data
+        let campaignsToRender = [];
+
+        if (Array.isArray(campaignData)) {
+            campaignsToRender = campaignData; // Trường hợp API thành công (Trả về Mảng)
+        } else if (campaignData && Array.isArray(campaignData.data)) {
+            campaignsToRender = campaignData.data; // Trường hợp Catch lỗi trả về {data: []}
+        }
+
+        // Render chiến dịch
+        renderCampaignStatus(campaignsToRender);
+
+        // Hiển thị vùng kết quả
         resultSection.classList.remove('d-none');
 
     } catch (error) {
@@ -262,5 +290,44 @@ function renderPartsTable(parts) {
             </tr>
         `;
         tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function renderCampaignStatus(campaigns) {
+    const campaignCard = document.getElementById('campaignCard');
+    const noCampaignCard = document.getElementById('noCampaignCard');
+    const container = document.getElementById('campaignListContainer');
+
+    if (!campaigns || campaigns.length === 0) {
+        campaignCard.style.display = 'none';
+        noCampaignCard.style.display = 'block';
+        return;
+    }
+
+    noCampaignCard.style.display = 'none';
+    campaignCard.style.display = 'block';
+    container.innerHTML = '';
+
+    campaigns.forEach(camp => {
+        // Tạo HTML hiển thị từng chiến dịch
+        let partsHtml = '';
+        if (camp.parts && camp.parts.length > 0) {
+            partsHtml = '<ul class="mb-0 small mt-1 text-muted">';
+            camp.parts.forEach(p => {
+                partsHtml += `<li>${p.partName} (x${p.quantityLimit})</li>`;
+            });
+            partsHtml += '</ul>';
+        }
+
+        const div = document.createElement('div');
+        div.className = 'alert alert-light border-warning mb-2 p-2';
+        div.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <strong>${camp.code}: ${camp.title}</strong>
+                <span class="badge bg-warning text-dark">${camp.type}</span>
+            </div>
+            ${partsHtml}
+        `;
+        container.appendChild(div);
     });
 }

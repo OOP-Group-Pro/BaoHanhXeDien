@@ -32,6 +32,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
                           @Param("status") CampaignStatus status,
                           @Param("type") CampaignType type,
                           Pageable pageable);
+
     // Tìm kiếm theo code (contains, ignore case) + phân trang
     Page<Campaign> findByCodeContainingIgnoreCase(String code, Pageable pageable);
 
@@ -41,5 +42,17 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
             CampaignStatus status,
             CampaignType type,
             Pageable pageable
+    );
+
+    // ... (các hàm cũ giữ nguyên) ...
+
+    // ⬇️ QUAY VỀ CÂU QUERY ĐƠN GIẢN (Bỏ FETCH đi)
+    @Query("SELECT DISTINCT c FROM Campaign c " +
+            "JOIN c.affectedVehicles av " +
+            "WHERE av.vehicleVin = :vin " +
+            "AND c.status = :status")
+    java.util.List<Campaign> findActiveCampaignsByVin(
+            @Param("vin") String vin,
+            @Param("status") CampaignStatus status
     );
 }

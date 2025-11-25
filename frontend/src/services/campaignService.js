@@ -158,3 +158,13 @@ export const createNotification = (dto) => {
 export const getNotificationsByAffected = (affectedId) => {
     return api.get(`/notifications/by-affected/${affectedId}`);
 };
+
+// ... (các hàm cũ giữ nguyên)
+
+/**
+ * Kiểm tra các chiến dịch áp dụng cho xe (Eligibility Check)
+ * API: GET /api/v1/campaigns/eligibility/{vin}
+ */
+export const checkCampaignEligibility = (vin) => {
+    return api.get(`/campaigns/eligibility/${vin}`);
+};
