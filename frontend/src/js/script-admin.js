@@ -1,4 +1,9 @@
 import { api as apiClient } from '../../src/services/apiClient.js';
+if (isRequestsPage) {
+    import('./manager-request.js');
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
     const path = location.pathname.toLowerCase();
     const currentPage = path.split('/').pop();

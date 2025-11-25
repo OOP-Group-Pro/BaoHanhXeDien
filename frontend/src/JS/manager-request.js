@@ -1,5 +1,7 @@
 // src/request.js
-import { checkAuth, logout } from '../utils/auth.js';
+
+import { logout } from "../services/authService.js";
+import { checkAuth } from '../utils/auth.js';
 import { api } from '../services/apiClient.js';
 
 async function initRequestPage() {

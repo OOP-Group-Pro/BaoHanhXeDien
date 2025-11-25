@@ -56,6 +56,63 @@
     </div>
 
     <div class="content-area" style="grid-template-columns: 1fr;"> <div class="table-container">
+        <!-- Tab xem thong tin kho -->
+        <div class="nav-tabs-container mb-3">
+            <button class="tab-btn active" data-tab="stock">📦 Danh sách Tồn kho</button>
+            <button class="tab-btn" data-tab="allocation">🚚 Lịch sử Cấp phát (Logistics)</button>
+        </div>
+
+        <div id="tab-stock" class="tab-content active">
+            <div class="filter-section">...</div>
+            <div class="content-area">...</div>
+        </div>
+
+        <div id="tab-allocation" class="tab-content" style="display: none;">
+            <div class="filter-section mb-3">
+                <div class="filter-group">
+                    <i class="fa-solid fa-file-invoice"></i>
+                    <input type="text" id="search-allocation" placeholder="Tìm mã Claim, mã phụ tùng...">
+                </div>
+                <div class="filter-group">
+                    <i class="fa-solid fa-shop"></i>
+                    <input type="text" id="filter-allocation-center" placeholder="Mã Trạm (Service Center)...">
+                </div>
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter"></i>
+                    <select id="filter-allocation-status">
+                        <option value="">-- Trạng thái --</option>
+                        <option value="PENDING">Đang chờ (Pending)</option>
+                        <option value="WAITING_FOR_PART">Chờ hàng về</option>
+                        <option value="READY_TO_INSTALL">Sẵn sàng lắp</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="content-area" style="grid-template-columns: 1fr;">
+                <div class="table-container">
+                    <h2>Nhật ký Điều chuyển & Cấp phát</h2>
+                    <table class="user-table table-full-width">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Mã Claim</th>
+                            <th>Phụ tùng</th>
+                            <th>Nơi Yêu Cầu (Trạm)</th>
+                            <th>Số lượng</th>
+                            <th>Xuất từ Kho</th>
+                            <th>Ngày Cấp</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                        </thead>
+                        <tbody id="allocation-tbody">
+                        <tr><td colspan="8" class="text-center">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bo loc -->
         <div class="filter-section mb-3">
             <div class="filter-group" style="flex: 2;">
                 <i class="fa-solid fa-search"></i>

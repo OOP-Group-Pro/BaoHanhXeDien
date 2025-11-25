@@ -4,6 +4,7 @@ import com.oem.evwarranty.dto.*;
 import com.oem.evwarranty.mapper.DocumentMapper;
 import com.oem.evwarranty.mapper.PartMapper;
 import com.oem.evwarranty.model.AttachedDocument;
+import com.oem.evwarranty.model.utils.CompleteAllocationRequest;
 import com.oem.evwarranty.model.utils.UserResponseDto;
 import com.oem.evwarranty.client.warranty.UserServiceClient;
 import com.oem.evwarranty.enums.ClaimStatus;
@@ -213,34 +214,6 @@ public class WarrantyService {
             throw new IllegalStateException("Claim không đủ điều kiện phê duyệt. Trạng thái hiện tại: " + claim.getCurrentStatus());
         }
 
-        // BƯỚC 1 & 2: CẬP NHẬT CLAIM
-        claim.setCurrentStatus(ClaimStatus.APPROVED);   // Cong viec thuc hien qpprove nằm o đây
-        claim.setTechnicalStaffId(technicalStaffId);  // Lưu Chuyên viên sửa chữa
-        claimRepo.save(claim);
-
-        // BƯỚC 3: CẬP NHẬT CHI TIẾT PHỤ TÙNG
-        // Giả sử logic phê duyệt là phê duyệt tất cả các part trong claim này
-        // Thuc ra de cho dung thi phai kiem tra moi part co trong chinh sach bao hanh hay khong, trong kho con hay khong -> vay thi phai truy cuu den Doi tuong part -> vay thi phai goi api den Part-service de lay thong tin hoac thuc hien method kiem tra luon
-        List<ClaimPartDetail> parts = partDetailRepo.findAllByClaim_Id(claim.getId());
-        List<String> partNumbers = new ArrayList<>();   // Danh sách phụ tùng đã được duyệt
-        for (ClaimPartDetail part : parts) {
-            // Nếu có kiểm tra các điều kiện phê duyệt phụ tùng thậm chí là gọi đến part-service để kiểm tra thì sẽ thực hiện ở đây. Nhưng hiện tại cho đơn giản thì duyệt hết mà ko cần ktra
-            // Thường thì viec kiểm tra và xem xét từng phụ tùng có được duyệt bảo hành hay không sẽ thực hiện ở đây rồi mới đánh dấu và thêm vào partsNumbers
-            part.setIsApproved(true);   // Đánh dấu phụ tùng được phép bảo hành
-            partNumbers.add(part.getPartNumber());  // Sau khi đánh dấu thì thêm vào danh sách đã duyệt
-        }
-        partDetailRepo.saveAll(parts);  //Lưu cập nhật trạng thái duyệt mới của tất cả part
-
-        // BƯỚC 4: GHI LOG
-        logRepo.save(
-                ClaimStatusLog.builder()
-                        .claim(claim)
-                        .timestamp(LocalDateTime.now())
-                        .status(ClaimStatus.APPROVED)
-                        .processorId(evmStaffId)
-                        .notes(approvalNotes != null ? approvalNotes : "Yêu cầu đã được EVM phê duyệt.")
-                        .build());
-
         // BƯỚC 5: GỌI SERVICE NGOÀI
         try {
             List<ClaimPartDetail> partRequests = claim.getPartDetails();
@@ -267,8 +240,35 @@ public class WarrantyService {
             }
         } catch (Exception e) {
             log.error("❌ Lỗi cấp phát phụ tùng: {}", e.getMessage());
-            // Tùy chọn: throw e nếu muốn rollback transaction khi lỗi
+            throw new RuntimeException("Không thể duyệt: " + e.getMessage());
         }
+
+        // BƯỚC 1 & 2: CẬP NHẬT CLAIM
+        claim.setCurrentStatus(ClaimStatus.APPROVED);   // Cong viec thuc hien qpprove nằm o đây
+        claim.setEvmStaffId(evmStaffId);
+        claim.setTechnicalStaffId(technicalStaffId);  // Lưu Chuyên viên sửa chữa
+
+        // BƯỚC 3: CẬP NHẬT CHI TIẾT PHỤ TÙNG
+        List<ClaimPartDetail> parts = partDetailRepo.findAllByClaim_Id(claim.getId());
+        List<String> partNumbers = new ArrayList<>();   // Danh sách phụ tùng đã được duyệt
+        for (ClaimPartDetail part : parts) {
+            // Nếu có kiểm tra các điều kiện phê duyệt phụ tùng thậm chí là gọi đến part-service để kiểm tra thì sẽ thực hiện ở đây. Nhưng hiện tại cho đơn giản thì duyệt hết mà ko cần ktra
+            // Thường thì viec kiểm tra và xem xét từng phụ tùng có được duyệt bảo hành hay không sẽ thực hiện ở đây rồi mới đánh dấu và thêm vào partsNumbers
+            part.setIsApproved(true);   // Đánh dấu phụ tùng được phép bảo hành
+            partNumbers.add(part.getPartNumber());  // Sau khi đánh dấu thì thêm vào danh sách đã duyệt
+        }
+        // Lưu claim do cacheCade nên nó tự động cập nhật trong CSDL
+        claimRepo.save(claim);
+        // BƯỚC 4: GHI LOG
+        logRepo.save(
+                ClaimStatusLog.builder()
+                        .claim(claim)
+                        .timestamp(LocalDateTime.now())
+                        .status(ClaimStatus.APPROVED)
+                        .processorId(evmStaffId)
+                        .notes(approvalNotes != null ? approvalNotes : "Yêu cầu đã được EVM phê duyệt.")
+                        .build());
+
     }
 
     @Caching(evict = {
@@ -313,40 +313,73 @@ public class WarrantyService {
         WarrantyClaim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
 
-        // Kiểm tra trạng thái phù hợp để cập nhật kết quả
         if (claim.getCurrentStatus() != ClaimStatus.APPROVED) {
             throw new IllegalArgumentException("Claim chưa được duyệt để cập nhật kết quả.");
         }
 
-        Boolean allPartsUpdated = false;
-
-        // Lặp qua danh sách kết quả (từ DTO)
+        // --- BƯỚC 1: CẬP NHẬT SERIAL (VÒNG LẶP) ---
         for (Map.Entry<String, SerialUpdateDetail> entry : resultDto.getSerialUpdates().entrySet()) {
             String partNumber = entry.getKey();
             SerialUpdateDetail newSerialNumber = entry.getValue();
-            // Lấy ClaimPartDetail tương ứng (bằng claimId và partNumber)
+
+            // Lấy ClaimPartDetail
             ClaimPartDetail partDetail = partDetailRepo.findByClaim_IdAndPartNumber(claimId, partNumber);
-            // Cập nhật partDetail.setSerialNumberReplace(newSerialNumber);
-            partDetail.setSerialNumberReplace(newSerialNumber.getNewSerialNumber());
-            // Cập nhật partDetail.setSerialNumberDefective(oldSerialNumber);
-            partDetail.setSerialNumberDefective(newSerialNumber.getDefectiveSerialNumber());
-            // Lưu lại:
-            partDetailRepo.save(partDetail);
+
+            if (partDetail != null) {
+                // Cập nhật Serial Mới & Cũ
+                partDetail.setSerialNumberReplace(newSerialNumber.getNewSerialNumber());
+                partDetail.setSerialNumberDefective(newSerialNumber.getDefectiveSerialNumber());
+                partDetailRepo.save(partDetail);
+            }
         }
 
-        // Logic kiểm tra nếu mọi thứ đã xong -> Cập nhật Claim Status thành COMPLETED
+        // --- BƯỚC 2: GỌI PART SERVICE (RA KHỎI VÒNG LẶP) ---
+        // Chỉ gọi 1 lần sau khi đã update xong hết serial
+        try {
+            // A. Chuẩn bị danh sách hàng hỏng trả về
+            List<CompleteAllocationRequest.ReturnedPart> returnedParts = new ArrayList<>();
+
+            // Lấy lại danh sách chi tiết (Lúc này DB đã được update ở Bước 1)
+            // Lưu ý: Nếu Hibernate Cache chưa refresh, có thể cần claimRepo.save(claim) hoặc flush trước.
+            // Nhưng thường object 'claim' vẫn giữ tham chiếu đến list partDetails.
+
+            for (ClaimPartDetail detail : claim.getPartDetails()) {
+                // Logic: Chỉ trả về kho những phụ tùng CÓ serial hỏng (tức là có thay thế thật)
+                if (detail.getSerialNumberDefective() != null && !detail.getSerialNumberDefective().isEmpty()) {
+                    returnedParts.add(new CompleteAllocationRequest.ReturnedPart(
+                            detail.getPartNumber(), // partType (VD: PIN)
+                            detail.getQuantityRequired()
+                    ));
+                }
+            }
+
+            // B. Tạo Request
+            CompleteAllocationRequest completeRequest = CompleteAllocationRequest.builder()
+                    .claimCode(claim.getClaimCode())
+                    .returnedParts(returnedParts) // Gửi kèm danh sách trả
+                    .build();
+
+            // C. Gọi sang Part Service (FIRE & FORGET - Log error if fail)
+            partClient.completeAllocation(completeRequest);
+
+        } catch (Exception e) {
+            // Quan trọng: Chỉ log lỗi, KHÔNG ném exception để tránh rollback việc technician đã làm xong.
+            // Việc đồng bộ kho có thể xử lý sau bằng cơ chế khác nếu lỗi.
+            log.error("⚠️ Lỗi hoàn tất cấp phát/trả hàng (Part Service): {}", e.getMessage());
+        }
+
+        // --- BƯỚC 3: HOÀN TẤT CLAIM ---
         claim.setCurrentStatus(ClaimStatus.COMPLETED);
         claimRepo.save(claim);
-        // ... (Ghi Log)
+
         logRepo.save(ClaimStatusLog.builder()
                 .claim(claim)
                 .timestamp(LocalDateTime.now())
                 .status(ClaimStatus.COMPLETED)
-                .processorId(claim.getTechnicalStaffId())
+                .processorId(claim.getTechnicalStaffId()) // Hoặc currentTechnicianId
                 .notes("Công tác bảo hành đã hoàn thành.")
                 .build());
     }
-
     // --- CÁC HÀM CƠ BẢN (READ/GET) ---
 
     // 4. Chức năng: XEM CHI TIẾT CLAIM (BẢN NÂNG CẤP CUỐI CÙNG)
@@ -532,9 +565,10 @@ public class WarrantyService {
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
                 }if (roles.contains("ROLE_SC_TECHNICIAN")) {
-                    Specification<WarrantyClaim> assignedToMe = (root, query, cb) ->
-                        cb.equal(root.get("technicalStaffId"), currentUserId);
-                    specification = specification.and(assignedToMe);}
+                    /*Specification<WarrantyClaim> assignedToMe = (root, query, cb) ->
+                        cb.equal(root.get("technicalStaffId"), currentUserId); */
+                    specification = specification.and(WarrantyClaimSpecification.hasTechinicianId(currentUserId));
+                }
                 else {
                     specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
                 }

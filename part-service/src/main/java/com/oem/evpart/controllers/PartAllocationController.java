@@ -1,7 +1,9 @@
 package com.oem.evpart.controllers;
 
+import com.oem.evpart.dto.request.CompleteAllocationRequest;
 import com.oem.evpart.dto.request.DecrementStockRequest;
 import com.oem.evpart.dto.request.PartAllocationRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartAllocationResponse;
 import com.oem.evpart.dto.response.PartAllocationStatusDto;
 import com.oem.evpart.dto.response.PartInventoryResponse;
@@ -9,6 +11,9 @@ import com.oem.evpart.services.PartAllocationService;
 import com.oem.evpart.services.PartInventoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +28,8 @@ public class PartAllocationController {
     private final PartAllocationService allocationService;
 
     private final PartInventoryService inventoryService;
+    private final PartAllocationService partAllocationService;
+
     @PostMapping
     public ResponseEntity<PartAllocationResponse> createAllocation(@Valid @RequestBody PartAllocationRequest request) {
         PartAllocationResponse response = allocationService.createAllocation(request);
@@ -68,5 +75,16 @@ public class PartAllocationController {
         // Service sẽ chứa logic tìm kiếm allocation theo claimCode và trả về DTO
         PartAllocationStatusDto statusDto = allocationService.getStatusByClaimCode(claimCode);
         return ResponseEntity.ok(statusDto);
+    }
+
+    @GetMapping
+    public PageCacheDto<PartAllocationResponse> getAllAllocations(@PageableDefault(size = 10, sort = "allocatedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return partAllocationService.getAllAllocations(pageable);
+    }
+
+    @PostMapping("/complete")
+    public ResponseEntity<Void> completeAllocation(@RequestBody CompleteAllocationRequest request) {
+        allocationService.completeAllocation(request);
+        return ResponseEntity.ok().build();
     }
 }

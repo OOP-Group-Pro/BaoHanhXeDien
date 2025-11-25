@@ -187,7 +187,7 @@ function initJobListPage() {
                     partsTableBody.innerHTML += `<tr>
                         <td>${part.partName}</td>
                         <td>${part.partNumber}</td>
-                        <td>${part.quantity}</td>
+                        <td>${part.quantityRequired}</td>
                     </tr>`;
                 });
             } else {
