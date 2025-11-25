@@ -4,6 +4,7 @@ import com.oem.evwarranty.dto.*;
 import com.oem.evwarranty.mapper.DocumentMapper;
 import com.oem.evwarranty.mapper.PartMapper;
 import com.oem.evwarranty.model.AttachedDocument;
+import com.oem.evwarranty.model.utils.CompleteAllocationRequest;
 import com.oem.evwarranty.model.utils.UserResponseDto;
 import com.oem.evwarranty.client.warranty.UserServiceClient;
 import com.oem.evwarranty.enums.ClaimStatus;
@@ -202,14 +203,9 @@ public class WarrantyService {
             @CacheEvict(value = "claim_list", allEntries = true)
     })
     public void approveClaim(String claimCode, Long evmStaffId, String approvalNotes, Long technicalStaffId) {
-        // [Logic chính]:
-        // 1. Kiểm tra trạng thái hiện tại (phải là WAITING_APPROVAL).
-        // 2. Cập nhật trạng thái Claim.
-        // 3. Cập nhật trạng thái phê duyệt cho ClaimPartDetail.
-        // 4. Ghi Log.
-        // 5. Yêu cầu cấp phát phụ tùng (Gọi Part-Service).
-        /*  ### Chu y: O day,   */
-        log.info("DEBUG: approveClaim called with ClaimCode={}, TechID={}", claimCode, technicalStaffId);
+        log.info("🔵 DEBUG: approveClaim called with ClaimCode={}, TechID={}", claimCode, technicalStaffId);
+
+        // 1. Tìm và Validate Claim
         WarrantyClaim claim = claimRepo.findByClaimCode(claimCode)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
 
@@ -217,25 +213,49 @@ public class WarrantyService {
             throw new IllegalStateException("Claim không đủ điều kiện phê duyệt. Trạng thái hiện tại: " + claim.getCurrentStatus());
         }
 
-        // BƯỚC 1 & 2: CẬP NHẬT CLAIM
-        claim.setCurrentStatus(ClaimStatus.APPROVED);   // Cong viec thuc hien qpprove nằm o đây
-        claim.setTechnicalStaffId(technicalStaffId);  // Lưu Chuyên viên sửa chữa
-        claimRepo.save(claim);
+        // 2. [QUAN TRỌNG] GỌI PART-SERVICE ĐỂ CẤP PHÁT (Thực hiện trước khi update DB)
+        try {
+            List<ClaimPartDetail> partRequests = claim.getPartDetails();
 
-        // BƯỚC 3: CẬP NHẬT CHI TIẾT PHỤ TÙNG
-        // Giả sử logic phê duyệt là phê duyệt tất cả các part trong claim này
-        // Thuc ra de cho dung thi phai kiem tra moi part co trong chinh sach bao hanh hay khong, trong kho con hay khong -> vay thi phai truy cuu den Doi tuong part -> vay thi phai goi api den Part-service de lay thong tin hoac thuc hien method kiem tra luon
-        List<ClaimPartDetail> parts = partDetailRepo.findAllByClaim_Id(claim.getId());
-        List<String> partNumbers = new ArrayList<>();   // Danh sách phụ tùng đã được duyệt
-        for (ClaimPartDetail part : parts) {
-            // Nếu có kiểm tra các điều kiện phê duyệt phụ tùng thậm chí là gọi đến part-service để kiểm tra thì sẽ thực hiện ở đây. Nhưng hiện tại cho đơn giản thì duyệt hết mà ko cần ktra
-            // Thường thì viec kiểm tra và xem xét từng phụ tùng có được duyệt bảo hành hay không sẽ thực hiện ở đây rồi mới đánh dấu và thêm vào partsNumbers
-            part.setIsApproved(true);   // Đánh dấu phụ tùng được phép bảo hành
-            partNumbers.add(part.getPartNumber());  // Sau khi đánh dấu thì thêm vào danh sách đã duyệt
+            if (partRequests != null && !partRequests.isEmpty()) {
+                // Map request
+                List<PartAllocationRequest.PartRequestItem> items = partRequests.stream()
+                        .map(p -> PartAllocationRequest.PartRequestItem.builder()
+                                .partNumber(p.getPartNumber())      // SKU/Type
+                                .quantity(p.getQuantityRequired())
+                                .build())
+                        .toList();
+
+                PartAllocationRequest allocationRequest = PartAllocationRequest.builder()
+                        .claimCode(claim.getClaimCode())
+                        .serviceCenterId(claim.getCenterId())
+                        .items(items)
+                        .build();
+
+                // Gọi Feign Client
+                partClient.requestPartAllocation(allocationRequest);
+            }
+        } catch (Exception e) {
+            log.error("❌ Lỗi cấp phát phụ tùng: {}", e.getMessage());
+            // BẮT BUỘC THROW ĐỂ ROLLBACK TRANSACTION
+            throw new RuntimeException("Không thể duyệt vì lỗi kho: " + e.getMessage());
         }
-        partDetailRepo.saveAll(parts);  //Lưu cập nhật trạng thái duyệt mới của tất cả part
 
-        // BƯỚC 4: GHI LOG
+        // 3. CẬP NHẬT CLAIM & PART DETAILS
+        claim.setCurrentStatus(ClaimStatus.APPROVED);
+        claim.setEvmStaffId(evmStaffId);
+        claim.setTechnicalStaffId(technicalStaffId); // Gán KTV
+
+        List<ClaimPartDetail> parts = partDetailRepo.findAllByClaim_Id(claim.getId());
+        for (ClaimPartDetail part : parts) {
+            part.setIsApproved(true); // Đánh dấu đã duyệt
+        }
+
+        // Lưu xuống DB (Do Transaction nên sẽ commit cùng lúc khi hết hàm)
+        claimRepo.save(claim);
+        // partDetailRepo.saveAll(parts); // Không cần thiết vì claim.getPartDetails() là managed entity, nhưng giữ cũng không sao.
+
+        // 4. GHI LOG LỊCH SỬ
         logRepo.save(
                 ClaimStatusLog.builder()
                         .claim(claim)
@@ -245,61 +265,30 @@ public class WarrantyService {
                         .notes(approvalNotes != null ? approvalNotes : "Yêu cầu đã được EVM phê duyệt.")
                         .build());
 
-        // BƯỚC 5: GỌI SERVICE NGOÀI
+        // 5. [TÍNH NĂNG MỚI] GỬI THÔNG BÁO FIREBASE (FIRE & FORGET)
+        // Đặt cuối cùng để không ảnh hưởng luồng chính nếu lỗi mạng
         try {
-            List<ClaimPartDetail> partRequests = claim.getPartDetails();
-
-            if (partRequests != null && !partRequests.isEmpty()) {
-
-                // 1. Map từ ClaimPartDetail sang PartRequestItem
-                List<PartAllocationRequest.PartRequestItem> items = partRequests.stream()
-                        .map(p -> PartAllocationRequest.PartRequestItem.builder()
-                                .partNumber(p.getPartNumber())      // Mã SKU (Type)
-                                .quantity(p.getQuantityRequired())  // Số lượng thực tế cần
-                                .build())
-                        .toList();
-
-                // 2. Tạo Request
-                PartAllocationRequest allocationRequest = PartAllocationRequest.builder()
-                        .claimCode(claim.getClaimCode())
-                        .serviceCenterId(claim.getCenterId())
-                        .items(items) // ⬅️ Gửi danh sách chi tiết
-                        .build();
-
-                // 3. Gửi đi
-                partClient.requestPartAllocation(allocationRequest);
-            }
-        } catch (Exception e) {
-            log.error("❌ Lỗi cấp phát phụ tùng: {}", e.getMessage());
-            // Tùy chọn: throw e nếu muốn rollback transaction khi lỗi
-        }
-        // BƯỚC 6: Firebase Motification
-        try {
-            // Lấy ID của kỹ thuật viên vừa được gán (tham số đầu vào)
             if (technicalStaffId != null) {
-
-                // 1. Gọi User Service lấy thông tin Kỹ thuật viên
+                // Gọi User Service lấy thông tin KTV (để lấy Token FCM)
                 UserResponseDto technician = userClient.getScStaffById(technicalStaffId);
 
-                // 2. In Log để kiểm tra xem có Token không (DEBUG)
-                log.info("🔍 CHECK TECHNICIAN TOKEN: {}", technician.getFcmToken());
+                log.info("🔍 CHECK TECHNICIAN TOKEN: {}", technician != null ? technician.getFcmToken() : "NULL");
 
-                // 3. Gửi thông báo
-                if (technician != null && technician.getFcmToken() != null) {
+                if (technician != null && technician.getFcmToken() != null && !technician.getFcmToken().isEmpty()) {
                     fcmService.sendNotification(
                             technician.getFcmToken(),
                             "Nhiệm vụ mới! 🛠️",
                             "Bạn được phân công xử lý phiếu: " + claimCode
                     );
-                    log.info("🔔 Đã gửi thông báo cho Technician: {}", technician.getFullName());
+                    log.info("🔔 Đã gửi thông báo FCM cho Technician: {}", technician.getFullName());
                 } else {
-                    log.warn("⚠️ Technician chưa có Token hoặc User null");
+                    log.warn("⚠️ Technician chưa có FCM Token, bỏ qua gửi thông báo.");
                 }
             }
         } catch (Exception e) {
-            log.error("❌ Lỗi gửi thông báo FCM: {}", e.getMessage());
+            // Chỉ log warning, KHÔNG throw exception để tránh rollback việc duyệt Claim đã thành công
+            log.warn("⚠️ Lỗi gửi thông báo FCM (nhưng Claim vẫn được duyệt): {}", e.getMessage());
         }
-
     }
 
     @Caching(evict = {
@@ -344,31 +333,57 @@ public class WarrantyService {
         WarrantyClaim claim = claimRepo.findById(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("Claim không tồn tại."));
 
-        // Kiểm tra trạng thái phù hợp để cập nhật kết quả
         if (claim.getCurrentStatus() != ClaimStatus.APPROVED) {
             throw new IllegalArgumentException("Claim chưa được duyệt để cập nhật kết quả.");
         }
 
-        Boolean allPartsUpdated = false;
-
-        // Lặp qua danh sách kết quả (từ DTO)
+        // --- BƯỚC 1: CẬP NHẬT SERIAL (VÒNG LẶP) ---
         for (Map.Entry<String, SerialUpdateDetail> entry : resultDto.getSerialUpdates().entrySet()) {
             String partNumber = entry.getKey();
             SerialUpdateDetail newSerialNumber = entry.getValue();
-            // Lấy ClaimPartDetail tương ứng (bằng claimId và partNumber)
+
+            // Lấy ClaimPartDetail
             ClaimPartDetail partDetail = partDetailRepo.findByClaim_IdAndPartNumber(claimId, partNumber);
-            // Cập nhật partDetail.setSerialNumberReplace(newSerialNumber);
-            partDetail.setSerialNumberReplace(newSerialNumber.getNewSerialNumber());
-            // Cập nhật partDetail.setSerialNumberDefective(oldSerialNumber);
-            partDetail.setSerialNumberDefective(newSerialNumber.getDefectiveSerialNumber());
-            // Lưu lại:
-            partDetailRepo.save(partDetail);
+
+            if (partDetail != null) {
+                // Cập nhật Serial Mới & Cũ
+                partDetail.setSerialNumberReplace(newSerialNumber.getNewSerialNumber());
+                partDetail.setSerialNumberDefective(newSerialNumber.getDefectiveSerialNumber());
+                partDetailRepo.save(partDetail);
+            }
         }
 
-        // Logic kiểm tra nếu mọi thứ đã xong -> Cập nhật Claim Status thành COMPLETED
+        // --- BƯỚC 2: GỌI PART SERVICE (RA KHỎI VÒNG LẶP) ---
+        try {
+            // A. Chuẩn bị danh sách hàng hỏng trả về
+            List<CompleteAllocationRequest.ReturnedPart> returnedParts = new ArrayList<>();
+
+            for (ClaimPartDetail detail : claim.getPartDetails()) {
+                if (detail.getSerialNumberDefective() != null && !detail.getSerialNumberDefective().isEmpty()) {
+                    returnedParts.add(new CompleteAllocationRequest.ReturnedPart(
+                            detail.getPartNumber(), // partType
+                            detail.getQuantityRequired()
+                    ));
+                }
+            }
+
+            // B. Tạo Request
+            CompleteAllocationRequest completeRequest = CompleteAllocationRequest.builder()
+                    .claimCode(claim.getClaimCode())
+                    .returnedParts(returnedParts)
+                    .build();
+
+            // C. Gọi sang Part Service
+            partClient.completeAllocation(completeRequest);
+
+        } catch (Exception e) {
+            log.error("⚠️ Lỗi hoàn tất cấp phát/trả hàng (Part Service): {}", e.getMessage());
+        }
+
+        // --- BƯỚC 3: HOÀN TẤT CLAIM ---
         claim.setCurrentStatus(ClaimStatus.COMPLETED);
         claimRepo.save(claim);
-        // ... (Ghi Log)
+
         logRepo.save(ClaimStatusLog.builder()
                 .claim(claim)
                 .timestamp(LocalDateTime.now())
@@ -376,11 +391,13 @@ public class WarrantyService {
                 .processorId(claim.getTechnicalStaffId())
                 .notes("Công tác bảo hành đã hoàn thành.")
                 .build());
+
+        // --- BƯỚC 4: GỬI THÔNG BÁO FCM CHO SC STAFF (MỚI THÊM) ---
+        // (Đặt cuối cùng để đảm bảo mọi thứ xong xuôi mới báo)
         try {
-            Long scStaffId = claim.getScStaffId(); // 👈 Lấy ID người tạo phiếu
+            Long scStaffId = claim.getScStaffId(); // Lấy ID người tạo phiếu (SC Staff)
 
             if (scStaffId != null) {
-
                 // 1. Gọi User Service để lấy Token của SC Staff
                 UserResponseDto scStaff = userClient.getScStaffById(scStaffId);
 
@@ -388,15 +405,16 @@ public class WarrantyService {
                 if (scStaff != null && scStaff.getFcmToken() != null) {
                     fcmService.sendNotification(
                             scStaff.getFcmToken(),
-                            "Sửa chữa hoàn tất! ✅", // ✅ Tiêu đề phù hợp
-                            "KTV đã xử lý xong phiếu " + claim.getClaimCode() + ". Vui lòng kiểm tra." // ✅ Nội dung phù hợp
+                            "Sửa chữa hoàn tất! ✅",
+                            "KTV đã xử lý xong phiếu " + claim.getClaimCode() + ". Vui lòng kiểm tra."
                     );
                     log.info("🔔 Đã gửi thông báo hoàn thành cho SC Staff: {}", scStaff.getFullName());
                 } else {
-                    log.warn("⚠️ SC Staff chưa có Token hoặc User null");
+                    log.warn("⚠️ SC Staff chưa có Token hoặc User null, bỏ qua gửi thông báo.");
                 }
             }
         } catch (Exception e) {
+            // Chỉ log lỗi, không làm ảnh hưởng luồng chính
             log.error("❌ Lỗi gửi thông báo FCM (SC Staff): {}", e.getMessage());
         }
     }
@@ -586,9 +604,8 @@ public class WarrantyService {
                 if (roles.contains("ROLE_MANAGER")) {
                     specification = specification.and(WarrantyClaimSpecification.hasCenterId(currentCenterId));
                 }if (roles.contains("ROLE_SC_TECHNICIAN")) {
-                    Specification<WarrantyClaim> assignedToMe = (root, query, cb) ->
-                        cb.equal(root.get("technicalStaffId"), currentUserId);
-                    specification = specification.and(assignedToMe);}
+                    specification = specification.and(WarrantyClaimSpecification.hasTechinicianId(currentUserId));
+                }
                 else {
                     specification = specification.and(WarrantyClaimSpecification.hasStaffId(currentUserId));
                 }

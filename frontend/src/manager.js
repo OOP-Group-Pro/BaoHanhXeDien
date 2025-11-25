@@ -77,7 +77,7 @@ async function initManagerPage() {
             usernameInput.value = request.username;
             emailInput.value = request.email || '';
             phoneInput.value = request.phone || '';
-            roleSelect.value = request.roleName;
+            roleSelect.value = request.role;
             document.getElementById('modal-title').textContent = 'Chỉnh sửa Phiếu';
         } else {
             requestIdInput.value = '';
@@ -122,7 +122,7 @@ async function initManagerPage() {
                     <td>${r.username}</td>
                     <td>${r.email || ''}</td>
                     <td>${r.phone || ''}</td>
-                    <td>${r.roleName}</td>
+                    <td>${r.role}</td>
                     <td>${r.status}</td>
                     <td>
                         <button class="btn-action btn-edit" data-id="${r.requestId}">Sửa</button>

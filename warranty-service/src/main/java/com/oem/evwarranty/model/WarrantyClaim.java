@@ -24,6 +24,8 @@ public class WarrantyClaim {
     private String vin;         //Ma xe
     @Column(nullable = false)
     private Long scStaffId;     // Id Nhan vien tao don
+    @Column(nullable = true)
+    private Long evmStaffId;
     @Column
     private Long centerId;
     @Column(nullable = true)

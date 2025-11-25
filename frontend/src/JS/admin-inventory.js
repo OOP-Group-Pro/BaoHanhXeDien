@@ -2,11 +2,13 @@ import { checkAuth } from '../utils/auth.js';
 import { renderAdminSidebar } from '../components/AdminSidebar.js';
 import { api } from '../services/apiClient.js';
 import { getAllInventory, getParts } from '../services/partService.js'; // Import từ file service của bạn
+import { getAllocationStatusForClaim } from '../services/partService.js'; // Hoặc service tương ứng
 
 // --- API SERVICE ---
 const InventoryService = {
     getAll: (page = 0, size = 10) => api.get(`/inventory/all-stock?page=${page}&size=${size}`),
-    addStock: (data) => api.post('/inventory/stock', data)
+    addStock: (data) => api.post('/inventory/stock', data),
+    getAllAllocations: (page = 0, size = 10) => api.get(`/allocations?page=${page}&size=${size}`)
 };
 
 let currentPage = 0;
@@ -24,6 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. Setup Event
     setupModalEvents();
+    // Set up Tab inventory:
+    setupTabs();
 });
 
 // --- LOAD BẢNG TỒN KHO ---
@@ -293,3 +297,100 @@ searchInput.addEventListener('input', applyFilter);
 // Với thẻ <select>, dùng sự kiện 'change'
 if(locationInput) locationInput.addEventListener('change', applyFilter);
 if(statusSelect) statusSelect.addEventListener('change', applyFilter);
+
+// Logic cho kho sau khi approve claim:
+function setupTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 1. Active UI Tab
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // 2. Show Content
+            const targetId = tab.dataset.tab; // 'stock' hoặc 'allocation'
+            document.getElementById('tab-stock').style.display = targetId === 'stock' ? 'block' : 'none';
+            document.getElementById('tab-allocation').style.display = targetId === 'allocation' ? 'block' : 'none';
+
+            // 3. Load Data nếu cần
+            if (targetId === 'allocation') {
+                loadAllocationTable();
+            }
+        });
+    });
+}
+
+// Biến toàn cục để lưu trang hiện tại của tab Allocation
+let currentAllocationPage = 0;
+
+async function loadAllocationTable() {
+    const tbody = document.getElementById('allocation-tbody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div> Đang tải lịch sử...</td></tr>';
+
+    try {
+        // 1. Gọi API Backend (Đã sửa ở trên)
+        const response = await InventoryService.getAllAllocations(currentAllocationPage, 10);
+        const data = response.content || [];
+
+        // 2. Kiểm tra dữ liệu rỗng
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Chưa có lịch sử cấp phát nào.</td></tr>';
+            return;
+        }
+
+        // 3. Render dữ liệu
+        tbody.innerHTML = ''; // Xóa loading
+
+        data.forEach(item => {
+            // Format ngày tháng
+            const date = item.allocatedDate ? new Date(item.allocatedDate).toLocaleString('vi-VN') : '-';
+
+            // Xử lý thông tin phụ tùng (item.inventory có thể null nếu query join không fetch)
+            // Tùy vào DTO trả về, ở đây giả định PartAllocationResponse có field partName hoặc inventory object
+            const partName = item.partName || 'Unknown Part';
+            const partSku = item.serialNumber || 'N/A';
+            const location = item.inventoryId || 'N/A';
+
+            // Badge trạng thái
+            let statusClass = 'bg-secondary';
+            let statusText = item.status;
+
+            if (item.status === 'PENDING') {
+                statusClass = 'bg-warning text-dark';
+                statusText = 'Chờ xử lý';
+            } else if (item.status === 'WAITING_FOR_PART') {
+                statusClass = 'bg-danger';
+                statusText = 'Thiếu hàng';
+            } else if (item.status === 'READY_TO_INSTALL') {
+                statusClass = 'bg-primary';
+                statusText = 'Sẵn sàng lắp';
+            } else if (item.status === 'COMPLETED') { // Nếu có
+                statusClass = 'bg-success';
+                statusText = 'Hoàn tất';
+            }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>#${item.allocationId}</td>
+                    <td class="fw-bold text-primary">${item.claimCode}</td>
+                    <td>
+                        <div class="fw-bold">${partName}</div>
+                        <small class="text-muted">SKU: ${partSku}</small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">Trạm ${item.serviceCenterId}</span></td>
+                    <td class="fw-bold">${item.allocatedQty}</td>
+                    <td>${location}</td>
+                    <td class="small text-muted">${date}</td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                </tr>
+            `;
+        });
+
+        // (Tùy chọn) Cập nhật phân trang nếu bạn muốn làm kỹ phần này
+        // updatePagination(response);
+
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">Lỗi tải dữ liệu: ${error.message}</td></tr>`;
+    }
+}

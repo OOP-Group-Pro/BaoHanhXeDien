@@ -817,3 +817,34 @@ body {
     cursor: pointer;
 }
 #btn-save-import:hover { background-color: #0056b3; }
+
+/* CSS cho Tabs */
+.nav-tabs-container {
+    display: flex;
+    gap: 10px;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6B7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px; /* Đè lên border cha */
+    transition: all 0.2s;
+}
+
+.tab-btn:hover { color: var(--primary-blue); }
+
+.tab-btn.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+}
+
+.tab-content {
+    animation: fadeIn 0.3s ease;
+}

@@ -3,6 +3,7 @@ package com.oem.evwarranty.client.warranty;
 
 import com.oem.evwarranty.client.warranty.fallback.PartServiceClientFallback;
 import com.oem.evwarranty.config.FeignConfig;
+import com.oem.evwarranty.model.utils.CompleteAllocationRequest;
 import com.oem.evwarranty.model.utils.PartAllocationRequest;
 import com.oem.evwarranty.model.utils.PartResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -34,6 +35,7 @@ public interface PartServiceClient {
 
     @PostMapping("/api/v1/parts/by-numbers")
     Map<String, PartResponseDto> getPartsByNumbers(@RequestBody List<String> partNumbers);
+
+    @PostMapping("/api/v1/allocations/complete")
+    void completeAllocation(@RequestBody CompleteAllocationRequest request);
 }
-
-

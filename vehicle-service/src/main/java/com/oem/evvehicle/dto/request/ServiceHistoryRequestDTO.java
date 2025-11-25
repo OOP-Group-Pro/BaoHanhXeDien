@@ -1,5 +1,6 @@
 package com.oem.evvehicle.dto.request;
 
+import com.oem.evvehicle.entity.enums.InstallStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -16,8 +17,20 @@ public class ServiceHistoryRequestDTO {
     private Long vehicleId;
     @NotNull
     private Long technicianId;
-    //Có thể rỗng vì có thể ko lắp gì.
-    private List<Long> partIds; // Danh sách ID của các linh kiện liên quan
+    // 🔥 THAY ĐỔI: Xóa List<Long> partIds cũ, dùng list object chi tiết
+    private List<PartInstallationInfo> partsToInstall;
+
+    @Data
+    public static class PartInstallationInfo {
+        @NotNull
+        private Long partId;        // ID loại phụ tùng (để trừ kho)
+
+        @NotBlank
+        private String serialNumber; // Serial thực tế lắp vào xe
+
+        @NotNull
+        private InstallStatus status; // INSTALLED / REPLACED
+    }
     @NotNull(message = "Phải nhập số ODO tại thời điểm sửa chữa")
     private Long odometerReading;
 }

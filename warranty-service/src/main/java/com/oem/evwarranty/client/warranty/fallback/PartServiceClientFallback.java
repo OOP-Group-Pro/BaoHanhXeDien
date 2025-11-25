@@ -1,6 +1,7 @@
 package com.oem.evwarranty.client.warranty.fallback;
 
 import com.oem.evwarranty.client.warranty.PartServiceClient;
+import com.oem.evwarranty.model.utils.CompleteAllocationRequest;
 import com.oem.evwarranty.model.utils.PartAllocationRequest;
 import com.oem.evwarranty.model.utils.PartResponseDto;
 import lombok.extern.slf4j.Slf4j;
@@ -28,5 +29,10 @@ public class PartServiceClientFallback implements PartServiceClient {
     public Map<String, PartResponseDto> getPartsByNumbers (List<String> partNumbers) {
         log.error("Feign client ERROR: Cannot get part by numbers");
         return null;
+    }
+
+    @Override
+    public void completeAllocation(CompleteAllocationRequest request) {
+        log.error("Feign client ERROR: Cannot complete allocation");
     }
 }

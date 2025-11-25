@@ -13,4 +13,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRoles_RoleNameAndServiceCenterId (String roleName, Long serviceCenterId);
     List<User> findByRoles_RoleName (String roleName);
     Page<User> findAll(org.springframework.data.domain.Pageable pageable);
+    Boolean existsByEmail(String email);
 }

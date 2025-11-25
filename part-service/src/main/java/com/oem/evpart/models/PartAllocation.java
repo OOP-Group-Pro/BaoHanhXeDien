@@ -47,6 +47,7 @@ public class PartAllocation {
         PENDING,           // Đang chờ xử lý
         WAITING_FOR_PART,  // Đang chờ phụ tùng về
         READY_TO_INSTALL,  // Sẵn sàng lắp đặt
-        NOT_REQUIRED       // Không yêu cầu phụ tùng
+        NOT_REQUIRED,       // Không yêu cầu phụ tùng
+        COMPLETED
     }
 }

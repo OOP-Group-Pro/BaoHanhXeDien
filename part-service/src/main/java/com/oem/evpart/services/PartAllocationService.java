@@ -1,9 +1,13 @@
 package com.oem.evpart.services;
 
 import com.oem.evpart.dto.request.ClaimAllocationRequest;
+import com.oem.evpart.dto.request.CompleteAllocationRequest;
 import com.oem.evpart.dto.request.PartAllocationRequest;
+import com.oem.evpart.dto.response.PageCacheDto;
 import com.oem.evpart.dto.response.PartAllocationResponse;
 import com.oem.evpart.dto.response.PartAllocationStatusDto;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface PartAllocationService {
@@ -39,4 +43,8 @@ public interface PartAllocationService {
      * Dùng cho màn hình Kỹ thuật viên để hiển thị tiến độ.
      */
     PartAllocationStatusDto getStatusByClaimCode(String claimCode);
+
+    PageCacheDto<PartAllocationResponse> getAllAllocations(Pageable pageable);
+
+    public void completeAllocation(CompleteAllocationRequest request);
 }

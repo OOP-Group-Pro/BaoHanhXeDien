@@ -5,10 +5,14 @@ import com.oem.evuser.entity.Role;
 import com.oem.evuser.entity.User;
 import com.oem.evuser.entity.UserStatus;
 import com.oem.evuser.repository.NewStaffRequestRepository;
+import com.oem.evuser.repository.RoleRepository;
 import com.oem.evuser.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j; // ✅ Import cho Log
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -17,11 +21,14 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NewStaffRequestService {
 
     private final NewStaffRequestRepository requestRepo;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
+
 
     // Manager gửi phiếu
     public void createRequest(NewStaffRequest request, String createdBy) {
@@ -35,47 +42,82 @@ public class NewStaffRequestService {
         requestRepo.save(request);
     }
 
-    // Admin duyệt phiếu → tạo user mới
+    @Transactional
     public void approveRequest(Long requestId, String approvedBy) {
+        log.info("🟢 Starting approval for request ID: {}", requestId);
+
+        // 1. Tìm và Validate Request
         NewStaffRequest request = requestRepo.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with id: " + requestId));
 
         if (!"PENDING".equals(request.getStatus())) {
-            throw new RuntimeException("Request already processed");
+            throw new IllegalStateException("Request has already been processed (Status: " + request.getStatus() + ")");
         }
 
-        Set<Role> roles = request.getProposedRoles();
-        if (roles == null || roles.isEmpty()) {
-            throw new RuntimeException("No role proposed");
-        }
-
+        // 2. Validate User & Email tồn tại
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            throw new IllegalArgumentException("Username '" + request.getUsername() + "' already exists");
+        }
+        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Email '" + request.getEmail() + "' already exists");
         }
 
-        System.out.println("Approving request ID: " + requestId);
-        System.out.println("Username: " + request.getUsername());
-        System.out.println("Roles: " + roles);
-        System.out.println("ServiceCenter: " + request.getServiceCenterId());
+        // 3. XỬ LÝ ROLE THÔNG MINH (FIX LỖI CỦA BẠN)
+        Set<Role> roles = request.getProposedRoles();
 
+        // Nếu bảng trung gian rỗng, thử tìm từ chuỗi String 'role'
+        if (roles == null || roles.isEmpty()) {
+            log.warn("⚠️ ProposedRoles is empty for reqId: {}. Trying fallback to String role...", requestId);
+
+            String roleNameStr = request.getRole(); // Lấy chuỗi VD: "ROLE_SC_STAFF"
+
+            if (roleNameStr != null && !roleNameStr.isEmpty()) {
+                // Xử lý tên role (bỏ tiền tố ROLE_ nếu cần, tùy dữ liệu trong bảng roles)
+                // Giả sử bảng roles lưu "SC_STAFF" -> cần xóa "ROLE_"
+                // Giả sử bảng roles lưu "ROLE_SC_STAFF" -> giữ nguyên
+
+                // 🟢 THỬ TÌM TRỰC TIẾP TRƯỚC
+                Role fallbackRole = roleRepository.findByRoleName(roleNameStr).orElse(null);
+
+                // 🟢 NẾU KHÔNG THẤY, THỬ BỎ "ROLE_"
+                if (fallbackRole == null && roleNameStr.startsWith("ROLE_")) {
+                    String shortName = roleNameStr.replace("ROLE_", "");
+                    fallbackRole = roleRepository.findByRoleName(shortName).orElse(null);
+                }
+
+                if (fallbackRole != null) {
+                    roles = new HashSet<>();
+                    roles.add(fallbackRole);
+                    log.info("✅ Fallback successful. Found role: {}", fallbackRole.getRoleName());
+                } else {
+                    throw new IllegalArgumentException("Role not found in DB: " + roleNameStr);
+                }
+            } else {
+                throw new IllegalArgumentException("Cannot approve: No role specified (both list and string are empty)");
+            }
+        }
+
+        // 4. Tạo User Mới
         User newUser = new User();
         newUser.setUsername(request.getUsername());
         newUser.setPassword(passwordEncoder.encode("123456"));
-        newUser.setEmail(request.getEmail() != null ? request.getEmail() : "");
-        newUser.setPhone(request.getPhone() != null ? request.getPhone() : "");
+        newUser.setEmail(request.getEmail());
+        newUser.setPhone(request.getPhone());
         newUser.setStatus(UserStatus.ACTIVE);
-        // Tạo copy mới để tránh shared reference
-        newUser.setRoles(new HashSet<>(roles));
         newUser.setServiceCenterId(request.getServiceCenterId());
+
+        // Gán Role
+        newUser.setRoles(new HashSet<>(roles));
 
         userRepository.save(newUser);
 
+        // 5. Cập nhật trạng thái phiếu
         request.setStatus("APPROVED");
         request.setApprovedBy(approvedBy);
         request.setApprovedAt(LocalDateTime.now());
         requestRepo.save(request);
 
-        System.out.println("Approved successfully!");
+        log.info("✅ Approved successfully. New User ID: {}", newUser.getUserId());
     }
 
     // Admin từ chối phiếu

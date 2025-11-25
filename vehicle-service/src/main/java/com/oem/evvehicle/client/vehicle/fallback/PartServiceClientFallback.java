@@ -2,8 +2,10 @@ package com.oem.evvehicle.client.vehicle.fallback;
 
 import com.oem.evvehicle.client.vehicle.PartServiceClient;
 import com.oem.evvehicle.dto.external.PartInventoryDetailsDTO;
+import com.oem.evvehicle.dto.request.DecrementStockRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,5 +21,11 @@ public class PartServiceClientFallback implements PartServiceClient {
         // Điều này giúp code của bạn không bị NullPointerException
         // và logic nghiệp vụ sẽ hiểu là "không tìm thấy kho".
         return Collections.emptyList();
+    }
+
+    @Override
+    public Object decrementStock( DecrementStockRequest request) {
+        log.error("Error in decrementStock request: {}", request);
+        return null;
     }
 }

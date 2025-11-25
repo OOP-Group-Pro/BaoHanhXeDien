@@ -1,5 +1,6 @@
 import { api } from '../services/apiClient.js';
 import { checkAuth } from '../utils/auth.js';
+import {renderAdminSidebar} from "../components/AdminSidebar.js";
 
 // API gọi ReportController
 const getDashboardStats = () => api.get('/reports/dashboard-stats');
@@ -10,6 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!userInfo) return;
 
     try {
+
+        renderAdminSidebar();
         // 2. Gọi API
         const stats = await getDashboardStats();
         console.log("📊 Dashboard Data:", stats);
