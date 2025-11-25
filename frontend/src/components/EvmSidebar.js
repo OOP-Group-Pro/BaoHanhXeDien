@@ -44,6 +44,13 @@ export function renderEvmSidebar() {
                         Báo cáo
                     </a>
                 </li>
+                </li>
+
+                 <a href="/pages/evmStaff/profile.html" class="">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        Hồ sơ cá nhân
+                                    </a>
+                                </li>
             </ul>
 
             <div class="sidebar-user">

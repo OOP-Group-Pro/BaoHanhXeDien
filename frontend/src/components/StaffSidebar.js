@@ -45,6 +45,13 @@ export function renderStaffSidebar() {
                         Lịch hẹn
                     </a>
                 </li>
+                </li>
+                    <a href="/pages/scStaff/profile.html" class="">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        Hồ sơ cá nhân
+                    </a>
+                </li>
+
             </ul>
 
             <div class="sidebar-user">

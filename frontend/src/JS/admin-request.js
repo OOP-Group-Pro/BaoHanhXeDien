@@ -1,6 +1,8 @@
 // src/request.js
 import { checkAuth, logout } from '../utils/auth.js';
 import { api } from '../services/apiClient.js';
+import { renderAdminSidebar } from '../components/AdminSidebar.js';
+renderAdminSidebar();
 
 async function initRequestPage() {
     // Kiểm tra quyền ADMIN

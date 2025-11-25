@@ -1,9 +1,10 @@
 import { api } from '../services/apiClient.js';
 import { checkAuth } from '../utils/auth.js';
+import { renderAdminSidebar } from '../components/AdminSidebar.js';
 
 // API gọi ReportController
 const getDashboardStats = () => api.get('/reports/dashboard-stats');
-
+renderAdminSidebar();
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Check quyền Admin
     const userInfo = checkAuth('ROLE_ADMIN');
