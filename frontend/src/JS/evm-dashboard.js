@@ -2,6 +2,7 @@ import { getClaims, getClaimDetails, approveClaim, rejectClaim } from '../servic
 import { getUsersByRole } from '../services/userService.js';
 import { getVehicleByVin } from '../services/vehicleService.js';
 import { getPartsDetails } from '../services/partService.js'; // ⬅️ Đã có hàm này từ bước 1
+import { checkCampaignEligibility } from '../services/campaignService.js';
 
 let reviewModalInstance = null;
 let currentClaimId = null;
@@ -196,15 +197,22 @@ async function openReviewModal(id, code) {
         currentClaimId = claim.claimCode;
         const partNumbers = claim.partList.map(p => p.partNumber); // List các partType
 
-        // 2. GỌI 3 API SONG SONG
-        const [vehicleRes, partsMap, technicians] = await Promise.all([
+        // 2. GỌI 4 API SONG SONG (Thêm checkCampaignEligibility)
+        // Lưu ý: checkCampaignEligibility có thể trả về mảng hoặc object tùy api client, ta sẽ xử lý an toàn
+        const [vehicleRes, partsMap, technicians, campaignRes] = await Promise.all([
             getVehicleByVin(claim.vin),           // Lấy ODO, Ngày mua
             getPartsDetails(partNumbers),         // Lấy Tồn kho, Policy
-            getUsersByRole('SC_TECHNICIAN')       // Lấy DS KTV
+            getUsersByRole('SC_TECHNICIAN'),       // Lấy DS KTV
+            checkCampaignEligibility(claim.vin).catch(() => []) // Catch lỗi để không chết luồng
         ]);
 
+        // Chuẩn hóa danh sách chiến dịch
+        let campaigns = [];
+        if (Array.isArray(campaignRes)) campaigns = campaignRes;
+        else if (campaignRes && Array.isArray(campaignRes.data)) campaigns = campaignRes.data;
+
         // 3. Render giao diện thông minh
-        renderSmartReview(claim, vehicleRes.data, partsMap, technicians);
+        renderSmartReview(claim, vehicleRes.data, partsMap, technicians, campaigns); // Truyền thêm campaigns
 
     } catch (e) {
         console.error(e);
@@ -212,20 +220,8 @@ async function openReviewModal(id, code) {
     }
 }
 
-function renderSmartReview(claim, vehicle, partsMap, technicians) {
-    // --- LOG DEBUG START ---
-    console.group("🔍 DEBUG: renderSmartReview");
-    console.log("1. Dữ liệu Claim:", claim);
-    console.log("2. Dữ liệu Xe (Vehicle):", vehicle);
-    console.log("3. Dữ liệu PartsMap (Từ API):", partsMap);
-    console.log("4. Danh sách KTV:", technicians);
-    // --- LOG DEBUG END ---
-
+function renderSmartReview(claim, vehicle, partsMap, technicians, campaigns) {
     const body = document.getElementById('modal-body-content');
-
-    if (!partsMap) {
-        console.error("😡 LỖI: partsMap bị null hoặc undefined!");
-    }
 
     // A. Render Dropdown KTV
     let techOptions = '<option value="">-- Chọn Kỹ thuật viên --</option>';
@@ -233,67 +229,79 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
         techOptions += technicians.map(t => `<option value="${t.userId}">${t.fullName}</option>`).join('');
     }
 
-    // B. Render Danh sách Phụ tùng & Logic kiểm tra
     let totalCost = 0;
     let canApprove = true;
     let warningMessages = [];
 
     let partsHtml = '';
+
     if (!claim.partList || claim.partList.length === 0) {
         partsHtml = '<li class="list-group-item text-muted">Không có phụ tùng yêu cầu</li>';
     } else {
         partsHtml = claim.partList.map((p, index) => {
-            // --- LOG DEBUG VÒNG LẶP ---
-            console.groupCollapsed(`🛠️ Kiểm tra Part #${index + 1}: ${p.partName || 'No Name'}`);
-            console.log("🔹 Dữ liệu Part trong Claim (p):", p);
-
-            // Kiểm tra xem key dùng để map là gì
-            // (Lưu ý: DTO Backend trả về 'partNumber', code cũ bạn dùng 'partType', hãy check log xem cái nào có giá trị)
-            const lookupKey = p.partType || p.partNumber;
-            console.log(`🔹 Key dùng để tra cứu trong Map: "${lookupKey}"`);
-            console.log(`🔹 Giá trị p.partType:`, p.partType);
-            console.log(`🔹 Giá trị p.partNumber:`, p.partNumber);
-
+            // Lấy key để tra cứu (ưu tiên partNumber)
+            const lookupKey = p.partNumber || p.partType;
             const info = partsMap[lookupKey] || {};
-
-            if (Object.keys(info).length === 0) {
-                console.warn(`⚠️ CẢNH BÁO: Không tìm thấy thông tin cho key "${lookupKey}" trong partsMap.`);
-            } else {
-                console.log("✅ Tìm thấy thông tin Part (Info):", info);
-                console.log(`   - Tồn kho (inventoryQuantity): ${info.inventoryQuantity}`);
-                console.log(`   - Giá (price): ${info.price}`);
-                console.log(`   - BH Tháng (warrantyDurationMonths): ${info.warrantyDurationMonths}`);
-                console.log(`   - BH Km (warrantyMileageLimit): ${info.warrantyMileageLimit}`);
-            }
-            // --- LOG DEBUG END ---
 
             const stock = info.inventoryQuantity || 0;
             const price = info.price || 0;
             const lineTotal = price * p.quantityRequired;
             totalCost += lineTotal;
 
-            // 1. Check Tồn kho
+            // ---------------------------------------------------------
+            // 1. KIỂM TRA TỒN KHO
+            // ---------------------------------------------------------
             const isStockOk = stock >= p.quantityRequired;
-            let stockBadge = '';
-            if (isStockOk) {
-                stockBadge = `<span class="badge badge-stock-ok"><i class="fa-solid fa-check"></i> Kho: ${stock}</span>`;
-            } else {
-                stockBadge = `<span class="badge badge-stock-low"><i class="fa-solid fa-xmark"></i> Thiếu: ${stock}</span>`;
+            let stockBadge = isStockOk
+                ? `<span class="badge badge-stock-ok"><i class="fa-solid fa-check"></i> Kho: ${stock}</span>`
+                : `<span class="badge badge-stock-low"><i class="fa-solid fa-xmark"></i> Thiếu: ${stock}</span>`;
+
+            if (!isStockOk) {
                 canApprove = false;
-                warningMessages.push(`Thiếu hàng: <strong>${p.partName || p.partNumber}</strong> (Cần ${p.quantityRequired}, Kho ${stock})`);
+                warningMessages.push(`Thiếu hàng: <strong>${p.partName || p.partNumber}</strong>`);
             }
 
-            // 2. Check Bảo hành
+            // ---------------------------------------------------------
+            // 2. PHÂN TÍCH CHÍNH SÁCH (BẢO HÀNH vs CHIẾN DỊCH)
+            // ---------------------------------------------------------
+            let policyBadge = '';
+            let policyReason = '';
+            let isPolicyValid = true;
+            let borderClass = '';
+
+            // BƯỚC 2.1: Kiểm tra Bảo hành Tiêu chuẩn trước
             const warrantyCheck = analyzeWarranty(vehicle, info);
-            console.log("🛡️ Kết quả Check Bảo hành:", warrantyCheck); // Log kết quả check bảo hành
 
-            if (!warrantyCheck.isValid) {
-                canApprove = false;
-                warningMessages.push(`Hết bảo hành: <strong>${p.partName || p.partNumber}</strong> - ${warrantyCheck.reason}`);
+            if (warrantyCheck.isValid) {
+                // ==> CASE 1: CÒN BẢO HÀNH
+                policyBadge = '<span class="badge badge-policy-ok">Bảo hành</span>';
+                policyReason = '<i class="fa-solid fa-shield-halved text-success"></i> Xe còn hạn bảo hành (Hãng chịu 100%)';
+                borderClass = 'border-success text-success';
+            } else {
+                // ==> CASE 2: HẾT BẢO HÀNH -> CHECK CHIẾN DỊCH
+                // Tìm xem phụ tùng này có nằm trong bất kỳ chiến dịch ACTIVE nào của xe không
+                const validCampaign = campaigns.find(camp => {
+                    if (!camp.parts) return false;
+                    return camp.parts.some(cp => cp.partNumber === lookupKey);
+                });
+
+                if (validCampaign) {
+                    // ==> CASE 2A: THUỘC CHIẾN DỊCH
+                    policyBadge = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-star"></i> Chiến dịch</span>';
+                    policyReason = `<i class="fa-solid fa-check-circle text-warning"></i> Áp dụng: ${validCampaign.code} (Hãng chịu 100%)`;
+                    borderClass = 'border-warning text-dark';
+                } else {
+                    // ==> CASE 2B: KHÔNG THUỘC CHIẾN DỊCH -> TỪ CHỐI
+                    isPolicyValid = false;
+                    canApprove = false; // Chặn phê duyệt
+                    policyBadge = '<span class="badge bg-danger">Không Hợp lệ</span>';
+                    policyReason = `<i class="fa-solid fa-circle-xmark text-danger"></i> ${warrantyCheck.reason} & Không có chiến dịch.`;
+                    borderClass = 'border-danger text-danger';
+                    warningMessages.push(`Chính sách: <strong>${p.partName}</strong> không được hỗ trợ.`);
+                }
             }
 
-            console.groupEnd(); // Kết thúc nhóm log cho part này
-
+            // Render HTML cho từng dòng phụ tùng
             return `
             <li class="list-group-item">
                 <div class="d-flex justify-content-between align-items-start">
@@ -303,21 +311,23 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
                     </div>
                     <div class="text-end">
                         <div class="mb-1">${stockBadge}</div>
-                        <div>${warrantyCheck.badge}</div>
+                        <div>${policyBadge}</div>
                     </div>
                 </div>
-                ${!warrantyCheck.isValid ? `<div class="small text-danger mt-1 bg-light p-1 rounded border border-danger"><i class="fa-solid fa-triangle-exclamation"></i> ${warrantyCheck.reason}</div>` : ''}
+
+                <div class="small mt-2 p-2 rounded border ${borderClass} bg-light bg-opacity-25">
+                    ${policyReason}
+                </div>
+
                 <div class="text-end small text-muted border-top mt-2 pt-1">
-                    Giá: ${price.toLocaleString()} đ x ${p.quantityRequired} = <strong>${lineTotal.toLocaleString()} đ</strong>
+                    Giá trị: ${price.toLocaleString()} đ x ${p.quantityRequired} = <strong>${lineTotal.toLocaleString()} đ</strong>
                 </div>
             </li>
             `;
         }).join('');
     }
 
-    console.groupEnd(); // Kết thúc nhóm log tổng
-
-    // C. Tạo thông báo lỗi (Alert)
+    // C. Tạo thông báo lỗi (Alert chặn duyệt)
     let alertHtml = '';
     if (warningMessages.length > 0) {
         alertHtml = `
@@ -330,13 +340,13 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
         `;
     }
 
-    // D. Cập nhật trạng thái nút (Enable/Disable nút ở Footer)
+    // D. Cập nhật trạng thái nút Duyệt
     const btnApprove = document.getElementById('btn-approve-action');
     if (btnApprove) {
         btnApprove.disabled = !canApprove;
     }
 
-    // E. Render Giao diện (3 Cột)
+    // E. Render toàn bộ Body Modal
     body.innerHTML = `
         <div class="row">
             <div class="col-md-7 border-end">
@@ -345,37 +355,36 @@ function renderSmartReview(claim, vehicle, partsMap, technicians) {
                     <div><i class="fa-solid fa-calendar"></i> ${new Date(vehicle.warrantyStartDate).toLocaleDateString('vi-VN')}</div>
                     <div><i class="fa-solid fa-road"></i> ${vehicle.currentOdometer?.toLocaleString()} Km</div>
                 </div>
-                
+
                 <h6 class="text-secondary fw-bold small">MÔ TẢ LỖI TỪ SC</h6>
                 <p class="p-2 border rounded mb-4 bg-white" style="min-height: 60px;">${claim.description}</p>
-                
+
                 <h6 class="text-secondary fw-bold small d-flex justify-content-between align-items-center border-bottom pb-2">
                     <span>PHỤ TÙNG YÊU CẦU</span>
-                    <span>Tổng dự kiến: <span class="text-primary fs-6 fw-bold">${totalCost.toLocaleString()} đ</span></span>
+                    <span>Tổng giá trị: <span class="text-primary fs-6 fw-bold">${totalCost.toLocaleString()} đ</span></span>
                 </h6>
                 <ul class="list-group list-group-flush" style="max-height: 350px; overflow-y: auto;">
                     ${partsHtml}
                 </ul>
             </div>
-            
+
             <div class="col-md-5 ps-4">
                 <h6 class="text-primary fw-bold mb-3"><i class="fa-solid fa-gavel"></i> QUYẾT ĐỊNH</h6>
-                
+
                 <div class="mb-3">
                     <label class="form-label fw-bold small">1. Chỉ định Kỹ thuật viên (Bắt buộc)</label>
                     <select class="form-select" id="review-technician">
                         ${techOptions}
                     </select>
                 </div>
-                
+
                 <div class="mb-3">
                     <label class="form-label fw-bold small">2. Ghi chú</label>
-                    <textarea class="form-control" id="review-notes" rows="5" placeholder="Nhập lý do..."></textarea>
+                    <textarea class="form-control" id="review-notes" rows="5" placeholder="Nhập ghi chú..."></textarea>
                 </div>
 
                 ${alertHtml}
-
-                </div>
+            </div>
         </div>
     `;
 }

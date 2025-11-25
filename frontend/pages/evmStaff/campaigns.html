@@ -116,6 +116,7 @@
 
                     <hr>
 
+
                     <div class="mb-3">
                         <label class="form-label fw-bold d-flex justify-content-between align-items-center">
                             <span>Danh sách xe ảnh hưởng</span>
@@ -130,6 +131,32 @@
 
                         <textarea class="d-none" id="campVins"></textarea>
                         <div class="form-text text-primary" id="vinCount">Đã chọn: 0 xe</div>
+                    </div>
+
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                            <span>Phụ tùng thay thế (Campaign Parts)</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnOpenPartModal">
+                                <i class="bi bi-gear-fill me-1"></i> Thêm Phụ tùng
+                            </button>
+                        </label>
+
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-striped mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Mã PT</th>
+                                    <th>Tên Phụ tùng</th>
+                                    <th style="width: 100px;">Số lượng</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                                </thead>
+                                <tbody id="selectedPartsTbody">
+                                <tr id="noPartsRow"><td colspan="4" class="text-center text-muted fst-italic">Chưa có phụ tùng nào.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -291,6 +318,63 @@
                         </thead>
                         <tbody id="viewVehicleTbody">
                         <tr><td colspan="3" class="text-center">Đang tải danh sách xe...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr class="mt-4">
+
+                <h6 class="fw-bold text-success"><i class="bi bi-gear-fill me-2"></i>Phụ tùng thay thế (Campaign Parts)</h6>
+                <div class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto;">
+                    <table class="table table-sm table-striped mb-0 bg-white">
+                        <thead>
+                        <tr>
+                            <th>Mã PT</th>
+                            <th>Tên Phụ tùng</th>
+                            <th>SL Giới hạn</th>
+                        </tr>
+                        </thead>
+                        <tbody id="viewPartsTbody">
+                        <tr><td colspan="3" class="text-center text-muted">Không có phụ tùng nào.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="partSelectModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Thêm Phụ tùng vào Chiến dịch</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="partSearchKeyword" placeholder="Nhập tên hoặc mã phụ tùng...">
+                    <button class="btn btn-primary" type="button" id="btnSearchPart">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Mã Phụ tùng</th>
+                            <th>Tên Phụ tùng</th>
+                            <th>Tồn kho</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody id="partSearchResultBody">
+                        <tr><td colspan="4" class="text-center text-muted">Nhập từ khóa để tìm kiếm.</td></tr>
                         </tbody>
                     </table>
                 </div>

@@ -32,12 +32,7 @@ export function renderEvmSidebar() {
                         Quản lý Chiến dịch
                     </a>
                 </li>
-                <li>
-                    <a href="/pages/evmStaff/approve-claims.html" class="${isActive('/pages/evmStaff/approve-claims.html')}">
-                        <i class="fa-solid fa-check-to-slot"></i>
-                        Phê duyệt Claim
-                    </a>
-                </li>
+
                 <li>
                     <a href="/pages/evmStaff/reports.html" class="">
                         <i class="fa-solid fa-chart-pie"></i>

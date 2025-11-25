@@ -40,7 +40,6 @@ import com.oem.evwarranty.repository.WarrantyClaimRepository;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Service
 @Slf4j
 public class WarrantyService {
@@ -348,6 +347,8 @@ public class WarrantyService {
     }
 
     // --- CÁC HÀM CƠ BẢN (READ/GET) ---
+
+
 
     // 4. Chức năng: XEM CHI TIẾT CLAIM (BẢN NÂNG CẤP CUỐI CÙNG)
     @Transactional(readOnly = true)
