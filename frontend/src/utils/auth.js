@@ -35,39 +35,45 @@ export function decodeToken() {
 }
 
 /**
- * HÀM GÁC CỔNG CHÍNH
- * (Dùng ở đầu mỗi file JS của các trang được bảo vệ, VÍ DỤ: scStaff.js)
- * @param {string[]} requiredRole - (Tùy chọn) Tên vai trò yêu cầu, ví dụ: "ROLE_ADMIN"
+ * HÀM GÁC CỔNG CHÍNH (Hỗ trợ đa quyền)
+ * @param {string|string[]} requiredRoles - (Tùy chọn) Role đơn hoặc mảng Role, ví dụ: ['ROLE_ADMIN', 'ROLE_MANAGER']
  */
-export function checkAuth (requiredRole = null) {
-    const userInfo = decodeToken(); // (Đã bao gồm kiểm tra token, hết hạn)
+export function checkAuth(requiredRoles = null) {
+    const userInfo = decodeToken();
 
     if (!userInfo) {
-        // 1. Nếu không có thông tin (chưa login hoặc token hỏng/hết hạn)
         alert('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-        window.location.href = '/index.html'; // Chuyển về trang login
-        return null; // ⬅️ Trả về null để file JS kia dừng lại
+        window.location.href = '/index.html';
+        return null;
     }
 
-    if (requiredRole && !userInfo.roles.includes(requiredRole)) {
-        // 2. Nếu có yêu cầu vai trò, nhưng user không có vai trò đó
-        alert('Bạn không có quyền truy cập trang này!');
-        window.location.href = '/index.html'; // ⬅️ Chuyển về trang login (an toàn)
-        return null; // ⬅️ Trả về null
+    // Nếu có yêu cầu Role
+    if (requiredRoles) {
+        // Chuyển về mảng nếu là chuỗi đơn
+        const allowedRoles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+
+        // Kiểm tra: User có ít nhất 1 role nằm trong danh sách cho phép không?
+        // userInfo.roles thường là mảng chuỗi ['ROLE_MANAGER', 'ROLE_USER']
+        const hasPermission = userInfo.roles.some(role => allowedRoles.includes(role));
+
+        if (!hasPermission) {
+            alert('Bạn không có quyền truy cập trang này!');
+            window.location.href = '/index.html';
+            return null;
+        }
     }
 
-    // 3. Hợp lệ!
-    // Đồng bộ thông tin user trong localStorage (nếu chưa có)
+    // ... (phần lưu localStorage giữ nguyên) ...
     if (!getUser()) {
         saveUser({
             id: userInfo.sub,
             roles: userInfo.roles,
             centerId: userInfo.centerId,
-            username: userInfo.sub // (JwtService của bạn không lưu username, tạm dùng ID)
+            username: userInfo.sub
         });
     }
 
-    return userInfo; // Trả về info user để trang có thể dùng
+    return userInfo;
 }
 
 /**

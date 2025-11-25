@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Hồ sơ Xe | OEM Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
+</head>
+<body>
+
+<nav class="sidebar"></nav>
+
+<main class="main-content">
+    <header class="main-header">
+        <h1>Quản lý Hồ sơ Xe (Vehicle Profile) 🚗</h1>
+        <div class="header-actions">
+            <button class="btn-primary" id="btn-add-vehicle">
+                <i class="fa-solid fa-plus"></i> Đăng Ký Xe Mới
+            </button>
+        </div>
+    </header>
+
+    <div class="filter-section">
+        <div class="filter-group" style="flex: 2;">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="search-vin" placeholder="Tìm kiếm theo VIN, Biển số...">
+        </div>
+        <button class="btn-secondary" id="btn-search"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </div>
+
+    <div class="content-area" style="grid-template-columns: 1fr;">
+        <div class="table-container">
+            <h2>Danh sách Xe đã đăng ký</h2>
+            <table class="user-table table-full-width">
+                <thead>
+                <tr>
+                    <th>Số VIN</th>
+                    <th>Biển Số</th>
+                    <th>Model</th>
+                    <th>Chủ sở hữu</th>
+                    <th>Ngày BH</th>
+                    <th>Phụ tùng chính</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody id="vehicle-tbody">
+                <tr><td colspan="7" class="text-center">Đang tải...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<div id="vehicle-modal" class="modal-popup">
+    <div class="modal-box" style="width: 800px; max-width: 95%;">
+        <button class="close-btn" id="close-vehicle-modal">&times;</button>
+        <h3>🚘 Hồ sơ Xe Chi tiết</h3>
+
+        <form id="vehicle-form">
+            <div class="row mb-3">
+                <div class="col-6">
+                    <label>Số VIN (17 ký tự) <span class="text-danger">*</span></label>
+                    <input type="text" id="inp-vin" maxlength="17" required style="text-transform: uppercase;">
+                </div>
+                <div class="col-6">
+                    <label>Biển Số</label>
+                    <input type="text" id="inp-plate" style="text-transform: uppercase;">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <label>Model Xe</label>
+                    <select id="inp-model">
+                        <option value="VF8">VF8 - Eco</option>
+                        <option value="VF8_PLUS">VF8 - Plus</option>
+                        <option value="VF9">VF9</option>
+                        <option value="VFe34">VF e34</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label>Ngày kích hoạt BH</label>
+                    <input type="date" id="inp-warranty-date" required>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="mb-0 fs-6">⚙️ Cấu hình Phụ tùng (Traceable Parts)</h4>
+                <button type="button" class="btn-secondary btn-sm" id="btn-add-part-row">
+                    <i class="fa-solid fa-plus"></i> Thêm Phụ tùng
+                </button>
+            </div>
+
+            <div class="table-responsive" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee;">
+                <table class="table-simple" style="width: 100%;">
+                    <thead>
+                    <tr style="background: #f8f9fa;">
+                        <th style="padding-left: 10px;">Loại (Type)</th>
+                        <th>Tên Phụ tùng</th>
+                        <th>Số Serial (Định danh)</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="installed-parts-tbody">
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="submit" class="btn-primary w-100 mt-4">Lưu Hồ Sơ</button>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="../../src/admin-vehicle.js"></script>
+
+</body>
+</html>
