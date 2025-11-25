@@ -1,6 +1,7 @@
 package com.oem.evuser.repository;
 
 import com.oem.evuser.entity.User;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -11,4 +12,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     List<User> findByRoles_RoleNameAndServiceCenterId (String roleName, Long serviceCenterId);
     List<User> findByRoles_RoleName (String roleName);
+    Page<User> findAll(org.springframework.data.domain.Pageable pageable);
 }

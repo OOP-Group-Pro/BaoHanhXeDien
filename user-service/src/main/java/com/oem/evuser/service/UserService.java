@@ -1,5 +1,7 @@
 package com.oem.evuser.service;
 
+import com.oem.evuser.dto.UserDto;
+import com.oem.evuser.dto.response.PageCacheDto;
 import com.oem.evuser.dto.event.UserCreatedEvent;
 import com.oem.evuser.entity.Role;
 import com.oem.evuser.entity.User;
@@ -11,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -79,7 +83,6 @@ public class UserService {
         if (!isAdmin()) {
             throw new AccessDeniedException("Chỉ ADMIN mới được phép tạo user!");
         }
-
         Role role = roleRepository.findByRoleName(roleName)
                 .orElseGet(() -> roleRepository.save(new Role(roleName)));
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -117,9 +120,15 @@ public class UserService {
 
     // READ - Lấy tất cả user
     @Transactional(readOnly = true)
-    @Cacheable(value = "users_list") // Cache danh sách user (cẩn thận nếu list quá lớn)
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+   @Cacheable(value = "users_list") // Cache danh sách user (cẩn thận nếu list quá lớn)
+    public PageCacheDto<UserDto> getAllUsers(Pageable pageable) {
+        Page<User> page = userRepository.findAll(pageable);
+
+        List<UserDto> dtoList = page.getContent().stream()
+                .map(UserMapper::mapToUserDto)
+                .toList();
+
+        return PageCacheDto.from(page.map(UserMapper::mapToUserDto));
     }
 
     // UPDATE

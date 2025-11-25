@@ -158,3 +158,203 @@ body {
     padding-left: 3rem !important;
     padding-right: 3rem !important;
 }
+/* =========================================
+   src/styles/evm-profile.css
+   ========================================= */
+
+/* 1. Container chính */
+.profile-container {
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    flex-wrap: wrap;
+}
+
+/* 2. Card hồ sơ */
+.profile-card,
+.profile-details-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Profile card nhỏ bên trái */
+.profile-card {
+    flex: 1 1 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+}
+
+/* Avatar lớn */
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--primary-green);
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+/* Status badge */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #D1FAE5;
+    color: var(--primary-green-dark);
+}
+
+/* Profile details card */
+.profile-details-card {
+    flex: 2 1 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Card header */
+.profile-details-card .card-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+/* Card body: form group */
+.profile-details-card .card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 cột */
+    gap: 16px 24px;
+}
+
+.profile-details-card .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-details-card label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.profile-details-card input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    background-color: #F9FAFB;
+}
+
+/* Card footer */
+.profile-details-card .card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Button */
+.btn-primary {
+    background-color: var(--primary-green);
+    color: var(--white);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-green-dark);
+}
+
+.btn-danger {
+    background-color: #EF4444;
+    color: var(--white);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-danger:hover {
+    background-color: #DC2626;
+}
+
+/* Modal */
+.modal-popup {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modal-popup.show {
+    display: flex;
+}
+
+.modal-box {
+    background-color: var(--white);
+    border-radius: 12px;
+    padding: 24px;
+    width: 400px;
+    max-width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-box label {
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.modal-box input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: #F9FAFB;
+}
+
+.modal-box .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* Responsive */
+@media screen and (max-width: 900px) {
+    body {
+        grid-template-columns: 1fr;
+    }
+    .profile-container {
+        flex-direction: column;
+        padding: 16px;
+    }
+    .profile-details-card .card-body {
+        grid-template-columns: 1fr;
+    }
+    .sidebar {
+        height: auto;
+        padding: 16px;
+    }
+}

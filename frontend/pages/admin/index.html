@@ -3,122 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | OEM EV Warranty Management System</title>
+    <title>Quản lí Người dùng | OEM EV Warranty Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="../../src/styles/style-admin.css">
 </head>
 <body>
-<nav class="sidebar">
-    <div class="sidebar-header">
-        <div class="avatar">T</div>
-        <div class="user-info">
-            <strong>Admin</strong>
-            <span>Admin Thùy</span>
-        </div>
-    </div>
-    <ul class="sidebar-nav">
-        <li><a href="index.html"><i class="fa-solid fa-tachometer-alt"></i>Dashboard</a></li>
-        <li>
-            <a href="claims.html" class="sub-label" id="claim-sub-label">
-                <i class="fa-solid fa-wrench"></i> Yêu cầu bảo hành
-            </a>
-        </li>
-        <li><a href="users.html"><i class="fa-solid fa-file-invoice"></i>Quản lí người dùng</a></li>
-        <li><a href="request.html"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
-        <li><a href="inventory.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
-        <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
-        <li style="font-style:italic; font-size:0.85rem; text-align:center; margin-top:5px;">
-            <a href="#" id="manager-link">Bạn là Manager?</a>
-        </li>
-    </ul>
-</nav>
+
+<nav class="sidebar"></nav>
+
 
 <main class="main-content" id="main-content">
     <header class="main-header">
-        <h1>Dashboard - Hệ thống Bảo hành EV</h1>
+        <h1>Quản lí Người dùng 👥</h1>
         <div class="header-actions">
-            <div class="search-bar">
-                <i class="fa-solid fa-search"></i>
-                <input type="text" placeholder="Tìm kiếm nhanh...">
+            <div class="btn-group">
+                <button class="btn-secondary"><i class="fa-solid fa-file-import"></i> Import</button>
+                <button class="btn-secondary"><i class="fa-solid fa-file-export"></i> Export</button>
             </div>
-            <button class="btn-secondary"><i class="fa-solid fa-download"></i> Báo cáo</button>
-            <button class="btn-primary"><i class="fa-solid fa-plus"></i> Tạo Yêu cầu Mới</button>
+            <button class="btn-primary" id="add-user-btn"><i class="fa-solid fa-user-plus"></i> Thêm Mới</button>
         </div>
     </header>
 
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Tổng số Yêu cầu</h3>
-                <div class="icon bg-blue"><i class="fa-solid fa-file-invoice"></i></div>
-            </div>
-            <div class="value">1,452</div>
-            <div class="value-change change-positive"><i class="fa-solid fa-arrow-up"></i> 12.5% (Tháng trước)</div>
+    <div class="filter-section">
+        <div class="filter-group">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="search-input" placeholder="Tìm tên, email, sđt...">
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Yêu cầu Đang chờ</h3>
-                <div class="icon bg-yellow"><i class="fa-solid fa-hourglass-half"></i></div>
-            </div>
-            <div class="value">87</div>
-            <div class="value-change change-negative"><i class="fa-solid fa-arrow-down"></i> 3.2% (Tuần trước)</div>
+        <div class="filter-group">
+            <i class="fa-solid fa-user-tag"></i>
+            <select id="filter-role">
+                <option value="">-- Tất cả Vai trò --</option>
+                <option value="ADMIN">Admin</option>
+                <option value="SC_STAFF">SC Staff</option>
+                <option value="SC_TECHNICIAN">SC Technician</option>
+                <option value="EVM_STAFF">EVM Staff</option>
+                <option value="MANAGER">Manager</option>
+            </select>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Chi phí Ước tính</h3>
-                <div class="icon bg-green"><i class="fa-solid fa-dollar-sign"></i></div>
-            </div>
-            <div class="value">1.2 Tr VND</div>
-            <div class="value-change change-positive"><i class="fa-solid fa-arrow-up"></i> 5.8% (Quý trước)</div>
+        <div class="filter-group">
+            <i class="fa-solid fa-building"></i>
+            <input type="number" id="filter-center" placeholder="Mã Trung tâm (ID)">
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Tỷ lệ Từ chối</h3>
-                <div class="icon bg-red"><i class="fa-solid fa-thumbs-down"></i></div>
-            </div>
-            <div class="value">4.1%</div>
-            <div class="value-change change-positive"><i class="fa-solid fa-arrow-up"></i> 0.5% (So với trung bình)</div>
+        <div class="filter-group">
+            <i class="fa-solid fa-toggle-on"></i>
+            <select id="filter-status">
+                <option value="">-- Tất cả Trạng thái --</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+                <option value="BLOCKED">Blocked</option>
+            </select>
         </div>
+
+        <button id="btn-clear-filter" class="btn-secondary"><i class="fa-solid fa-rotate-right"></i> Reset</button>
     </div>
-
-    <div class="content-area">
-        <div class="chart-container">
-            <h2>Xu hướng Yêu cầu Bảo hành (6 tháng)</h2>
-            <div class="chart-placeholder">
-                <p>Nơi đây sẽ hiển thị biểu đồ đường (sử dụng thư viện Chart.js/D3.js)</p>
-            </div>
-        </div>
-
+    <div class="content-area" style="grid-template-columns: 1fr;">
         <div class="table-container">
-            <h2>Yêu cầu Gần đây</h2>
-            <table class="table-simple">
+            <table class="user-table">
                 <thead>
                 <tr>
-                    <th>Mã Yêu cầu</th>
-                    <th>Trạng thái</th>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>SĐT</th>
+                    <th>Vai trò</th>
+                    <th>TTDV</th> <th>Trạng thái</th>
+                    <th>Hành động</th>
                 </tr>
                 </thead>
-                <tbody>
-                <tr><td>CLAIM-00459</td><td><span class="badge badge-pending">Đang chờ</span></td></tr>
-                <tr><td>CLAIM-00458</td><td><span class="badge badge-approved">Đã duyệt</span></td></tr>
-                <tr><td>CLAIM-00457</td><td><span class="badge badge-approved">Đã duyệt</span></td></tr>
-                <tr><td>CLAIM-00456</td><td><span class="badge badge-rejected">Từ chối</span></td></tr>
-                <tr><td>CLAIM-00455</td><td><span class="badge badge-pending">Đang chờ</span></td></tr>
+                <tbody id="user-table-body">
+                <tr><td colspan="8" style="text-align:center;">Đang tải dữ liệu...</td></tr>
                 </tbody>
             </table>
-            <div style="text-align: right; margin-top: 12px;">
-                <a href="claims.html" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 600;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
         </div>
     </div>
 </main>
+
+<!-- Modal Thêm/Sửa User -->
+<div id="user-modal" class="modal-popup">
+    <div class="modal-box">
+        <button class="close-btn" id="close-modal-btn">&times;</button>
+        <h3 id="modal-title">Thêm Người dùng</h3>
+        <input type="hidden" id="user-id">
+
+        <label>Username</label>
+        <input type="text" id="username">
+
+        <label>Password</label>
+        <div class="password-wrapper">
+            <input type="password" id="password">
+            <i class="fa-solid fa-eye" id="toggle-password"></i>
+        </div>
+        <script>
+            const pass = document.getElementById("password");
+            const toggle = document.getElementById("toggle-password");
+
+            toggle.onclick = () => pass.type = pass.type === "password" ? "text" : "password";
+        </script>
+
+        <label>Email</label>
+        <input type="email" id="email">
+
+        <label>Phone</label>
+        <input type="text" id="phone">
+
+        <label>Role</label>
+        <select id="role">
+            <option value="ADMIN">Admin</option>
+            <option value="SC_STAFF">SC Staff</option>
+            <option value="SC_TECHNICIAN">SC Technician</option>
+            <option value="EVM_STAFF">EVM Staff</option>
+            <option value="MANAGER">Manager</option>
+        </select>
+
+        <label>Status</label>
+        <select id="status">
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="BLOCKED">Blocked</option>
+        </select>
+
+        <button id="save-user-btn">Lưu</button>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="../../src/js/script-admin.js"></script>
+<script type="module" src="/src/admin.js"></script>
+
+<style>
+    /* Bảng user */
+    /* Bảng user */
+    .user-table { width: 100%; border-collapse: collapse; background-color: #fff; border-radius: 8px; overflow: hidden; }
+    .user-table th, .user-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    .user-table th { background-color: #007BFF; color: #fff; }
+    .user-table tr:hover { background-color: #f1f1f1; }
+    .btn-action { padding: 4px 8px; margin-right: 4px; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
+    .btn-edit { background-color: #28a745; }
+    .btn-delete { background-color: #dc3545; }
+
+    /* Modal popup */
+    .modal-popup { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-popup.show { display:flex; }
+
+    .modal-box { background:#fff; border-radius:12px; width:400px; max-width:90%; padding:20px; box-shadow:0 5px 20px rgba(0,0,0,0.2); position: relative; }
+    .modal-box h3 { margin-top:0; margin-bottom:15px; font-size:1.3rem; padding-right: 30px; /* Chừa chỗ cho nút close */ }
+    .modal-box label { display:block; margin-top:8px; font-weight:500; }
+    .modal-box input, .modal-box select { width:100%; padding:7px 10px; margin-top:4px; border-radius:6px; border:1px solid #ccc; box-sizing: border-box; }
+
+    /* Style cho nút Save/Submit (Loại trừ nút close) */
+    .modal-box button:not(.close-btn) {
+        margin-top:15px;
+        width:100%;
+        padding:8px;
+        background-color:#007BFF;
+        border:none;
+        color:#fff;
+        font-size:1rem;
+        border-radius:6px;
+        cursor:pointer;
+    }
+
+    /* Style riêng cho nút Close để nằm góc phải */
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+
+        /* Reset lại các thuộc tính bị dính từ nút thường */
+        width: 30px;
+        height: 30px;
+        background: transparent;
+        color: #555;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+
+        /* Căn giữa dấu X */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: 0.2s;
+    }
+
+    .close-btn:hover {
+        background-color: #f1f1f1;
+        color: #ff0000;
+    }
+
+    /* Style cho thanh bộ lọc */
+    .filter-section {
+        display: flex;
+        gap: 15px;
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 5px 10px;
+        background: #f9f9f9;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-group i {
+        color: #666;
+        margin-right: 8px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        border: none;
+        background: transparent;
+        outline: none;
+        width: 100%;
+        font-size: 14px;
+        color: #333;
+    }
+
+    #btn-clear-filter {
+        padding: 8px 15px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    #btn-clear-filter:hover {
+        background: #5a6268;
+    }
+
+    /* --- Avatar User --- */
+    .user-info-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        text-transform: uppercase;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* --- Status Dot (Chấm tròn trạng thái) --- */
+    .status-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-dot-green {
+        background-color: #28a745; /* Xanh lá */
+        box-shadow: 0 0 4px #28a745;
+    }
+    .status-dot-red {
+        background-color: #dc3545; /* Đỏ */
+        box-shadow: 0 0 4px #dc3545;
+    }
+    .status-dot-grey {
+        background-color: #6c757d; /* Xám */
+    }
+    .status-text {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #333;
+        text-transform: capitalize; /* Viết hoa chữ cái đầu: Active */
+    }
+
+    /* Role Badge nhỏ gọn hơn */
+    .role-badge {
+        background-color: #eef2f7;
+        color: #333;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .password-wrapper { position:relative; }
+    .password-wrapper i { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; color:#555; }
+</style>
 
 </body>
 </html>

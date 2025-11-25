@@ -91,13 +91,21 @@ public class CampaignServiceImpl implements CampaignService {
     public PageCacheDto<CampaignResponse> search(String code, CampaignStatus status,
                                                  CampaignType type,
                                                  Pageable pageable) {
-        String kw = (code == null) ? "" : code;
+
+        // Xử lý keyword: nếu null thì truyền rỗng để query vẫn chạy đúng
+        String keyword = (code != null) ? code.trim() : "";
+
         if (status != null && type != null) {
             return PageCacheDto.from(campaignRepo
-                    .findByCodeContainingIgnoreCaseAndStatusAndType(kw, status, type, pageable)
+                    .findByCodeContainingIgnoreCaseAndStatusAndType(keyword, status, type, pageable)
                     .map(CampaignMapper::toResponse));
         }
-        return PageCacheDto.from(campaignRepo.findByCodeContainingIgnoreCase(kw, pageable)
-                .map(CampaignMapper::toResponse));
+
+        // 1. Gọi hàm search và map sang Response (Kết quả là Page của Spring)
+        Page<CampaignResponse> pageResult = campaignRepo.search(keyword, status, type, pageable)
+                .map(CampaignMapper::toResponse);
+
+        // 2. Đóng gói Page vào PageCacheDto để trả về (Đây là bước fix lỗi)
+        return PageCacheDto.from(pageResult);
     }
 }

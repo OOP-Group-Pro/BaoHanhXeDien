@@ -332,6 +332,7 @@ async function loadHistory() {
 
             const rawStatus = claim.status || claim.currentStatus;
 
+            // Log để kiểm tra (bạn có thể xóa sau này)
             console.log(`Claim: ${claim.claimCode}, Status lấy được: ${rawStatus}`);
 
             // LỌC: Chỉ ẩn những xe đang chờ/mới/đang sửa
@@ -612,7 +613,7 @@ async function loadProfile() {
                     api.get(`/claims/${claimCode}/history`) // Đảm bảo endpoint này đúng
                 ]);
 
-                renderModalContent(details, history);
+                renderModalContent(details, history.content);
 
             } catch (error) {
                 console.error("Lỗi tải modal:", error);
@@ -734,5 +735,4 @@ async function loadProfile() {
         }
     // --- Khởi chạy lần đầu ---
     renderJobList();
-    initClaimDetailsModal();
 }

@@ -9,7 +9,11 @@ import { decodeToken } from './utils/auth.js';
 function redirectToDashboard(roles) {
     if (roles.includes('ROLE_ADMIN')) {
         window.location.href = '/pages/admin/index.html';
-    } else if (roles.includes('ROLE_SC_STAFF')) {
+    }
+    else if (roles.includes('ROLE_MANAGER')) {
+            window.location.href = '/pages/manager/create-request.html';
+        }
+    else if (roles.includes('ROLE_SC_STAFF')) {
         window.location.href = '/pages/scStaff/index.html';
     } else if (roles.includes('ROLE_EVM_STAFF')) {
         // Đảm bảo bạn đã tạo thư mục pages/evmStaff

@@ -22,4 +22,7 @@ public interface PartInventoryRepository extends JpaRepository<PartInventory, Lo
 
     //Tìm 1 kho đầu tiên có chứa "part" và số lượng "quantity" lớn hơn hoặc bằng
     Optional<PartInventory> findFirstByPartAndQuantityGreaterThanEqual(Part part, Long quantity);
+
+    // Tìm kho theo Part và Location (Để check xem đã có hàng ở kho đó chưa)
+    Optional<PartInventory> findByPartAndLocation(Part part, String location);
 }

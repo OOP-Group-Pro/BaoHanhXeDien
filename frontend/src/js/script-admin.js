@@ -1,17 +1,19 @@
 import { api as apiClient } from '../../src/services/apiClient.js';
+import { renderManagerSidebar } from '../components/ManagerSidebar.js';
+renderManagerSidebar();
 document.addEventListener("DOMContentLoaded", () => {
-  const path = location.pathname.toLowerCase();
-  const currentPage = path.split('/').pop();
+    const path = location.pathname.toLowerCase();
+    const currentPage = path.split('/').pop();
 
-  const isDashboard = path.includes("index");
-  const isUsersPage = path.includes("users");
-  const isRequestsPage = path.endsWith("request.html");
-  const isInventoryPage = path.includes("inventory");
-  const isClaimsPage = path.includes("claims");
-const isCreateRequestPage = path.endsWith("create-request.html");
+    const isDashboard = path.includes("index");
+    const isUsersPage = path.includes("users");
+    const isRequestsPage = path.endsWith("request.html");
+    const isInventoryPage = path.includes("inventory");
+    const isClaimsPage = path.includes("claims");
+    const isCreateRequestPage = path.endsWith("create-request.html");
 
 
-  const Swal = window.Swal;
+    const Swal = window.Swal;
 
     // ================= GLOBAL FUNCTIONS =================
     const mockDecodeToken = (token) => {
@@ -74,8 +76,8 @@ const isCreateRequestPage = path.endsWith("create-request.html");
                 cancelButtonText: "Hủy bỏ"
             }).then((result) => {
                 if (result.isConfirmed) {
-                localStorage.clear()
-                        Swal.fire({
+                    localStorage.clear()
+                    Swal.fire({
                         title: "Đã đăng xuất!",
                         text: "Bạn đã thoát khỏi hệ thống thành công.",
                         icon: "success",
@@ -89,23 +91,23 @@ const isCreateRequestPage = path.endsWith("create-request.html");
         });
     }
 // ================= GLOBAL: SIDEBAR ACTIVE =================
-const links = document.querySelectorAll('.sidebar-nav a');
-const currentPath = window.location.pathname.split('/').pop().toLowerCase();
+    const links = document.querySelectorAll('.sidebar-nav a');
+    const currentPath = window.location.pathname.split('/').pop().toLowerCase();
 
-links.forEach(link => {
-  const href = link.getAttribute('href')?.toLowerCase();
-  if (!href) return;
+    links.forEach(link => {
+        const href = link.getAttribute('href')?.toLowerCase();
+        if (!href) return;
 
-  if (currentPath.includes(href) && href !== '#') {
-    links.forEach(l => l.classList.remove('active'));
-    link.classList.add('active');
-  }
+        if (currentPath.includes(href) && href !== '#') {
+            links.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+        }
 
-  if ((currentPath === '' || currentPath === 'index.html') && href.includes('index')) {
-    links.forEach(l => l.classList.remove('active'));
-    link.classList.add('active');
-  }
-});
+        if ((currentPath === '' || currentPath === 'index.html') && href.includes('index')) {
+            links.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+        }
+    });
 
     // ================= GLOBAL: MANAGER LINK =================
     const managerLink = document.getElementById('manager-link');
@@ -542,11 +544,11 @@ links.forEach(link => {
 
         let MOCK_DATA = [
             { requestId: 2025001, fullName: 'Lam Bao Nghi', username: 'lam.nghi@oem.com', createdBy: 'nguyen.hung',
-              proposedRoles: [{ name: 'ROLE_SC_STAFF' }], createdAt: new Date('2025-10-25T10:30:00'), status: 'PENDING' },
+                proposedRoles: [{ name: 'ROLE_SC_STAFF' }], createdAt: new Date('2025-10-25T10:30:00'), status: 'PENDING' },
             { requestId: 2025002, fullName: 'Nguyễn Ngọc Anh', username: 'ngoc.anh@oem.com', createdBy: 'tran.mai',
-              proposedRoles: [{ name: 'ROLE_EVM_STAFF' }], createdAt: new Date('2025-10-20T15:45:00'), status: 'APPROVED' },
+                proposedRoles: [{ name: 'ROLE_EVM_STAFF' }], createdAt: new Date('2025-10-20T15:45:00'), status: 'APPROVED' },
             { requestId: 2025003, fullName: 'Lê Tấn Hùng', username: 'tan.hung@oem.com', createdBy: 'phan.quang',
-              proposedRoles: [{ name: 'ROLE_ADMIN' }, { name: 'ROLE_MANAGER' }], createdAt: new Date('2025-10-15T08:00:00'), status: 'REJECTED' }
+                proposedRoles: [{ name: 'ROLE_ADMIN' }, { name: 'ROLE_MANAGER' }], createdAt: new Date('2025-10-15T08:00:00'), status: 'REJECTED' }
         ];
 
         const openModal = (requestId, type) => {

@@ -23,6 +23,7 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
+
 public class SecurityConfig {
 
     private final InternalAuthFilter internalAuthFilter;
@@ -42,6 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Auth service public
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        
                 /*
                         // Feign client
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()

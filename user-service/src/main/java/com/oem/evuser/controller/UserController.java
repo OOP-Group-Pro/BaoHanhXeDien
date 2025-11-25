@@ -1,9 +1,12 @@
 package com.oem.evuser.controller;
 
+import com.oem.evuser.dto.UserDto;
+import com.oem.evuser.dto.response.PageCacheDto;
 import com.oem.evuser.entity.User;
 import com.oem.evuser.security.UserDetailsPrincipal;
 import com.oem.evuser.service.UserService;
 import com.oem.evuser.dto.response.UserResponseDto;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,8 +35,8 @@ public class UserController {
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/admin")
-    public ResponseEntity<List<User>> listAllUsersFull() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public PageCacheDto<UserDto> listAllUsersFull(Pageable pageable) {
+        return userService.getAllUsers(pageable);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")

@@ -17,6 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/vehicles")
@@ -116,6 +121,22 @@ public class VehicleController {
     public ResponseEntity<Map<String, String>> getCustomerNamesByVins(@RequestBody List<String> vins) {
         Map<String, String> nameMap = vehicleService.getCustomerNamesByVins(vins);
         return ResponseEntity.ok(nameMap);
+    }
+
+    /**
+     * API Tìm kiếm xe (Search Vehicles)
+     * URL: GET /api/v1/vehicles?keyword=VF8&page=0&size=10
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<VehicleResponseDTO>>> searchVehicles(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 10, sort = "vehicleId", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<VehicleResponseDTO> result = vehicleService.searchVehicles(keyword, pageable);
+
+        ApiResponse<Page<VehicleResponseDTO>> response = ApiResponse.success(
+                HttpStatus.OK.value(), "Search vehicles successfully.", result);
+        return ResponseEntity.ok(response);
     }
 
 }

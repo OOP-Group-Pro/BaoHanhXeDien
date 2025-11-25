@@ -49,6 +49,14 @@ export const addAffectedVehicle = (campaignId, dto) => {
     return api.post(`/campaigns/${campaignId}/affected-vehicles`, dto);
 };
 
+/**
+ * Xóa chiến dịch
+ * API: DELETE /api/v1/campaigns/{id}
+ */
+export const deleteCampaign = (id) => {
+    return api.delete(`/campaigns/${id}`);
+};
+
 // ============================================================
 // 2. APPOINTMENT (Lịch hẹn)
 // ============================================================

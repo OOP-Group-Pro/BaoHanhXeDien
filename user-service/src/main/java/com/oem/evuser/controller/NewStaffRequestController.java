@@ -10,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+@CrossOrigin(origins = "http://localhost:5173") // cho phép Vite
 @RestController
 @RequestMapping("/api/v1/staff-requests")
 @RequiredArgsConstructor

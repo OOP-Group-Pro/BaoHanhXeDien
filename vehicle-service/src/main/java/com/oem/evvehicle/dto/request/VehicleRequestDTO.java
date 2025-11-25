@@ -2,17 +2,20 @@ package com.oem.evvehicle.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
+@Getter
+@Setter
 public class VehicleRequestDTO {
-    @NotBlank(message = "VIN không được để trống")
     @Size(min = 17, max = 17, message = "VIN phải có đúng 17 ký tự")
     private String vehicleVin;
 
-    @NotBlank
+
     private String model;
     private LocalDateTime manufacturedDate;
 
