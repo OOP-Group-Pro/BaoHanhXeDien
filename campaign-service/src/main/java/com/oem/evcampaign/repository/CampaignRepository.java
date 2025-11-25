@@ -17,6 +17,8 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     boolean existsByCode(String code);
 
     // --- SỬA ĐOẠN NÀY ---
+    // Lấy 1 campaign theo code (nếu bạn có dùng chỗ khác)
+    Optional<Campaign> findByCode(String code);
 
     // Query thông minh:
     // 1. keyword: Tìm gần đúng trong cả CODE và TITLE (không phân biệt hoa thường)
@@ -30,4 +32,14 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
                           @Param("status") CampaignStatus status,
                           @Param("type") CampaignType type,
                           Pageable pageable);
+    // Tìm kiếm theo code (contains, ignore case) + phân trang
+    Page<Campaign> findByCodeContainingIgnoreCase(String code, Pageable pageable);
+
+    // Tìm kiếm theo code + status + type (đúng như ServiceImpl đang gọi)
+    Page<Campaign> findByCodeContainingIgnoreCaseAndStatusAndType(
+            String code,
+            CampaignStatus status,
+            CampaignType type,
+            Pageable pageable
+    );
 }

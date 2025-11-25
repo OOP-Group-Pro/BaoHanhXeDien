@@ -14,6 +14,9 @@ public class PartAllocationRequest {
     private Long serviceCenterId;
     private List<PartRequestItem> items;
 
+    public PartAllocationRequest(Long claimId, List<String> partNumbers, Long centerId, Long scStaffId) {
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

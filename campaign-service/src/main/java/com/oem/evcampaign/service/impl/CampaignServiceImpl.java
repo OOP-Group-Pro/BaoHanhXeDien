@@ -86,15 +86,20 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
-    // Cache kết quả tìm kiếm (chỉ cache trang đầu tiên để tối ưu)
-    @Cacheable(value = "campaign_search", key = "{#code, #status, #type, #pageable.pageNumber}", condition = "#pageable.pageNumber == 0")
-    public PageCacheDto<CampaignResponse> search(String code,
-                                                 CampaignStatus status,
+    // 🚀 CACHE: Tìm kiếm chiến dịch (Cache theo tham số tìm kiếm)
+    @Cacheable(value = "campaigns_search", key = "{#code, #status, #type, #pageable.pageNumber, #pageable.pageSize}")
+    public PageCacheDto<CampaignResponse> search(String code, CampaignStatus status,
                                                  CampaignType type,
                                                  Pageable pageable) {
 
         // Xử lý keyword: nếu null thì truyền rỗng để query vẫn chạy đúng
         String keyword = (code != null) ? code.trim() : "";
+
+        if (status != null && type != null) {
+            return PageCacheDto.from(campaignRepo
+                    .findByCodeContainingIgnoreCaseAndStatusAndType(keyword, status, type, pageable)
+                    .map(CampaignMapper::toResponse));
+        }
 
         // 1. Gọi hàm search và map sang Response (Kết quả là Page của Spring)
         Page<CampaignResponse> pageResult = campaignRepo.search(keyword, status, type, pageable)

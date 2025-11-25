@@ -187,7 +187,7 @@ function initJobListPage() {
                     partsTableBody.innerHTML += `<tr>
                         <td>${part.partName}</td>
                         <td>${part.partNumber}</td>
-                        <td>${part.quantity}</td>
+                        <td>${part.quantityRequired}</td>
                     </tr>`;
                 });
             } else {
@@ -662,16 +662,33 @@ async function loadProfile() {
             }
 
             // B. Lịch sử
-            let historyHtml = (history || []).map(log => `
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <strong>${log.status}</strong>
-                        <small class="text-muted">${new Date(log.timestamp).toLocaleString('vi-VN')}</small>
-                    </div>
-                    <p class="mb-0 small mt-1 text-secondary">${log.notes || ''}</p>
-                    <small class="text-muted fst-italic" style="font-size: 0.75rem">Bởi: ${log.processorName || 'Hệ thống'}</small>
-                </li>
-            `).join('') || '<li class="list-group-item text-muted">Chưa có lịch sử.</li>';
+            let historyList = [];
+
+                        // 1. Kiểm tra kỹ các trường hợp API trả về
+                        if (Array.isArray(history)) {
+                            historyList = history; // Là mảng chuẩn
+                        } else if (history && Array.isArray(history.content)) {
+                            historyList = history.content; // Là trang (Page)
+                        } else if (history && Array.isArray(history.data)) {
+                            historyList = history.data; // Là wrapper data
+                        }
+
+                        // 2. Map dữ liệu
+                        let historyHtml = '';
+                        if (historyList.length === 0) {
+                            historyHtml = '<li class="list-group-item text-muted">Chưa có lịch sử.</li>';
+                        } else {
+                            historyHtml = historyList.map(log => `
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>${log.status || 'Unknown'}</strong>
+                                        <small class="text-muted">${log.timestamp ? new Date(log.timestamp).toLocaleString('vi-VN') : 'N/A'}</small>
+                                    </div>
+                                    <p class="mb-0 small mt-1 text-secondary">${log.notes || ''}</p>
+                                    <small class="text-muted fst-italic" style="font-size: 0.75rem">Bởi: ${log.processorName || 'Hệ thống'}</small>
+                                </li>
+                            `).join('');
+                        }
 
             // C. Tài liệu
             let documentsHtml = (details.documents || []).map(doc => `

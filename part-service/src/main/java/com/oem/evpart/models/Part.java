@@ -43,6 +43,7 @@ public class Part {
     // ===== Quan hệ =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warranty_policy_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private WarrantyPolicy warrantyPolicy;
 
 
