@@ -29,10 +29,12 @@ public interface PartRepository extends JpaRepository<Part, Long> {
 
     List<Part> findAllByPartTypeIn(List<String> partNumbers);
 
-    @Query("SELECT p FROM Part p WHERE " +
+    @Query("SELECT DISTINCT p FROM Part p LEFT JOIN FETCH p.inventories WHERE " +
             "(:keyword IS NULL OR :keyword = '' OR " +
             "LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.serialNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.partType) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Part> searchParts(@Param("keyword") String keyword, Pageable pageable);
+            "LOWER(p.serialNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:partType IS NULL OR :partType = '' OR p.partType = :partType)")
+    Page<Part> searchParts(@Param("keyword") String keyword,
+                           @Param("partType") String partType,
+                           Pageable pageable);
 }

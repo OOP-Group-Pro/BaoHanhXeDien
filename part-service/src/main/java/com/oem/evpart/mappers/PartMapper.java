@@ -20,13 +20,26 @@ public class PartMapper {
     private final WarrantyPolicyRepository policyRepository; // ✅ Dùng để tìm chính sách
 
     public Part toPart(PartRequest request) {
-        return Part.builder()
+        Part part = Part.builder()
                 .name(request.getName())
                 .serialNumber(request.getSerialNumber())
                 .price(request.getPrice())
                 .manufacturer(request.getManufacturer())
                 .partType(request.getPartType())
                 .build();
+
+        // 🔥 FIX: Tìm và gán WarrantyPolicy nếu có ID
+        if (request.getWarrantyPolicyId() != null) {
+            WarrantyPolicy policy = policyRepository.findById(request.getWarrantyPolicyId())
+                    .orElse(null); // Hoặc ném lỗi nếu muốn bắt buộc phải có
+            part.setWarrantyPolicy(policy);
+
+            if (policy == null) {
+                log.warn("⚠️ Không tìm thấy Warranty Policy với ID: {}", request.getWarrantyPolicyId());
+            }
+        }
+
+        return part;
     }
 
     public PartResponse toPartResponse(Part part) {
@@ -83,5 +96,11 @@ public class PartMapper {
         if (request.getPrice() != null) part.setPrice(request.getPrice());
         if (request.getManufacturer() != null) part.setManufacturer(request.getManufacturer());
         if (request.getPartType() != null) part.setPartType(request.getPartType());
+
+        if (request.getWarrantyPolicyId() != null) {
+            WarrantyPolicy policy = policyRepository.findById(request.getWarrantyPolicyId())
+                    .orElse(null);
+            part.setWarrantyPolicy(policy);
+        }
     }
 }

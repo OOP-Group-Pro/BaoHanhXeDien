@@ -14,19 +14,19 @@
 
 <nav class="sidebar">
     <div class="sidebar-header">
-        <div class="avatar">T</div>
+        <div class="avatar">A</div>
         <div class="user-info">
             <strong>Admin</strong>
-            <span>Admin Thùy</span>
+            <span>Admin</span>
         </div>
     </div>
     <ul class="sidebar-nav">
         <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-        <li><a href="index.html" ><i class="fa-solid fa-file-invoice"></i>Quản lí người dùng</a></li>
-        <li><a href="#"><i class="fa-solid fa-shield-halved"></i> Chính sách BH</a></li>
+        <li><a href="index.html" ><i class="fa-solid fa-users"></i>Quản lí người dùng</a></li>
         <li><a href="inventory.html"><i class="fa-solid fa-warehouse"></i>Quản lý Kho</a></li>
-        <li><a href="request.html"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
-
+        <li><a href="inventory1.html?openCreate=true" ><i class="fa-solid fa-plus-circle"></i> Tạo phụ tùng mới</a></li>
+        <li><a href="request.html" class = "active"><i class="fa-solid fa-cogs"></i>Phiếu đề xuất</a></li>
+        <li><a href="#"><i class="fa-solid fa-shield-halved"></i> Chính sách BH</a></li>
         <li><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
     </ul>
 </nav>
@@ -68,7 +68,7 @@
     </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="../../src/JS/manager-request.js"></script>
+<script type="module" src="../../src/JS/manager-request.js"></script>
 
 </body>
 </html>

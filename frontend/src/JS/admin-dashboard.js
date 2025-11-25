@@ -3,7 +3,34 @@ import { checkAuth } from '../utils/auth.js';
 
 // API gọi ReportController
 const getDashboardStats = () => api.get('/reports/dashboard-stats');
+const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Ngăn chặn hành vi mặc định của thẻ <a>
 
+            // Hiển thị xác nhận (Optional - dùng SweetAlert2 cho đẹp)
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Đăng xuất?',
+                    text: "Bạn có chắc chắn muốn đăng xuất không?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Đúng, đăng xuất!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        logout();
+                    }
+                });
+            } else {
+                // Nếu không có SweetAlert2 thì logout luôn
+                if(confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+                    logout();
+                }
+            }
+        });
+    }
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Check quyền Admin
     const userInfo = checkAuth('ROLE_ADMIN');

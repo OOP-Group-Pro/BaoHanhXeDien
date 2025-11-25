@@ -105,7 +105,7 @@ public class PartServiceImpl implements PartService {
 
         // Logic tìm kiếm giữ nguyên
         if (keyword != null && !keyword.trim().isEmpty()) {
-            partPage = partRepository.searchParts(keyword.trim(), pageable);
+            partPage = partRepository.searchParts(keyword.trim() ,null, pageable);
         } else {
             partPage = partRepository.findAll(pageable);
         }
