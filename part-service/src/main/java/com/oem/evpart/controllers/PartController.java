@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class PartController {
     private final PartAllocationService allocationService;
 
     @PostMapping
+    @PreAuthorize("")
     public ResponseEntity<PartResponse> createPart(@Valid @RequestBody PartRequest partRequest) {
         PartResponse newPart = partService.createPart(partRequest);
         return new ResponseEntity<>(newPart, HttpStatus.CREATED);

@@ -44,7 +44,7 @@ public class RabbitMQConfig {
     }
 
     @Value("${app.rabbitmq.consumer.queue:part.claim.approved.queue}")
-    private String claimQueueName;
+    private String claimQueueName; 
 
     @Value("${app.rabbitmq.consumer.routing-key:claim.approved}")
     private String claimRoutingKey;

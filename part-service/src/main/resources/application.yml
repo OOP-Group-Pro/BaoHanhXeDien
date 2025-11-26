@@ -1,64 +1,67 @@
 server:
-  port: 8080
+  port: 8080  # Cổng chạy của ứng dụng Spring Boot
 
 logging:
   level:
-    com.oem.evpart: INFO
-    org.springframework: INFO
-    org.hibernate.SQL: DEBUG
+    com.oem.evpart: INFO  # Mức log cho package com.oem.evpart
+    org.springframework: INFO  # Mức log cho Spring Framework
+    org.hibernate.SQL: DEBUG  # Hiển thị SQL câu lệnh của Hibernate (debug chi tiết)
 
 spring:
   application:
-    name: part-service
+    name: part-service  # Tên ứng dụng Spring Boot
 
-  # 🔥 [THÊM ĐOẠN NÀY ĐỂ FIX LỖI 500 "UNKNOWN ERROR"] 🔥
+  # 🔥 Cấu hình Jackson để fix lỗi 500 "UNKNOWN ERROR" 🔥
   jackson:
     serialization:
-      WRITE_DATES_AS_TIMESTAMPS: false # Trả về dạng String "2025-11-23T..." thay vì mảng số
-    time-zone: Asia/Ho_Chi_Minh       # Múi giờ VN
-    default-property-inclusion: non_null # Bỏ qua các trường null cho gọn
+      WRITE_DATES_AS_TIMESTAMPS: false # Trả về dạng String ISO "2025-11-23T..." thay vì mảng số
+    time-zone: Asia/Ho_Chi_Minh       # Cài múi giờ Việt Nam
+    default-property-inclusion: non_null # Bỏ qua các trường null khi serialize JSON
   # -----------------------------------------------------
 
   datasource:
     url: jdbc:mysql://mysql-db:3306/part_service?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
-    username: root
-    password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # URL kết nối MySQL, tự tạo database nếu chưa tồn tại, timezone UTC, không dùng SSL
+    username: root  # User kết nối DB
+    password: 1234  # Password kết nối DB
+    driver-class-name: com.mysql.cj.jdbc.Driver  # Driver MySQL
 
   jpa:
     hibernate:
-      ddl-auto: update
-      dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: false
+      ddl-auto: update  # Hibernate tự động update schema khi chạy
+      dialect: org.hibernate.dialect.MySQL8Dialect  # Dialect phù hợp MySQL 8
+    show-sql: false  # Không in ra SQL khi chạy, debug thì bật true
 
   security:
     user:
-      name: admin
-      password: 1234
-      roles: ADMIN
+      name: admin  # Username mặc định cho basic auth
+      password: 1234  # Password mặc định
+      roles: ADMIN  # Role gán cho user
 
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:redis-cache} # Lưu ý: nên để fallback là redis-cache nếu chạy docker
-      port: ${SPRING_DATA_REDIS_PORT:6379}
+      host: ${SPRING_DATA_REDIS_HOST:redis-cache}  # Host Redis, mặc định "redis-cache"
+      port: ${SPRING_DATA_REDIS_PORT:6379}        # Port Redis, mặc định 6379
 
   cache:
-    type: redis
+    type: redis  # Loại cache sử dụng Redis
     redis:
-      time-to-live: 600000
-      cache-null-values: false
-    # Kết nối RabbitMQ
+      time-to-live: 600000  # Thời gian sống của cache (ms)
+      cache-null-values: false  # Không lưu giá trị null vào cache
+
+  # Cấu hình RabbitMQ
   rabbitmq:
-    host: rabbitmq
-    port: 5672
-    username: admin
-    password: password123
-    publisher-confirm-type: correlated
-    publisher-returns: true
+    host: rabbitmq  # Host RabbitMQ
+    port: 5672  # Port kết nối RabbitMQ
+    username: admin  # User kết nối RabbitMQ
+    password: password123  # Password kết nối
+    publisher-confirm-type: correlated  # Kiểm tra publisher confirm
+    publisher-returns: true  # Cho phép nhận return khi publish không thành công
 
   main:
-    allow-bean-definition-overriding: true
+    allow-bean-definition-overriding: true  # Cho phép override bean khi bị trùng
 
+# URL các service nội bộ (sử dụng feign hoặc resttemplate)
 vehicle-service:
   url: http://vehicle-service:8080/
 user-service:
@@ -68,32 +71,35 @@ warranty-service:
 campaign-service:
   url: http://campaign-service:8080/
 
+# Cấu hình Feign client
 feign:
   client:
     config:
       default:
-        connectTimeout: 5000
-        readTimeout: 10000
-        loggerLevel: full
+        connectTimeout: 5000  # Timeout khi kết nối (ms)
+        readTimeout: 10000    # Timeout khi đọc dữ liệu (ms)
+        loggerLevel: full      # Log chi tiết request/response
 
+# Cấu hình ứng dụng
 app:
-  internal-secret: ${INTERNAL_SERVICE_SECRET}
+  internal-secret: ${INTERNAL_SERVICE_SECRET}  # Secret nội bộ (env variable)
   inventory:
-    default-min-threshold: 5 # Vì trong DB không có cột này, ta dùng cấu hình chung
+    default-min-threshold: 5  # Ngưỡng tồn kho mặc định
   rabbitmq:
-    exchange: oem.internal.exchange
+    exchange: oem.internal.exchange  # Exchange RabbitMQ
     routing-keys:
-      inventory-low: inventory.low
+      inventory-low: inventory.low  # Routing key cho thông báo tồn kho thấp
 
+# Cấu hình quản lý và metrics
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus  # Các endpoint quản lý được expose
   endpoint:
     health:
-      show-details: always
+      show-details: always  # Luôn hiển thị chi tiết health
   metrics:
     distribution:
       percentiles-histogram:
-        http.server.requests: true
+        http.server.requests: true  # Bật histogram cho metrics request HTTP
