@@ -46,7 +46,7 @@ export function renderStaffSidebar() {
                     </a>
                 </li>
                 </li>
-                    <a href="/pages/scStaff/profile.html" class="">
+                    <a href="../common/profile.html" class="">
                         <i class="fa-solid fa-calendar-check"></i>
                         Hồ sơ cá nhân
                     </a>

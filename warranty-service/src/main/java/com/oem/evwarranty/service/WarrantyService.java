@@ -416,6 +416,43 @@ public class WarrantyService {
             // Chỉ log lỗi, không làm ảnh hưởng luồng chính
             log.error("❌ Lỗi gửi thông báo FCM (SC Staff): {}", e.getMessage());
         }
+
+        // 🔥 BƯỚC 5: ĐỒNG BỘ SANG VEHICLE SERVICE
+        try {
+            // 1. Chuẩn bị danh sách phụ tùng thay thế (Chỉ lấy cái nào có thay mới)
+            List<SyncServiceHistoryRequest.SyncPartItem> syncParts = new ArrayList<>();
+            for (ClaimPartDetail detail : claim.getPartDetails()) {
+                if (detail.getSerialNumberReplace() != null) {
+                    syncParts.add(SyncServiceHistoryRequest.SyncPartItem.builder()
+                            .partNumber(detail.getPartNumber()) // Mã Loại
+                            .partName(detail.getPartName())     // Tên
+                            .serialNumber(detail.getSerialNumberReplace()) // Serial Mới
+                            .build());
+                }
+            }
+
+
+            // 2. Tạo Request Sync
+            SyncServiceHistoryRequest syncRequest = SyncServiceHistoryRequest.builder()
+                    .vin(claim.getVin())
+                    .performedDate(LocalDateTime.now())
+                    .description("Bảo hành theo Claim: " + claim.getClaimCode() + "\n" +
+                            (resultDto.getFinalNotes() != null ? resultDto.getFinalNotes() : ""))
+                    // Lưu ý: Nếu Claim không lưu ODO lúc sửa, ta lấy tạm ODO lúc tạo hoặc 0
+                    .odometerReading(0L)
+                    .technicianId(currentTechnicianId)
+                    .replacedParts(syncParts)
+                    .build();
+
+            // 3. Gọi sang Vehicle Service
+            vehicleClient.syncServiceHistory(syncRequest);
+
+            log.info("✅ Đã đồng bộ lịch sử sang Vehicle Service cho VIN: {}", claim.getVin());
+
+        } catch (Exception e) {
+            // Chỉ log lỗi, KHÔNG rollback transaction chính (vì Claim đã hoàn tất rồi)
+            log.error("❌ Lỗi đồng bộ Vehicle Service: {}", e.getMessage());
+        }
     }
 
     // --- CÁC HÀM CƠ BẢN (READ/GET) ---

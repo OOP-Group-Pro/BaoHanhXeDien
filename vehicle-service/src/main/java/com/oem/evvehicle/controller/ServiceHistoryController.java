@@ -1,5 +1,6 @@
 package com.oem.evvehicle.controller;
 
+import com.oem.evvehicle.dto.request.SyncServiceHistoryRequest;
 import com.oem.evvehicle.dto.response.ApiResponse;
 import com.oem.evvehicle.dto.request.ServiceHistoryRequestDTO;
 import com.oem.evvehicle.dto.response.ServiceHistoryResponseDTO;
@@ -64,5 +65,12 @@ public class ServiceHistoryController {
         ApiResponse<Object> response = ApiResponse.success(
                 HttpStatus.OK.value(), "Service history deleted successfully.");
         return ResponseEntity.ok(response);
+    }
+
+    // 🔥 API MỚI: NHẬN DỮ LIỆU TỪ WARRANTY
+    @PostMapping("/sync-from-warranty")
+    public ResponseEntity<Void> syncFromWarranty(@RequestBody SyncServiceHistoryRequest request) {
+        historyService.syncHistoryFromWarranty(request);
+        return ResponseEntity.ok().build();
     }
 }

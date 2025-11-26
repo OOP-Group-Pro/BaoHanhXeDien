@@ -7,12 +7,14 @@ import com.oem.evvehicle.dto.external.CenterDetailsDTO;
 import com.oem.evvehicle.dto.external.TechnicianDetailsDTO;
 import com.oem.evvehicle.dto.request.DecrementStockRequest;
 import com.oem.evvehicle.dto.request.ServiceHistoryRequestDTO;
+import com.oem.evvehicle.dto.request.SyncServiceHistoryRequest;
 import com.oem.evvehicle.dto.response.InstalledPartResponseDTO;
 import com.oem.evvehicle.dto.response.ServiceHistoryResponseDTO;
 import com.oem.evvehicle.entity.InstalledPart;
 import com.oem.evvehicle.entity.ServiceHistory;
 import com.oem.evvehicle.entity.Technician;
 import com.oem.evvehicle.entity.Vehicle;
+import com.oem.evvehicle.entity.enums.InstallStatus;
 import com.oem.evvehicle.exception.BusinessException;
 import com.oem.evvehicle.exception.ResourceNotFoundException;
 import com.oem.evvehicle.repository.InstalledPartRepository;
@@ -346,4 +348,61 @@ public class ServiceHistoryService {
 
         return convertToDTO(history);
     }
+
+    @Transactional
+    public void syncHistoryFromWarranty(SyncServiceHistoryRequest request) {
+        // 1. Tìm Xe theo VIN
+        // Giả định bạn có hàm findByVehicleVin trong Repository, nếu chưa có dùng findById
+        Vehicle vehicle = vehicleRepository.findByVehicleVin(request.getVin())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy xe với VIN: " + request.getVin()));
+
+        // 2. Tìm Kỹ thuật viên (Để gán vào lịch sử)
+        // Lưu ý: ID này đến từ User Service, cần đảm bảo bảng Technician đã đồng bộ hoặc có dữ liệu
+        Technician technician = technicianRepository.findById(request.getTechnicianId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kỹ thuật viên không tồn tại ID: " + request.getTechnicianId()));
+
+        // 3. Tạo Service History
+        ServiceHistory history = new ServiceHistory();
+        history.setVehicle(vehicle);
+        history.setTechnician(technician);
+        history.setPerformedDate(request.getPerformedDate());
+        history.setDescription(request.getDescription());
+        history.setOdometerReading(request.getOdometerReading());
+
+        // Lưu history trước để có ID
+        history = historyRepository.save(history);
+
+        // 4. Lưu Phụ tùng lắp đặt (Installed Parts)
+        if (request.getReplacedParts() != null && !request.getReplacedParts().isEmpty()) {
+            Set<InstalledPart> installedParts = new HashSet<>();
+
+            for (SyncServiceHistoryRequest.SyncPartItem item : request.getReplacedParts()) {
+                InstalledPart part = new InstalledPart();
+                part.setVehicle(vehicle);
+                part.setSerialNumber(item.getSerialNumber()); // Serial mới
+                part.setInstallDate(request.getPerformedDate());
+                part.setStatus(InstallStatus.INSTALLED); // Đánh dấu là Đã lắp
+
+                // ⚠️ Lưu ý: Entity InstalledPart yêu cầu partId (Long).
+                // Warranty chỉ gửi partNumber (String).
+                // Tạm thời set 0 hoặc fake ID nếu chưa có bảng mapping.
+                part.setPartId(0L);
+
+                // Lưu vào DB
+                part = installedPartRepository.save(part);
+                installedParts.add(part);
+            }
+
+            // Liên kết phụ tùng với lịch sử
+            history.setPartsInvolved(installedParts);
+            historyRepository.save(history);
+        }
+
+        // 5. Cập nhật ODO hiện tại của xe (Nếu ODO mới lớn hơn cũ)
+        if (vehicle.getCurrentOdometer() == null || request.getOdometerReading() > vehicle.getCurrentOdometer()) {
+            vehicle.setCurrentOdometer(request.getOdometerReading());
+            vehicleRepository.save(vehicle);
+        }
+    }
 }
+

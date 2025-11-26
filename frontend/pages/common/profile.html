@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Cá Nhân | OEM EV System</title>
+    <link rel="stylesheet" href="../../src/styles/style-admin.css">
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar-placeholder"></nav>
+
+<main class="main-content">
+    <header class="main-header">
+        <h1>Hồ sơ cá nhân</h1>
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="profile-avatar-large" id="profile-avatar-text">U</div>
+            <h2 id="profile-name">Đang tải...</h2>
+            <p id="profile-role">...</p>
+            <span class="status-badge" id="profile-status-badge">...</span>
+            <button class="btn btn-primary" id="editProfileBtn" style="margin-top:15px;">Chỉnh sửa hồ sơ</button>
+        </div>
+
+        <div class="profile-details-card">
+            <div class="card-header">Thông tin chi tiết</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Mã nhân viên</label>
+                    <input type="text" id="profile-id" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Họ và tên</label>
+                    <input type="text" id="profile-fullname" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" id="profile-email" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="text" id="profile-phone" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Đơn vị công tác</label>
+                    <input type="text" id="profile-center" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Đăng nhập cuối</label>
+                    <input type="text" id="profile-last-login" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div class="modal-popup" id="profileModal">
+    <div class="modal-box">
+        <button class="close-btn" id="closeModal">&times;</button>
+        <h3>Cập nhật thông tin</h3>
+
+        <label>Email</label>
+        <input type="email" id="modal-email">
+
+        <label>Số điện thoại</label>
+        <input type="text" id="modal-phone">
+
+        <button id="saveProfileBtn">Lưu thay đổi</button>
+    </div>
+</div>
+
+<script type="module" src="../../src/JS/common-profile.js"></script>
+</body>
+</html>

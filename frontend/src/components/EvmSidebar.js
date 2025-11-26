@@ -41,7 +41,7 @@ export function renderEvmSidebar() {
                 </li>
                 </li>
 
-                 <a href="/pages/evmStaff/profile.html" class="">
+                 <a href="../common/profile.html" class="">
                                         <i class="fa-solid fa-chart-pie"></i>
                                         Hồ sơ cá nhân
                                     </a>

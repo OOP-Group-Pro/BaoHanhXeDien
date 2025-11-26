@@ -1,8 +1,10 @@
 package com.oem.evwarranty.client.warranty.fallback;
 
 import com.oem.evwarranty.client.warranty.VehicleServiceClient;
+import com.oem.evwarranty.dto.SyncServiceHistoryRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.Map;
@@ -30,5 +32,10 @@ public class VehicleServiceClientFallback implements VehicleServiceClient {
     public Map<String, String> getCustomerNamesByVins (List<String> vin) {
         log.error("Feign client ERROR: Cannot get customer names by vin");
         return null;
+    }
+
+    @Override
+    public void syncServiceHistory(@RequestBody SyncServiceHistoryRequest request) {
+        log.error("Feign client ERROR: Cannot sync service history");
     }
 }

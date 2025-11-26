@@ -19,7 +19,7 @@ export function renderManagerSidebar() {
     </div>
     <ul class="sidebar-nav">
         <li><a href="/pages/manager/create-request.html" class="${path.endsWith('dashboard.html') ? 'active' : ''}"><i class="fa-solid fa-chart-line"></i>Danh sách phiếu </a></li>
-        <li><a href="/pages/manager/profile.html" class="${path.endsWith('profile.html') ? 'active' : ''}"><i class="fa-solid fa-user"></i>Hồ sơ cá nhân</a></li>
+        <li><a href="../common/profile.html" class="${path.endsWith('profile.html') ? 'active' : ''}"><i class="fa-solid fa-user"></i>Hồ sơ cá nhân</a></li>
         <li><a href="#" id="logout-btn-sidebar"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
     </ul>
     `;

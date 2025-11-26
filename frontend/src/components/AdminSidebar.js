@@ -37,12 +37,22 @@ export function renderAdminSidebar() {
             </a>
         </li>
         <li>
+            <a href="/pages/admin/inventory1.html" class="${isActive('inventory1.html')}">
+                <i class="fa-solid fa-box-open"></i> Quản lý phụ tùng
+            </a>
+        </li>
+        <li>
+            <a href="/pages/admin/vehicle-manager.html" class="${isActive('vehicle-manager.html')}">
+                <i class="fa-solid fa-car"></i> Quản lý xe
+            </a>
+        </li>
+        <li>
             <a href="/pages/admin/request.html" class="${isActive('request.html')}">
                 <i class="fa-solid fa-file-signature"></i> Phiếu Đề xuất
             </a>
         </li>
         <li>
-            <a href="/pages/admin/profile.html" class="${isActive('profile.html')}">
+            <a href="../common/profile.html" class="${isActive('profile.html')}">
                 <i class="fa-solid fa-user"></i> Hồ sơ cá nhân
             </a>
         </li>

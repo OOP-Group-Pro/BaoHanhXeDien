@@ -3,6 +3,7 @@ package com.oem.evuser.controller;
 import com.oem.evuser.dto.UserDto;
 import com.oem.evuser.dto.request.UserUpdateRequest;
 import com.oem.evuser.dto.response.PageCacheDto;
+import com.oem.evuser.entity.CustomUserDetails;
 import com.oem.evuser.entity.User;
 import com.oem.evuser.mapper.UserMapper;
 import com.oem.evuser.security.UserDetailsPrincipal;
@@ -103,25 +104,47 @@ public class UserController {
     }
 
     // 1. Xem hồ sơ bản thân
+    // Hàm hỗ trợ: Lấy User ID từ Authentication bất chấp là class nào
+    private Long extractUserId(Authentication authentication) {
+        if (authentication == null) {
+            throw new RuntimeException("Authentication is NULL");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        // 🔥 IN LOG RA MÀN HÌNH ĐỂ SOI
+        System.out.println(">>> DEBUG PRINCIPAL CLASS: " + principal.getClass().getName());
+        System.out.println(">>> DEBUG PRINCIPAL DATA: " + principal.toString());
+
+        if (principal instanceof CustomUserDetails) {
+            // ⚠️ KIỂM TRA LẠI TÊN HÀM GET ID CỦA BẠN: getId() hay getUserId()?
+            return ((CustomUserDetails) principal).getId();
+        } else if (principal instanceof UserDetailsPrincipal) {
+            return ((UserDetailsPrincipal) principal).getUserId();
+        } else if (principal instanceof String) {
+            // Trường hợp token lỗi hoặc cấu hình sai, principal chỉ là một chuỗi "anonymousUser"
+            throw new RuntimeException("Lỗi xác thực: Principal là String (" + principal + ")");
+        } else {
+            throw new RuntimeException("Loại UserDetails không hỗ trợ: " + principal.getClass().getName());
+        }
+    }
+
+    // 1. Xem hồ sơ bản thân
     @GetMapping("/me")
     public ResponseEntity<UserDto> getMyProfile(Authentication authentication) {
-        UserDetailsPrincipal principal = (UserDetailsPrincipal) authentication.getPrincipal();
-        // Gọi hàm trả về UserDto
-        return ResponseEntity.ok(userService.getUserInfoById1(principal.getUserId()));
+        Long userId = extractUserId(authentication); // ✅ Dùng hàm mới
+        return ResponseEntity.ok(userService.getUserInfoById1(userId));
     }
 
     // 2. Cập nhật hồ sơ bản thân
     @PutMapping("/me")
     public ResponseEntity<UserDto> updateMyProfile(
-            @RequestBody UserUpdateRequest request, // Dùng DTO request mới tạo
+            @RequestBody UserUpdateRequest request,
             Authentication authentication
     ) {
-        UserDetailsPrincipal principal = (UserDetailsPrincipal) authentication.getPrincipal();
+        Long userId = extractUserId(authentication); // ✅ Dùng hàm mới
 
-        // Update trong DB
-        User updatedUser = userService.updateUserProfile(principal.getUserId(), request);
-
-        // Map sang UserDto để trả về
+        User updatedUser = userService.updateUserProfile(userId, request);
         UserDto responseDto = UserMapper.mapToUserDto(updatedUser);
         responseDto.setPassword(null);
 

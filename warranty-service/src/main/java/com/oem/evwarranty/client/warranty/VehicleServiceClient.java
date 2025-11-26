@@ -2,6 +2,7 @@ package com.oem.evwarranty.client.warranty;
 
 
 import com.oem.evwarranty.client.warranty.fallback.VehicleServiceClientFallback;
+import com.oem.evwarranty.dto.SyncServiceHistoryRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,4 +32,8 @@ public interface VehicleServiceClient {
 
     @PostMapping("/api/v1/vehicles/vins/customer-names")
     Map<String, String> getCustomerNamesByVins(@RequestBody List<String> vins);
+
+    // 🔥 HÀM MỚI: ĐỒNG BỘ LỊCH SỬ
+    @PostMapping("/api/v1/history/sync-from-warranty")
+    void syncServiceHistory(@RequestBody SyncServiceHistoryRequest request);
 }
